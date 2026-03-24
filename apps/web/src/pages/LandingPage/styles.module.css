@@ -1,20 +1,118 @@
-.page {
+.container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4);
-  background: var(--surface-container-low);
-}
-
-.card {
-  width: 100%;
-  max-width: 360px;
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-4);
+  background: var(--background);
   padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
 }
 
-.form {
+.content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 400px;
+}
+
+.header {
+  margin-bottom: var(--space-12);
+}
+
+.logo {
+  margin-bottom: var(--space-6);
+}
+
+.logo svg {
+  width: 64px;
+  height: 64px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-display-sm);
+  font-weight: var(--weight-bold);
+  color: var(--on-surface);
+  margin-bottom: var(--space-4);
+  letter-spacing: var(--tracking-display-sm);
+}
+
+.tagline {
+  font-size: var(--text-body-lg);
+  color: var(--on-surface-variant);
+  line-height: var(--leading-body-lg);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.primaryButton {
   width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.primaryButton:hover {
+  background: var(--primary-dim);
+}
+
+.secondaryButton {
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.secondaryButton:hover {
+  background: var(--secondary-fixed-dim);
+}
+
+.decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.circle1 {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: var(--primary-container);
+  opacity: 0.3;
+  top: -100px;
+  right: -100px;
+}
+
+.circle2 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--secondary-container);
+  opacity: 0.3;
+  bottom: -50px;
+  left: -50px;
+}
+
+.circle3 {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--tertiary-container);
+  opacity: 0.2;
+  bottom: 30%;
+  right: 10%;
 }

@@ -1,19 +1,163 @@
-.card {
-  background: var(--primary-container);
-  border-radius: 12px;
-  width: 100%;
-  margin-bottom: 24px;
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  padding: var(--space-6);
 }
 
-.fireEmoji {
-  font-size: 2.5rem;
-  line-height: 1;
+.content {
+  text-align: center;
+  max-width: 400px;
 }
 
-.streakNumber {
-  font-size: 4rem;
-  font-weight: 800;
-  color: var(--on-primary-container);
-  line-height: 1;
+.illustration {
+  margin-bottom: var(--space-8);
+}
+
+.title {
   font-family: var(--font-display);
+  font-size: var(--text-headline-lg);
+  font-weight: var(--weight-bold);
+  color: var(--on-surface);
+  margin-bottom: var(--space-4);
+}
+
+.description {
+  font-size: var(--text-body-lg);
+  color: var(--on-surface-variant);
+  line-height: var(--leading-body-lg);
+  margin-bottom: var(--space-10);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.primaryButton {
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.primaryButton:hover {
+  background: var(--primary-dim);
+}
+
+.secondaryButton {
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.secondaryButton:hover {
+  background: var(--secondary-fixed-dim);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(41, 50, 71, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  z-index: var(--z-modal);
+}
+
+.modal {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow-xl);
+}
+
+.modalTitle {
+  font-family: var(--font-headline);
+  font-size: var(--text-title-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--on-surface);
+  margin-bottom: var(--space-6);
+}
+
+.modalField {
+  margin-bottom: var(--space-6);
+}
+
+.modalLabel {
+  display: block;
+  font-size: var(--text-label-md);
+  font-weight: var(--weight-medium);
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label-md);
+}
+
+.modalInput {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-container-low);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-md);
+  color: var(--on-surface);
+  transition: background var(--transition-fast);
+}
+
+.modalInput:focus {
+  background: var(--surface-container-highest);
+  outline: none;
+}
+
+.modalActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.modalCancel {
+  flex: 1;
+  padding: var(--space-3);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-medium);
+  transition: background var(--transition-fast);
+}
+
+.modalCancel:hover {
+  background: var(--surface-container);
+}
+
+.modalConfirm {
+  flex: 1;
+  padding: var(--space-3);
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.modalConfirm:hover:not(:disabled) {
+  background: var(--primary-dim);
+}
+
+.modalConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

@@ -1,8 +1,0 @@
-.list {
-  width: 100%;
-}
-
-.emptyState {
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-3);
-}

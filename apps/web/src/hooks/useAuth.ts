@@ -1,52 +1,53 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { authApi, type User } from '../api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { authService, LoginRequest, RegisterRequest } from '../services/auth';
 
-export const AUTH_KEYS = {
+const AUTH_KEYS = {
   me: ['auth', 'me'] as const,
-}
+};
 
-export function useAuthMe() {
-  return useQuery({
+export function useAuth() {
+  const queryClient = useQueryClient();
+
+  const token = localStorage.getItem('token');
+
+  const { data: user, isLoading, error } = useQuery({
     queryKey: AUTH_KEYS.me,
-    queryFn: authApi.me,
+    queryFn: authService.me,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 min
-  })
-}
+    staleTime: Infinity,
+    enabled: !!token,
+  });
 
-export function useAuthRegister() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: authApi.register,
-    onSuccess: (data) => {
-      localStorage.setItem('auth-token', data.token)
-      queryClient.setQueryData<User>(AUTH_KEYS.me, data.user)
+  const loginMutation = useMutation({
+    mutationFn: (data: LoginRequest) => authService.login(data),
+    onSuccess: (response) => {
+      localStorage.setItem('token', response.token);
+      queryClient.setQueryData(AUTH_KEYS.me, response.user);
     },
-  })
-}
+  });
 
-export function useAuthLogin() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: authApi.login,
-    onSuccess: (data) => {
-      localStorage.setItem('auth-token', data.token)
-      queryClient.setQueryData<User>(AUTH_KEYS.me, data.user)
+  const registerMutation = useMutation({
+    mutationFn: (data: RegisterRequest) => authService.register(data),
+    onSuccess: (response) => {
+      localStorage.setItem('token', response.token);
+      queryClient.setQueryData(AUTH_KEYS.me, response.user);
     },
-  })
-}
+  });
 
-export function useLogout() {
-  const queryClient = useQueryClient()
+  const logout = () => {
+    localStorage.removeItem('token');
+    queryClient.clear();
+  };
 
-  return useMutation({
-    mutationFn: async () => {
-      localStorage.removeItem('auth-token')
-    },
-    onSuccess: () => {
-      queryClient.clear()
-    },
-  })
+  return {
+    user,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
+    logout,
+    isLoggingIn: loginMutation.isPending,
+    isRegistering: registerMutation.isPending,
+  };
 }
