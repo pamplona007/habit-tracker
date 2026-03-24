@@ -1,0 +1,29 @@
+.container {
+  max-width: 600px;
+}
+
+.noticeCard {
+  padding: var(--space-3);
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-3);
+}
+
+.emptyCard {
+  padding: var(--space-6);
+  text-align: center;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-3);
+}
+
+.dialogContent {
+  max-width: 400px;
+}
+
+.deleteButton {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.deleteButton:hover {
+  opacity: 1;
+}

@@ -1,83 +1,139 @@
-@import "tailwindcss";
+/* Design System: Ethereal Organizer */
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display rel="stylesheet');
+:root {
+  /* Primary (mint/teal) */
+  --primary: #016a6b;
+  --primary-container: #a0f0f0;
+  --on-primary: #e0fffe;
+  --on-primary-container: #005c5c;
+  --primary-dim: #005d5d;
+  --primary-fixed: #a0f0f0;
+  --primary-fixed-dim: #92e2e2;
+  --on-primary-fixed: #004748;
+  --on-primary-fixed-variant: #006667;
+  --surface-tint: #016a6b;
 
-@theme {
-  --color-on-error-container: #6e0a12;
-  --color-surface-dim: #d1daf4;
-  --color-secondary-fixed: #d0e4ff;
-  --color-on-surface-variant: #565f75;
-  --color-surface-container-high: #e0e8ff;
-  --color-on-surface: #293247;
-  --color-secondary-fixed-dim: #b7d7ff;
-  --color-surface-container: #e9edff;
-  --color-on-tertiary-container: #614106;
-  --color-primary-dim: #005d5d;
-  --color-inverse-surface: #0a0e18;
-  --color-secondary-container: #d0e4ff;
-  --color-on-background: #293247;
-  --color-on-tertiary-fixed: #492f00;
-  --color-primary-fixed: #a0f0f0;
-  --color-on-secondary-fixed-variant: #335e89;
-  --color-error: #a83836;
-  --color-on-primary-fixed-variant: #006667;
-  --color-surface-bright: #f9f9ff;
-  --color-tertiary-dim: #6e4d13;
-  --color-outline-variant: #a9b2cb;
-  --color-error-dim: #67040d;
-  --color-tertiary: #7c591e;
-  --color-secondary-dim: #2a5680;
-  --color-on-secondary: #f7f9ff;
-  --color-primary: #016a6b;
-  --color-on-secondary-fixed: #0f426a;
-  --color-on-primary: #e0fffe;
-  --color-surface-container-highest: #d9e2fd;
-  --color-inverse-primary: #aefffe;
-  --color-tertiary-fixed-dim: #ebbc78;
-  --color-on-primary-fixed: #004748;
-  --color-surface: #f9f9ff;
-  --color-background: #f9f9ff;
-  --color-surface-container-low: #f1f3ff;
-  --color-primary-fixed-dim: #92e2e2;
-  --color-secondary: #37628c;
-  --color-surface-container-lowest: #ffffff;
-  --color-on-error: #fff7f6;
-  --color-error-container: #fa746f;
-  --color-on-primary-container: #005c5c;
-  --color-inverse-on-surface: #999daa;
-  --color-tertiary-fixed: #faca84;
-  --color-outline: #717b92;
-  --color-on-tertiary: #fff8f2;
-  --color-surface-variant: #d9e2fd;
-  --color-on-secondary-container: #28547e;
-  --color-primary-container: #a0f0f0;
-  --color-tertiary-container: #faca84;
-  --color-on-tertiary-fixed-variant: #6b4a10;
-  --color-surface-tint: #016a6b;
+  /* Secondary (blue) */
+  --secondary: #37628c;
+  --secondary-container: #d0e4ff;
+  --on-secondary: #f7f9ff;
+  --on-secondary-container: #28547e;
+  --secondary-dim: #2a5680;
+  --secondary-fixed: #d0e4ff;
+  --secondary-fixed-dim: #b7d7ff;
+  --on-secondary-fixed: #0f426a;
+  --on-secondary-fixed-variant: #335e89;
 
-  --font-family-headline: 'Manrope', sans-serif;
-  --font-family-body: 'Plus Jakarta Sans', sans-serif;
-  --font-family-label: 'Plus Jakarta Sans', sans-serif;
+  /* Tertiary (warm/amber) */
+  --tertiary: #7c591e;
+  --tertiary-container: #faca84;
+  --on-tertiary: #fff8f2;
+  --on-tertiary-container: #614106;
+  --tertiary-dim: #6e4d13;
+  --tertiary-fixed: #faca84;
+  --tertiary-fixed-dim: #ebbc78;
+  --on-tertiary-fixed: #492f00;
+  --on-tertiary-fixed-variant: #6b4a10;
+
+  /* Error */
+  --error: #a83836;
+  --error-container: #fa746f;
+  --on-error: #fff7f6;
+  --on-error-container: #6e0a12;
+  --error-dim: #67040d;
+
+  /* Surfaces (tonal hierarchy - no borders, color shifts only) */
+  --surface: #f9f9ff;
+  --surface-bright: #f9f9ff;
+  --surface-dim: #d1daf4;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f3ff;
+  --surface-container: #e9edff;
+  --surface-container-high: #e0e8ff;
+  --surface-container-highest: #d9e2fd;
+  --surface-variant: #d9e2fd;
+
+  /* On surfaces */
+  --on-surface: #293247;
+  --on-surface-variant: #565f75;
+  --on-background: #293247;
+
+  /* Inverse */
+  --inverse-surface: #0a0e18;
+  --inverse-on-surface: #999daa;
+  --inverse-primary: #aefffe;
+
+  /* Outlines */
+  --outline: #717b92;
+  --outline-variant: #a9b2cb;
+
+  /* Background alias for legacy code */
+  --color-background: var(--surface);
+
+  /* Spacing scale (multiples of 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+
+  /* Radius scale */
+  --radius-1: 4px;
+  --radius-2: 6px;
+  --radius-3: 8px;
+  --radius-4: 12px;
+  --radius-5: 16px;
+  --radius-6: 20px;
+  --radius-7: 24px;
+  --radius-8: 28px;
+  --radius-9: 32px;
+
+  /* Typography */
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Shadows (ambient only - for modals/floating elements) */
+  --shadow-ambient: 0 20px 40px rgba(41, 50, 71, 0.06);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Display/Headline typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Manrope', sans-serif;
+  font-family: var(--font-display);
+  margin: 0;
 }
 
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+/* Ghost border fallback for accessibility (15% opacity outline) */
+.ghost-border {
+  outline: 1px solid var(--outline-variant);
+  outline-opacity: 0.15;
 }
 
-.ethereal-blur {
+/* Glass effect for floating elements */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-.primary-gradient {
-  background: linear-gradient(135deg, #016a6b 0%, #a0f0f0 100%);
+/* Primary gradient for CTAs and timers */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
 }

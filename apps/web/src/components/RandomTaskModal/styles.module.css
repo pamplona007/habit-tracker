@@ -1,0 +1,9 @@
+.content {
+  border-radius: var(--radius-4);
+}
+
+.taskBox {
+  background: var(--primary-container);
+  border-radius: var(--radius-3);
+  padding: var(--space-4);
+}

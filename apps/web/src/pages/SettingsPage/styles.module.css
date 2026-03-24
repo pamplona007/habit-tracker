@@ -1,182 +1,26 @@
 .container {
-  min-height: 100vh;
-  background: var(--background);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-6);
-  padding-top: var(--space-12);
-  background: var(--surface-container-low);
-}
-
-.backButton {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-surface);
-  border-radius: var(--radius-full);
-  transition: background var(--transition-fast);
-}
-
-.backButton:hover {
-  background: var(--surface-container-high);
-}
-
-.title {
-  font-family: var(--font-headline);
-  font-size: var(--text-title-lg);
-  font-weight: var(--weight-semibold);
-  color: var(--on-surface);
-}
-
-.placeholder {
-  width: 40px;
-}
-
-.content {
   max-width: 600px;
-  margin: 0 auto;
-  padding: var(--space-6);
 }
 
 .section {
-  margin-bottom: var(--space-8);
-}
-
-.sectionTitle {
-  font-size: var(--text-label-md);
-  font-weight: var(--weight-medium);
-  color: var(--on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label-md);
-  margin-bottom: var(--space-3);
-}
-
-.card {
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5);
-  margin-bottom: var(--space-3);
-}
-
-.cardTitle {
-  font-size: var(--text-body-md);
-  font-weight: var(--weight-medium);
-  color: var(--on-surface);
-  margin-bottom: var(--space-4);
-}
-
-.avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: var(--on-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: var(--text-headline-md);
-  font-weight: var(--weight-semibold);
-  margin-bottom: var(--space-4);
-}
-
-.profileInfo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.profileName {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-semibold);
-  color: var(--on-surface);
-}
-
-.profileEmail {
-  font-size: var(--text-body-sm);
-  color: var(--on-surface-variant);
-}
-
-.householdInfo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.householdName {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-semibold);
-  color: var(--on-surface);
-}
-
-.householdMembers {
-  font-size: var(--text-body-sm);
-  color: var(--on-surface-variant);
-}
-
-.memberList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.member {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.memberAvatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-label-md);
-  font-weight: var(--weight-medium);
-}
-
-.memberName {
-  font-size: var(--text-body-md);
-  color: var(--on-surface);
-}
-
-.settingRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.settingLabel {
-  font-size: var(--text-body-md);
-  color: var(--on-surface);
-}
-
-.settingValue {
-  font-size: var(--text-body-md);
-  color: var(--on-surface-variant);
-}
-
-.logoutButton {
-  width: 100%;
   padding: var(--space-4);
-  background: var(--error-container);
-  color: var(--on-error-container);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-body-md);
-  font-weight: var(--weight-medium);
-  transition: background var(--transition-fast);
 }
 
-.logoutButton:hover {
-  background: var(--error-dim);
+.code {
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.codeBox {
+  background: var(--surface-container-high);
+  border-radius: var(--radius-3);
+  padding: var(--space-4) var(--space-6);
+  width: 100%;
+  text-align: center;
+  color: var(--on-surface);
+}
+
+.dialogContent {
+  max-width: 400px;
 }

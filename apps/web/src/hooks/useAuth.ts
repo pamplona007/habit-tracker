@@ -1,53 +1,52 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authService, LoginRequest, RegisterRequest } from '../services/auth';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { authApi, type User } from '../api'
 
-const AUTH_KEYS = {
+export const AUTH_KEYS = {
   me: ['auth', 'me'] as const,
-};
+}
 
-export function useAuth() {
-  const queryClient = useQueryClient();
-
-  const token = localStorage.getItem('token');
-
-  const { data: user, isLoading, error } = useQuery({
+export function useAuthMe() {
+  return useQuery({
     queryKey: AUTH_KEYS.me,
-    queryFn: authService.me,
+    queryFn: authApi.me,
     retry: false,
-    staleTime: Infinity,
-    enabled: !!token,
-  });
+    staleTime: 5 * 60 * 1000, // 5 min
+  })
+}
 
-  const loginMutation = useMutation({
-    mutationFn: (data: LoginRequest) => authService.login(data),
-    onSuccess: (response) => {
-      localStorage.setItem('token', response.token);
-      queryClient.setQueryData(AUTH_KEYS.me, response.user);
+export function useAuthRegister() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: authApi.register,
+    onSuccess: (data) => {
+      localStorage.setItem('auth-token', data.token)
+      queryClient.setQueryData<User>(AUTH_KEYS.me, data.user)
     },
-  });
+  })
+}
 
-  const registerMutation = useMutation({
-    mutationFn: (data: RegisterRequest) => authService.register(data),
-    onSuccess: (response) => {
-      localStorage.setItem('token', response.token);
-      queryClient.setQueryData(AUTH_KEYS.me, response.user);
+export function useAuthLogin() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: authApi.login,
+    onSuccess: (data) => {
+      localStorage.setItem('auth-token', data.token)
+      queryClient.setQueryData<User>(AUTH_KEYS.me, data.user)
     },
-  });
+  })
+}
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    queryClient.clear();
-  };
+export function useLogout() {
+  const queryClient = useQueryClient()
 
-  return {
-    user,
-    isLoading,
-    error,
-    isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
-    logout,
-    isLoggingIn: loginMutation.isPending,
-    isRegistering: registerMutation.isPending,
-  };
+  return useMutation({
+    mutationFn: async () => {
+      localStorage.removeItem('auth-token')
+    },
+    onSuccess: () => {
+      queryClient.clear()
+    },
+  })
 }
