@@ -55,7 +55,7 @@ export function TaskItem({ task, onSelect, onRemove }: TaskItemProps) {
         size="1"
         color="gray"
         aria-label={t('goals.back')}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent) => {
           e.stopPropagation()
           onRemove()
         }}

@@ -39,7 +39,7 @@ export function AddTaskModal({ open, onClose, onAdd }: AddTaskModalProps) {
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && handleClose()}>
+    <Dialog.Root open={open} onOpenChange={(o: boolean) => !o && handleClose()}>
       <Dialog.Content className={styles.content} maxWidth="420px">
         <Dialog.Title>{t('addTask.title')}</Dialog.Title>
         <Flex direction="column" gap="3" mt="2">
@@ -50,11 +50,11 @@ export function AddTaskModal({ open, onClose, onAdd }: AddTaskModalProps) {
             <TextField.Root
               placeholder={t('addTask.namePlaceholder')}
               value={name}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setName(e.target.value)
                 setError('')
               }}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAdd()}
               autoFocus
             />
             {error && (
@@ -70,7 +70,7 @@ export function AddTaskModal({ open, onClose, onAdd }: AddTaskModalProps) {
             <input
               type="date"
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeadline(e.target.value)}
               className={styles.dateInput}
             />
           </Flex>

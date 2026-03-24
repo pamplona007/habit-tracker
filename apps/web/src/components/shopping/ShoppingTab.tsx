@@ -43,7 +43,7 @@ export function ShoppingTab() {
     setActiveListId(activeList.id)
   }
 
-  function handleAddItem(e: React.FormEvent) {
+  function handleAddItem(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!newItemName.trim() || !householdId || !activeList) return
     addItem.mutate(
@@ -136,7 +136,7 @@ export function ShoppingTab() {
                 <TextField.Root
                   placeholder="Nome do item..."
                   value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewItemName(e.target.value)}
                   className={styles.addItemInput}
                 />
                 <TextField.Root
@@ -144,7 +144,7 @@ export function ShoppingTab() {
                   min={1}
                   max={99}
                   value={newItemQty}
-                  onChange={(e) => setNewItemQty(Number(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewItemQty(Number(e.target.value))}
                   className={styles.qtyInput}
                 />
                 <Button type="submit" disabled={!newItemName.trim()}>+</Button>
@@ -180,7 +180,7 @@ export function ShoppingTab() {
               <TextField.Root
                 placeholder="Ex: Supermercado"
                 value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)}
                 autoFocus
               />
             </Box>

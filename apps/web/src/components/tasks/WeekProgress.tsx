@@ -21,7 +21,7 @@ export function WeekProgress({
 }: WeekProgressProps) {
   return (
     <Box className={styles.card}>
-      <Text size="2" weight="semibold" className={styles.title}>
+      <Text size="2" weight="bold" className={styles.title}>
         Sua semana
       </Text>
       <Flex gap="6" justify="center" className={styles.progressList}>

@@ -97,7 +97,7 @@ export function NoticesTab() {
               <TextField.Root
                 placeholder="Ex: Reunião domingo"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 autoFocus
               />
             </Box>
@@ -106,13 +106,13 @@ export function NoticesTab() {
               <TextArea
                 placeholder="Detalhes do aviso..."
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
                 rows={3}
               />
             </Box>
             <Box>
               <Text size="2" mb="1" as="label">Prioridade</Text>
-              <Select.Root value={priority} onValueChange={(v) => setPriority(v as NoticePriority)}>
+              <Select.Root value={priority} onValueChange={(v: string) => setPriority(v as NoticePriority)}>
                 <Select.Trigger />
                 <Select.Content>
                   {(['urgent', 'high', 'normal', 'low'] as NoticePriority[]).map((p) => (

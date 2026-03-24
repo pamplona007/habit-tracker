@@ -13,7 +13,7 @@ export function CompletionModal({ open, task, onComplete, onClose }: CompletionM
   if (!task) return null
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
       <Dialog.Content className={styles.content} maxWidth="380px">
         <Dialog.Title className={styles.title}>Como foi?</Dialog.Title>
         <Text size="2" color="gray" mb="4" className={styles.taskName}>

@@ -22,7 +22,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleRegisterSubmit(e: React.FormEvent) {
+  function handleRegisterSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     register(
       { email, password, name: name || undefined },
@@ -57,21 +57,21 @@ export function RegisterPage() {
                 type="text"
                 placeholder="Nome (opcional)"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 autoFocus
               />
               <TextField.Root
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
               />
               <TextField.Root
                 type="password"
                 placeholder="Senha (mín. 6 caracteres)"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 minLength={6}
                 required
               />

@@ -27,7 +27,7 @@ export function HouseholdStep({ email }: HouseholdStepProps) {
       ? 'Algo deu errado. Tente novamente.'
       : null
 
-  function handleCreate(e: React.FormEvent) {
+  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!householdName.trim()) return
     createHousehold.mutate(
@@ -38,7 +38,7 @@ export function HouseholdStep({ email }: HouseholdStepProps) {
     )
   }
 
-  function handleJoin(e: React.FormEvent) {
+  function handleJoin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!inviteCode.trim()) return
     joinHousehold.mutate(inviteCode.trim().toUpperCase())
@@ -97,7 +97,7 @@ export function HouseholdStep({ email }: HouseholdStepProps) {
                 <TextField.Root
                   placeholder="Ex: Casa Pamplona"
                   value={householdName}
-                  onChange={(e) => setHouseholdName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHouseholdName(e.target.value)}
                   autoFocus
                   minLength={2}
                   required
@@ -132,7 +132,7 @@ export function HouseholdStep({ email }: HouseholdStepProps) {
                 <TextField.Root
                   placeholder="ABCD1234"
                   value={inviteCode}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setInviteCode(e.target.value.toUpperCase())
                   }
                   autoFocus

@@ -32,13 +32,13 @@ export function NoHouseholdPage() {
       ? 'Algo deu errado. Tente novamente.'
       : null
 
-  function handleCreate(e: React.FormEvent) {
+  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!householdName.trim()) return
     createHousehold.mutate({ name: householdName.trim() })
   }
 
-  function handleJoin(e: React.FormEvent) {
+  function handleJoin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!inviteCode.trim()) return
     joinHousehold.mutate(inviteCode.trim().toUpperCase())
@@ -109,7 +109,7 @@ export function NoHouseholdPage() {
                 <TextField.Root
                   placeholder="Ex: Casa Pamplona"
                   value={householdName}
-                  onChange={(e) => setHouseholdName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHouseholdName(e.target.value)}
                   autoFocus
                   minLength={2}
                   required
@@ -144,8 +144,8 @@ export function NoHouseholdPage() {
                 <TextField.Root
                   placeholder="ABCD1234"
                   value={inviteCode}
-                  onChange={(e) =>
-                    setInviteCode(e.target.value.toUpperCase())
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setInviteCode(e.target.value.toUpperCase())
                   }
                   autoFocus
                   maxLength={12}

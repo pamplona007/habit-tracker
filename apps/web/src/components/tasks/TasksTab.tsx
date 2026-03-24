@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -231,7 +231,7 @@ export function TasksTab() {
       {/* Tasks Section */}
       <Box className={styles.tasksSection}>
         <Flex justify="between" align="center" mb="3">
-          <Text size="3" weight="semibold" className={styles.sectionTitle}>
+          <Text size="3" weight="bold" className={styles.sectionTitle}>
             Suas tarefas
           </Text>
           <Button size="1" variant="soft" onClick={() => setCreateOpen(true)}>
@@ -320,7 +320,7 @@ export function TasksTab() {
               <TextField.Root
                 placeholder="Ex: Levar lixo"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 autoFocus
               />
             </Box>
@@ -329,13 +329,13 @@ export function TasksTab() {
               <TextArea
                 placeholder="Detalhes..."
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 rows={2}
               />
             </Box>
             <Box>
               <Text size="2" mb="1" as="label" className={styles.fieldLabel}>Tipo</Text>
-              <Select.Root value={type} onValueChange={(v) => setType(v as TaskType)}>
+              <Select.Root value={type} onValueChange={(v: string) => setType(v as TaskType)}>
                 <Select.Trigger style={{ width: '100%' }} />
                 <Select.Content>
                   {(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME'] as TaskType[]).map((t) => (
@@ -365,7 +365,7 @@ export function TasksTab() {
                   min={1}
                   max={31}
                   value={dayOfMonth}
-                  onChange={(e) => setDayOfMonth(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDayOfMonth(e.target.value)}
                 />
               </Box>
             )}
@@ -375,7 +375,7 @@ export function TasksTab() {
                 <TextField.Root
                   type="date"
                   value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeadline(e.target.value)}
                 />
               </Box>
             )}

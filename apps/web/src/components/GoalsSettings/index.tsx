@@ -87,7 +87,7 @@ export function GoalsSettings({ goals, onSave, onBack }: GoalsSettingsProps) {
           min={1}
           max={7}
           value={weekly}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setWeekly(e.target.value)
             setErrors((prev) => ({ ...prev, weekly: undefined }))
           }}
@@ -111,7 +111,7 @@ export function GoalsSettings({ goals, onSave, onBack }: GoalsSettingsProps) {
           min={1}
           max={31}
           value={monthly}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setMonthly(e.target.value)
             setErrors((prev) => ({ ...prev, monthly: undefined }))
           }}

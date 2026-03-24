@@ -21,7 +21,7 @@ export function CompletionModal({
   if (!task) return null
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
       <Dialog.Content className={styles.content} maxWidth="420px">
         <Dialog.Title>{t('completion.title')}</Dialog.Title>
         <Text size="2" color="gray" mb="4" as="p">

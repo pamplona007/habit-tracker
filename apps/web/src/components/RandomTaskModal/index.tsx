@@ -48,7 +48,7 @@ export function RandomTaskModal({
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(o: boolean) => !o && onClose()}>
       <Dialog.Content className={styles.content} maxWidth="420px">
         <Dialog.Title>{t('randomTask.title')}</Dialog.Title>
         {pending.length === 0 ? (
