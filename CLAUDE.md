@@ -1,6 +1,6 @@
 # CLAUDE.md — Habit Tracker (Monorepo)
 
-Plataforma doméstica completa: tarefas (diárias/semanais/mensais), avisos e listas de compras.
+Plataforma doméstica colaborativa em React + Bun/Hono.
 
 ---
 
@@ -8,10 +8,11 @@ Plataforma doméstica completa: tarefas (diárias/semanais/mensais), avisos e li
 
 ### Frontend (`apps/web`)
 - **Vite** + **React 19** + **TypeScript**
-- **@radix-ui/themes** para componentes UI
-- **CSS Modules** para estilos (NUNCA Tailwind inline)
-- **i18next** para internacionalização (EN/PT)
-- localStorage para cache local (chave: `habit-tracker-state`)
+- **TanStack Query** — cache e sync de dados
+- **Axios** — cliente HTTP
+- **@radix-ui/themes** — componentes UI
+- **i18next** — internacionalização (EN/PT)
+- **CSS Modules** — estilos
 
 ### Backend (`apps/api`)
 - **Bun** runtime
@@ -23,124 +24,174 @@ Plataforma doméstica completa: tarefas (diárias/semanais/mensais), avisos e li
 
 ---
 
-## Estrutura de Componentes
-
-O frontend foi movido para `apps/web/src/`:
-
-```
-apps/web/src/
-├── components/
-│   ├── Header/
-│   ├── StreakCard/
-│   ├── TaskList/
-│   ├── TaskItem/
-│   ├── AddTaskModal/
-│   ├── RandomTaskModal/
-│   ├── TaskInProgress/
-│   ├── CompletionModal/
-│   └── GoalsSettings/
-├── hooks/
-│   ├── useAppState.ts   # estado global + localStorage
-│   └── useStreak.ts     # cálculo de streak
-├── i18n/
-│   ├── index.ts         # configuração i18next
-│   └── locales/
-│       ├── en.ts        # inglês
-│       └── pt.ts        # português
-├── types/
-│   └── index.ts
-├── utils/
-│   ├── dates.ts
-│   └── streak.ts
-├── App.tsx
-└── main.tsx
-```
-
----
-
-## API (`apps/api/src/routes`)
-
-| Rota | Descrição |
-|------|-----------|
-| `auth.ts` | Register, login, /me |
-| `notices.ts` | CRUD avisos |
-| `weekly-tasks.ts` | CRUD tarefas semanais |
-| `monthly-tasks.ts` | CRUD tarefas mensais |
-| `shopping.ts` | CRUD listas + itens |
-
-Todas as rotas (exceto auth) são protegidas por JWT middleware.
-
----
-
-## Regras de Estilo (CRÍTICO)
-
-- CSS Modules ONLY — nenhum inline style, nenhum Tailwind
-- Cores via variáveis Radix: `var(--accent-9)`, `var(--gray-3)`, etc. — nunca hex hardcoded
-- Espaçamento: grid de 4px (4, 8, 12, 16, 24, 32, 48px)
-- Componentes Radix permitidos: Box, Flex, Text, Heading, Button, Card, Badge, Dialog, TextField, IconButton, Select
-
----
-
 ## Modelo de Dados (Prisma)
 
-```prisma
+```
+Household
+├── id, name
+└── members[], notices[], tasks[], shoppingLists[], invites[]
+
+HouseholdMember (N:N — composite PK)
+├── householdId + userId
+├── role (OWNER | ADMIN | MEMBER)
+└── joinedAt
+
 User
 ├── id, email, password, name
-├── notices[]        # Avisos (title, content, priority, isActive)
-├── weeklyTasks[]    # Tarefas semanais (dayOfWeek 0-6)
-├── monthlyTasks[]   # Tarefas mensais (dayOfMonth 1-31)
-└── shoppingLists[]  # Listas de compras
-    └── items[]     # Itens (name, quantity, isChecked)
+├── currentHouseholdId
+└── memberships[]
+
+HouseholdInvite
+├── code (único), isUsed, expiresAt
+├── householdId, usedById
+
+Task
+├── id, name, description
+├── type (DAILY | WEEKLY | MONTHLY | ONE_TIME)
+├── dayOfWeek?, dayOfMonth?, deadline?, isActive
+└── completions[]
+
+TaskCompletion
+├── id, completedAt, type (FULL | PARTIAL)
+├── taskId, userId
+
+Notice
+├── id, title, content, priority (low|normal|high|urgent)
+├── isActive, startDate?, endDate?
+└── householdId
+
+ShoppingList / ShoppingItem
+└── householdId / listId
 ```
 
 ---
 
-## Internacionalização
+## API Endpoints
 
-- Arquivos em `apps/web/src/i18n/locales/`
-- Seletor de idioma nas configurações (GoalsSettings)
-- Persistido via localStorage (`habit-tracker-lang`)
+### Auth
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+
+### Households
+- `POST /households` — criar
+- `GET /households` — listar casas do user
+- `POST /households/join` — entrar com código
+- `GET /households/:id` — detalhes + membros + convites
+- `POST /households/:id/invites` — gerar convite
+- `POST /households/:id/switch` — trocar casa ativa
+- `POST /households/:id/leave` — sair
+
+### Tasks
+- `GET /households/:id/tasks?type=DAILY|WEEKLY|MONTHLY|ONE_TIME`
+- `POST /households/:id/tasks`
+- `PATCH /households/:id/tasks/:id`
+- `POST /households/:id/tasks/:id/complete` — body: `{ type: 'FULL' | 'PARTIAL' }`
+- `DELETE /households/:id/tasks/:id/complete` — toggle (remove última completion)
+- `DELETE /households/:id/tasks/:id`
+
+### Notices
+- `GET/POST /households/:id/notices`
+- `PATCH/DELETE /households/:id/notices/:id`
+
+### Shopping
+- `GET/POST /households/:id/shopping`
+- `DELETE /households/:id/shopping/:id`
+- `POST /households/:id/shopping/:id/items`
+- `PATCH /households/:id/shopping/:listId/items/:itemId`
+- `DELETE /households/:id/shopping/:listId/items/:itemId`
 
 ---
 
-## Navegação (sem router)
+## Fluxo de Segurança
 
-Estado `view` no App.tsx: `'home' | 'in-progress' | 'goals'`
+### Middleware chain:
+1. `jwtMiddleware` — valida JWT
+2. `loadUser` — carrega user + memberships (N:N)
+3. `requireHouseholdMembership` — verifica se user é membro da `:householdId` no path
 
-Modais usam Radix Dialog e são sobrepostos às views.
+### Convites:
+- Código único + expira + uso único
+- Atomic transaction: marca usado + cria membership
 
 ---
 
-## Como Rodar
+## Estrutura Frontend
+
+```
+src/
+├── api/               # client.ts + auth, households, tasks, notices, shopping
+├── components/
+│   ├── layout/        # Sidebar (com household selector + mobile)
+│   ├── tasks/         # TasksTab, StreakCard, TaskInProgress, CompletionModal
+│   ├── notices/       # NoticesTab
+│   └── shopping/      # ShoppingTab
+├── context/          # AuthContext, Providers
+├── hooks/           # TanStack Query hooks (useTasks, useNotices, etc.)
+├── i18n/            # locales/en.ts, pt.ts
+├── pages/           # Landing, Login, Register, NoHousehold, Dashboard, Settings
+└── types/ui.tsx     # Link component
+```
+
+---
+
+## Regras de Estilo
+
+- **CSS Modules** — cada componente na sua pasta com `styles.module.css`
+- **Radix UI** para componentes (Box, Flex, Text, Button, Card, Dialog, Select, Checkbox, Badge, Progress, Avatar, TextArea, TextField, IconButton)
+- **Variáveis Radix** para cores: `var(--accent-9)`, `var(--gray-3)` — nunca hex hardcoded
+- Espaçamento em múltiplos de 4px
+
+---
+
+## Views (App.tsx)
+
+```ts
+type Route = '/' | '/login' | '/register'
+
+// status: 'loading' | 'unauthenticated' | 'no-household' | 'authenticated'
+// Unauthenticated → Landing / Login / Register
+// Authenticated + no-household → NoHouseholdPage
+// Authenticated + household → DashboardPage
+```
+
+---
+
+## TanStack Query Keys
+
+```ts
+AUTH_KEYS.me              // ['auth', 'me']
+HOUSEHOLD_KEYS.all       // ['households']
+HOUSEHOLD_KEYS.one(id)   // ['households', id]
+TASK_KEYS.all(id)         // ['households', id, 'tasks']
+NOTICE_KEYS.all(id)       // ['households', id, 'notices']
+SHOPPING_KEYS.all(id)     // ['households', id, 'shopping']
+```
+
+---
+
+## Docker
 
 ```bash
-# Desenvolvimento
-npm run dev          # Ambos web + api
-npm run dev:web      # Só frontend (localhost:5173)
-npm run dev:api      # Só backend (localhost:3000)
-
-# Database
-cd apps/api
-npx prisma db push   # Criar tabelas
+docker compose up             # Subir tudo
+docker compose down         # Parar
+docker compose exec api bun run prisma db push
+docker compose exec api bun run prisma/seed.ts
 ```
-
----
-
-## UX / Design
-
-- StreakCard: número grande (≥4rem), emoji 🔥, cor quente (accent orange)
-- Tarefas ordenadas por deadline (com deadline primeiro)
-- Empty state da task list: mensagem encorajadora + botão de adicionar
-- TaskInProgress: timer visual desde que a view abriu
-- Mobile-first, max-width ~480px centralizado
 
 ---
 
 ## Pendências
 
-1. ❌ Conectar frontend com API (atualmente localStorage)
-2. ❌ Criar telas para novas funcionalidades (avisos, tarefas semanais/mensais, listas)
-3. ❌ Implementar login/registro no frontend
-4. ✅ Monorepo configurado
-5. ✅ Backend com Prisma schema
-6. ✅ i18n EN/PT
+1. ✅ Auth + Household (N:N)
+2. ✅ Tarefas (daily/weekly/monthly/one-time)
+3. ✅ Streak + Timer + Random + Completion (FULL/PARTIAL)
+4. ✅ Avisos com priority
+5. ✅ Listas de compras com quantidade
+6. ✅ Sidebar com household selector + mobile
+7. ✅ Página de configurações (membros + convites)
+8. ✅ i18n EN/PT
+9. ❌ Editar perfil do usuário
+10. ❌ Histórico de completions
+11. ❌ Notificações / lembretes
+12. ❌ Deploy (Railway / Vercel)

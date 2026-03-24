@@ -1,5 +1,139 @@
+/* Design System: Ethereal Organizer */
+
+:root {
+  /* Primary (mint/teal) */
+  --primary: #016a6b;
+  --primary-container: #a0f0f0;
+  --on-primary: #e0fffe;
+  --on-primary-container: #005c5c;
+  --primary-dim: #005d5d;
+  --primary-fixed: #a0f0f0;
+  --primary-fixed-dim: #92e2e2;
+  --on-primary-fixed: #004748;
+  --on-primary-fixed-variant: #006667;
+  --surface-tint: #016a6b;
+
+  /* Secondary (blue) */
+  --secondary: #37628c;
+  --secondary-container: #d0e4ff;
+  --on-secondary: #f7f9ff;
+  --on-secondary-container: #28547e;
+  --secondary-dim: #2a5680;
+  --secondary-fixed: #d0e4ff;
+  --secondary-fixed-dim: #b7d7ff;
+  --on-secondary-fixed: #0f426a;
+  --on-secondary-fixed-variant: #335e89;
+
+  /* Tertiary (warm/amber) */
+  --tertiary: #7c591e;
+  --tertiary-container: #faca84;
+  --on-tertiary: #fff8f2;
+  --on-tertiary-container: #614106;
+  --tertiary-dim: #6e4d13;
+  --tertiary-fixed: #faca84;
+  --tertiary-fixed-dim: #ebbc78;
+  --on-tertiary-fixed: #492f00;
+  --on-tertiary-fixed-variant: #6b4a10;
+
+  /* Error */
+  --error: #a83836;
+  --error-container: #fa746f;
+  --on-error: #fff7f6;
+  --on-error-container: #6e0a12;
+  --error-dim: #67040d;
+
+  /* Surfaces (tonal hierarchy - no borders, color shifts only) */
+  --surface: #f9f9ff;
+  --surface-bright: #f9f9ff;
+  --surface-dim: #d1daf4;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f3ff;
+  --surface-container: #e9edff;
+  --surface-container-high: #e0e8ff;
+  --surface-container-highest: #d9e2fd;
+  --surface-variant: #d9e2fd;
+
+  /* On surfaces */
+  --on-surface: #293247;
+  --on-surface-variant: #565f75;
+  --on-background: #293247;
+
+  /* Inverse */
+  --inverse-surface: #0a0e18;
+  --inverse-on-surface: #999daa;
+  --inverse-primary: #aefffe;
+
+  /* Outlines */
+  --outline: #717b92;
+  --outline-variant: #a9b2cb;
+
+  /* Background alias for legacy code */
+  --color-background: var(--surface);
+
+  /* Spacing scale (multiples of 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+
+  /* Radius scale */
+  --radius-1: 4px;
+  --radius-2: 6px;
+  --radius-3: 8px;
+  --radius-4: 12px;
+  --radius-5: 16px;
+  --radius-6: 20px;
+  --radius-7: 24px;
+  --radius-8: 28px;
+  --radius-9: 32px;
+
+  /* Typography */
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Shadows (ambient only - for modals/floating elements) */
+  --shadow-ambient: 0 20px 40px rgba(41, 50, 71, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--gray-1);
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display/Headline typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+
+/* Ghost border fallback for accessibility (15% opacity outline) */
+.ghost-border {
+  outline: 1px solid var(--outline-variant);
+  outline-opacity: 0.15;
+}
+
+/* Glass effect for floating elements */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Primary gradient for CTAs and timers */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
 }

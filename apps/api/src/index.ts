@@ -1,48 +1,53 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { jwtMiddleware, auth } from './middleware/auth'
+import { jwtMiddleware, loadUser, requireHouseholdMembership, requireCurrentHousehold } from './middleware/auth'
 import { authRoutes } from './routes/auth'
+import { householdsRoutes } from './routes/households'
 import { noticesRoutes } from './routes/notices'
-import { weeklyTasksRoutes } from './routes/weekly-tasks'
-import { monthlyTasksRoutes } from './routes/monthly-tasks'
+import { tasksRoutes } from './routes/tasks'
 import { shoppingRoutes } from './routes/shopping'
 
 const app = new Hono()
 
-// Middleware
+// Middleware global
 app.use('*', cors({
   origin: '*',
   credentials: true,
 }))
 
-// Public routes
-app.get('/', (c) => c.json({ 
+// Root
+app.get('/', (c) => c.json({
   message: 'Habit Tracker API',
-  version: '1.0.0',
+  version: '3.0.0',
   endpoints: {
     auth: '/auth',
-    notices: '/notices',
-    weekly: '/weekly-tasks',
-    monthly: '/monthly-tasks',
-    shopping: '/shopping',
-  }
+    households: '/households',
+    notices: '/households/:householdId/notices',
+    tasks: '/households/:householdId/tasks',
+    shopping: '/households/:householdId/shopping',
+  },
 }))
 
-// Auth routes (public)
+// Auth (públicas: login, register)
 app.route('/auth', authRoutes)
 
-// Protected routes
-app.use('/notices/*', jwtMiddleware)
-app.use('/weekly-tasks/*', jwtMiddleware)
-app.use('/monthly-tasks/*', jwtMiddleware)
-app.use('/shopping/*', jwtMiddleware)
+// /auth/me é protegida
+app.use('/auth/me', jwtMiddleware, loadUser)
 
-app.route('/notices', noticesRoutes)
-app.route('/weekly-tasks', weeklyTasksRoutes)
-app.route('/monthly-tasks', monthlyTasksRoutes)
-app.route('/shopping', shoppingRoutes)
+// Households (precisa de token, mas não de membership para criar/ver/join)
+app.use('/households/*', jwtMiddleware, loadUser)
+app.route('/households', householdsRoutes)
 
-// Health check
+// Resources com householdId no path (precisa ser membro)
+app.use('/households/:householdId/notices/*', requireHouseholdMembership)
+app.use('/households/:householdId/tasks/*', requireHouseholdMembership)
+app.use('/households/:householdId/shopping/*', requireHouseholdMembership)
+
+app.route('/households/:householdId/notices', noticesRoutes)
+app.route('/households/:householdId/tasks', tasksRoutes)
+app.route('/households/:householdId/shopping', shoppingRoutes)
+
+// Health
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 export default app

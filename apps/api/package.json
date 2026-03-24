@@ -9,7 +9,11 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "db:seed": "bun run prisma/seed.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun"
+  },
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

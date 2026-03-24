@@ -1,20 +1,21 @@
 .content {
-  border-radius: 12px;
+  border-radius: var(--radius-4);
 }
 
 .dateInput {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--gray-6);
-  background: var(--gray-1);
-  color: var(--gray-12);
+  border-radius: var(--radius-2);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
   font-size: 0.875rem;
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.15s ease;
+  border: 1px solid var(--outline-variant);
+  font-family: var(--font-body);
 }
 
 .dateInput:focus {
-  border-color: var(--accent-8);
+  border-color: var(--primary);
 }

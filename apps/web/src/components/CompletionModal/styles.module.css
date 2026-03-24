@@ -1,23 +1,23 @@
 .content {
-  border-radius: 12px;
+  border-radius: var(--radius-4);
 }
 
 .fullButton {
   width: 100%;
-  background: var(--green-9) !important;
-  color: white !important;
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
 }
 
 .fullButton:hover {
-  background: var(--green-10) !important;
+  background: var(--primary-dim) !important;
 }
 
 .partialButton {
   width: 100%;
-  background: var(--yellow-3) !important;
-  color: var(--yellow-11) !important;
+  background: var(--tertiary-container) !important;
+  color: var(--on-tertiary-container) !important;
 }
 
 .partialButton:hover {
-  background: var(--yellow-4) !important;
+  background: var(--tertiary-fixed-dim) !important;
 }

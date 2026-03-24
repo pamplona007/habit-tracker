@@ -9,35 +9,27 @@ const itemSchema = z.object({
   quantity: z.number().min(1).default(1),
 })
 
-// List all shopping lists
+// GET /households/:householdId/shopping
 shoppingRoutes.get('/', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
 
   const lists = await prisma.shoppingList.findMany({
-    where: { userId: user.id },
-    include: {
-      items: {
-        orderBy: { isChecked: 'asc' },
-      },
-    },
+    where: { householdId },
+    include: { items: { orderBy: { isChecked: 'asc' } } },
     orderBy: { createdAt: 'desc' },
   })
 
   return c.json({ lists })
 })
 
-// Get single shopping list
+// GET /households/:householdId/shopping/:id
 shoppingRoutes.get('/:id', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const id = c.req.param('id')
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id, userId: user.id },
-    include: {
-      items: {
-        orderBy: { isChecked: 'asc' },
-      },
-    },
+    where: { id, householdId },
+    include: { items: { orderBy: { isChecked: 'asc' } } },
   })
 
   if (!list) {
@@ -47,19 +39,19 @@ shoppingRoutes.get('/:id', async (c) => {
   return c.json({ list })
 })
 
-// Create shopping list
+// POST /households/:householdId/shopping
 shoppingRoutes.post('/', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const { name } = await c.req.json()
 
-  if (!name) {
+  if (!name || !name.trim()) {
     return c.json({ error: 'Name is required' }, 400)
   }
 
   const list = await prisma.shoppingList.create({
     data: {
-      name,
-      userId: user.id,
+      name: name.trim(),
+      householdId,
     },
     include: { items: true },
   })
@@ -67,14 +59,14 @@ shoppingRoutes.post('/', async (c) => {
   return c.json({ list }, 201)
 })
 
-// Add item to list
+// POST /households/:householdId/shopping/:id/items
 shoppingRoutes.post('/:id/items', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const listId = c.req.param('id')
   const data = await c.req.json()
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id: listId, userId: user.id },
+    where: { id: listId, householdId },
   })
 
   if (!list) {
@@ -85,7 +77,8 @@ shoppingRoutes.post('/:id/items', async (c) => {
 
   const item = await prisma.shoppingItem.create({
     data: {
-      ...parsed,
+      name: parsed.name,
+      quantity: parsed.quantity,
       listId,
     },
   })
@@ -93,13 +86,13 @@ shoppingRoutes.post('/:id/items', async (c) => {
   return c.json({ item }, 201)
 })
 
-// Toggle item checked
+// PATCH /households/:householdId/shopping/:listId/items/:itemId
 shoppingRoutes.patch('/:listId/items/:itemId', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const { listId, itemId } = c.req.param()
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id: listId, userId: user.id },
+    where: { id: listId, householdId },
   })
 
   if (!list) {
@@ -122,13 +115,13 @@ shoppingRoutes.patch('/:listId/items/:itemId', async (c) => {
   return c.json({ item: updated })
 })
 
-// Delete item
+// DELETE /households/:householdId/shopping/:listId/items/:itemId
 shoppingRoutes.delete('/:listId/items/:itemId', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const { listId, itemId } = c.req.param()
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id: listId, userId: user.id },
+    where: { id: listId, householdId },
   })
 
   if (!list) {
@@ -140,13 +133,13 @@ shoppingRoutes.delete('/:listId/items/:itemId', async (c) => {
   return c.json({ success: true })
 })
 
-// Delete shopping list
+// DELETE /households/:householdId/shopping/:id
 shoppingRoutes.delete('/:id', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const id = c.req.param('id')
 
   const list = await prisma.shoppingList.findFirst({
-    where: { id, userId: user.id },
+    where: { id, householdId },
   })
 
   if (!list) {

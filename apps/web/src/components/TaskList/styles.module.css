@@ -3,7 +3,6 @@
 }
 
 .emptyState {
-  background: var(--gray-2);
-  border-radius: 10px;
-  border: 1px dashed var(--gray-6);
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-3);
 }

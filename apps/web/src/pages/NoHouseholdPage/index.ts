@@ -1,0 +1,1 @@
+export { NoHouseholdPage } from './NoHouseholdPage'

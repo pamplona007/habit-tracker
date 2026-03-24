@@ -1,7 +1,6 @@
 .card {
-  background: var(--accent-3);
-  border: 1px solid var(--accent-6);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  border-radius: var(--radius-4);
   width: 100%;
   margin-bottom: 24px;
 }
@@ -14,6 +13,7 @@
 .streakNumber {
   font-size: 4rem;
   font-weight: 800;
-  color: var(--accent-9);
+  color: var(--on-primary);
   line-height: 1;
+  font-family: var(--font-display);
 }

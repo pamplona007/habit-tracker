@@ -1,9 +1,9 @@
 .content {
-  border-radius: 12px;
+  border-radius: var(--radius-4);
 }
 
 .taskBox {
-  background: var(--accent-2);
-  border: 1px solid var(--accent-5);
-  border-radius: 10px;
+  background: var(--primary-container);
+  border-radius: var(--radius-3);
+  padding: var(--space-4);
 }

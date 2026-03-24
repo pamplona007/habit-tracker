@@ -1,0 +1,19 @@
+.card {
+  background: var(--primary-container);
+  border-radius: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.fireEmoji {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.streakNumber {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--on-primary-container);
+  line-height: 1;
+  font-family: var(--font-display);
+}

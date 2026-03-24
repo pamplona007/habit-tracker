@@ -2,17 +2,20 @@ import { Hono } from 'hono'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+import { JWT_SECRET, jwtMiddleware, loadUser } from '../middleware/auth'
 
 export const authRoutes = new Hono()
 
-// Register
+// POST /auth/register
 authRoutes.post('/register', async (c) => {
   const { email, password, name } = await c.req.json()
 
   if (!email || !password) {
     return c.json({ error: 'Email and password are required' }, 400)
+  }
+
+  if (password.length < 6) {
+    return c.json({ error: 'Password must be at least 6 characters' }, 400)
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email } })
@@ -32,6 +35,7 @@ authRoutes.post('/register', async (c) => {
       id: true,
       email: true,
       name: true,
+      currentHouseholdId: true,
       createdAt: true,
     },
   })
@@ -41,7 +45,7 @@ authRoutes.post('/register', async (c) => {
   return c.json({ user, token })
 })
 
-// Login
+// POST /auth/login
 authRoutes.post('/login', async (c) => {
   const { email, password } = await c.req.json()
 
@@ -49,7 +53,21 @@ authRoutes.post('/login', async (c) => {
     return c.json({ error: 'Email and password are required' }, 400)
   }
 
-  const user = await prisma.user.findUnique({ where: { email } })
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      password: true,
+      currentHouseholdId: true,
+      memberships: {
+        include: { household: { select: { id: true, name: true } } },
+      },
+      createdAt: true,
+    },
+  })
+
   if (!user) {
     return c.json({ error: 'Invalid credentials' }, 401)
   }
@@ -61,19 +79,28 @@ authRoutes.post('/login', async (c) => {
 
   const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' })
 
-  return c.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      createdAt: user.createdAt,
-    },
-    token,
-  })
+  const { password: _, ...userWithoutPassword } = user
+
+  return c.json({ user: userWithoutPassword, token })
 })
 
-// Get current user
-authRoutes.get('/me', async (c) => {
+// GET /auth/me — protegida
+authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
   const user = c.get('user')
-  return c.json({ user })
+
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      currentHouseholdId: true,
+      memberships: {
+        include: { household: { select: { id: true, name: true } } },
+      },
+      createdAt: true,
+    },
+  })
+
+  return c.json({ user: fullUser })
 })

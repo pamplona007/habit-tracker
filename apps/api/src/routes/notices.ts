@@ -13,45 +13,48 @@ const noticeSchema = z.object({
   endDate: z.string().datetime().optional(),
 })
 
-// List all notices
+// GET /households/:householdId/notices
 noticesRoutes.get('/', async (c) => {
-  const user = c.get('user')
-  
+  const householdId = c.get('householdId')
+
   const notices = await prisma.notice.findMany({
-    where: { userId: user.id },
+    where: { householdId },
     orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
   })
 
   return c.json({ notices })
 })
 
-// Create notice
+// POST /households/:householdId/notices
 noticesRoutes.post('/', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const data = await c.req.json()
-  
+
   const parsed = noticeSchema.parse(data)
 
   const notice = await prisma.notice.create({
     data: {
-      ...parsed,
+      title: parsed.title,
+      content: parsed.content,
+      priority: parsed.priority,
+      isActive: parsed.isActive,
       startDate: parsed.startDate ? new Date(parsed.startDate) : null,
       endDate: parsed.endDate ? new Date(parsed.endDate) : null,
-      userId: user.id,
+      householdId,
     },
   })
 
   return c.json({ notice }, 201)
 })
 
-// Update notice
+// PATCH /households/:householdId/notices/:id
 noticesRoutes.patch('/:id', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const id = c.req.param('id')
   const data = await c.req.json()
 
   const notice = await prisma.notice.findFirst({
-    where: { id, userId: user.id },
+    where: { id, householdId },
   })
 
   if (!notice) {
@@ -70,13 +73,13 @@ noticesRoutes.patch('/:id', async (c) => {
   return c.json({ notice: updated })
 })
 
-// Delete notice
+// DELETE /households/:householdId/notices/:id
 noticesRoutes.delete('/:id', async (c) => {
-  const user = c.get('user')
+  const householdId = c.get('householdId')
   const id = c.req.param('id')
 
   const notice = await prisma.notice.findFirst({
-    where: { id, userId: user.id },
+    where: { id, householdId },
   })
 
   if (!notice) {

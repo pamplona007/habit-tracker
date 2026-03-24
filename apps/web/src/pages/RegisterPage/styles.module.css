@@ -1,0 +1,20 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--surface-container-low);
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-4);
+  padding: var(--space-6);
+}
+
+.form {
+  width: 100%;
+}

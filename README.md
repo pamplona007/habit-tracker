@@ -1,158 +1,227 @@
-# Habit Tracker - Monorepo
+# Habit Tracker — Plataforma Doméstica Colaborativa
 
-Plataforma completa de gestão doméstica com tarefas, avisos e listas de compras.
+Organize sua casa: tarefas, avisos e listas de compras compartilhados entre membros de uma casa.
+
+## 🐳 Docker (Desenvolvimento Local)
+
+```bash
+# Subir tudo
+docker compose up
+
+# Ver logs
+docker compose logs -f
+
+# Para tudo
+docker compose down
+
+# Reset completo (banco + imagens)
+docker compose down -v --rmi all
+```
+
+**Urls:**
+- Frontend: http://localhost:5173
+- API: http://localhost:3000
+- API Docs: http://localhost:3000 (health check)
+
+**Seed (dados de teste):**
+```bash
+docker compose exec api bun run prisma/seed.ts
+```
+
+**Login padrão:**
+```
+pamplona@email.com / 123456
+```
+
+## 🚀 Sem Docker
+
+```bash
+# 1. Dependências
+npm install
+
+# 2. PostgreSQL
+docker run -d -p 5432:5432 \
+  -e POSTGRES_USER=habit_tracker \
+  -e POSTGRES_PASSWORD=habit_tracker_dev \
+  -e POSTGRES_DB=habit_tracker \
+  postgres:16-alpine
+
+# 3. API
+cp apps/api/.env.example apps/api/.env
+cd apps/api
+npx prisma db push
+npx prisma db seed
+bun run --watch src/index.ts
+
+# 4. Web (outro terminal)
+cd apps/web
+npm run dev
+```
 
 ## 📁 Estrutura
 
 ```
 habit-tracker/
 ├── apps/
-│   ├── web/           # Frontend (Vite + React + Radix UI + i18next)
-│   └── api/           # Backend (Bun + Hono + Prisma + PostgreSQL)
-├── package.json       # Root workspace (npm)
-└── turbo.json        # Build orchestration
+│   ├── web/                    # React + Vite + TanStack Query
+│   │   └── src/
+│   │       ├── api/            # Cliente Axios + endpoints
+│   │       ├── components/     # UI (layout, tasks, notices, shopping)
+│   │       ├── context/        # AuthContext, Providers
+│   │       ├── hooks/         # TanStack Query hooks por domínio
+│   │       ├── i18n/          # EN/PT
+│   │       └── pages/         # Landing, Login, Register, Dashboard, Settings
+│   │
+│   └── api/                   # Bun + Hono + Prisma + PostgreSQL
+│       └── src/
+│           ├── middleware/     # Auth (JWT)
+│           └── routes/         # auth, households, tasks, notices, shopping
+│
+├── docker-compose.yml
+├── package.json               # Root workspace
+└── turbo.json
+```
+
+## 📡 API Endpoints
+
+### Auth
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/auth/register` | Criar conta |
+| POST | `/auth/login` | Login |
+| GET | `/auth/me` | User atual |
+
+### Households
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/households` | Criar casa |
+| GET | `/households` | Listar casas do user |
+| POST | `/households/join` | Entrar com código |
+| GET | `/households/:id` | Detalhes + membros + convites |
+| POST | `/households/:id/invites` | Gerar convite |
+| POST | `/households/:id/switch` | Trocar casa ativa |
+| POST | `/households/:id/leave` | Sair da casa |
+
+### Tasks
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/households/:id/tasks` | Listar tarefas |
+| POST | `/households/:id/tasks` | Criar tarefa |
+| PATCH | `/households/:id/tasks/:id` | Editar tarefa |
+| POST | `/households/:id/tasks/:id/complete` | Completar (FULL/PARTIAL) |
+| DELETE | `/households/:id/tasks/:id/complete` | Toggle: remove completion |
+| DELETE | `/households/:id/tasks/:id` | Deletar |
+
+### Notices
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET/POST | `/households/:id/notices` | Listar / Criar |
+| PATCH/DELETE | `/households/:id/notices/:id` | Editar / Deletar |
+
+### Shopping
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET/POST | `/households/:id/shopping` | Listas |
+| DELETE | `/households/:id/shopping/:id` | Deletar lista |
+| POST | `/households/:id/shopping/:id/items` | Adicionar item |
+| PATCH | `/households/:id/shopping/:listId/items/:itemId` | Toggle item |
+| DELETE | `/households/:id/shopping/:listId/items/:itemId` | Remover item |
+
+## 🗄️ Modelo de Dados
+
+```
+Household
+├── id, name
+└── members (N:N via HouseholdMember)
+├── notices[]
+├── tasks[]
+├── shoppingLists[]
+└── invites[]
+
+HouseholdMember (N:N)
+├── householdId + userId (PK composta)
+├── role (OWNER | ADMIN | MEMBER)
+└── joinedAt
+
+User
+├── id, email, password, name
+├── currentHouseholdId
+└── memberships[] (via HouseholdMember)
+
+HouseholdInvite
+├── code (único), isUsed, expiresAt
+├── householdId
+└── usedById
+
+Task
+├── id, name, description
+├── type (DAILY | WEEKLY | MONTHLY | ONE_TIME)
+├── dayOfWeek?, dayOfMonth?, deadline?
+├── isActive
+└── completions[]
+
+TaskCompletion
+├── id, completedAt, type (FULL | PARTIAL)
+├── taskId, userId
+└── createdAt (via Task)
+
+Notice
+├── id, title, content, priority
+├── isActive, startDate?, endDate?
+└── householdId
+
+ShoppingList
+├── id, name, isActive
+├── householdId
+└── items[]
+
+ShoppingItem
+├── id, name, quantity, isChecked
+└── listId
 ```
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Vite** - Build tool
-- **React 19** - UI framework
-- **Radix UI Themes** - Componentes
-- **i18next** - Internacionalização (EN/PT)
-- **TypeScript**
+- **Vite** + **React 19** + **TypeScript**
+- **TanStack Query** — cache e sync
+- **Axios** — cliente HTTP
+- **Radix UI Themes** — componentes
+- **i18next** — EN/PT
+- **CSS Modules**
 
 ### Backend
-- **Bun** - Runtime (super rápido)
-- **Hono** - Framework web
-- **Prisma** - ORM
-- **PostgreSQL** - Banco de dados
-- **JWT** - Autenticação
-- **Zod** - Validação
+- **Bun** runtime
+- **Hono** framework
+- **Prisma** ORM
+- **PostgreSQL**
+- **JWT** autenticação
+- **Zod** validação
 
-## 🚀 Como Rodar
+## 🎮 Funcionalidades
 
-### Pré-requisitos
-- Node.js 18+
-- Bun (opcional, já incluso no npm)
-- PostgreSQL
+### Tarefas
+- Tipos: diária, semanal, mensal, pontual
+- 🎲 Seleção aleatória de tarefa pendente
+- ⏱️ Timer com cronômetro
+- ✅ Conclusão full ou parcial
+- 🔥 Streak (dias seguidos)
+- Toggle completo/descompleto
 
-### Setup
+### Avisos
+- Priority: baixa, normal, alta, urgente
+- Ordenados por prioridade
 
-```bash
-# Instalar dependências (raiz)
-npm install
+### Compras
+- Múltiplas listas
+- Progress bar
+- Quantidade por item
 
-# Backend: configurar variáveis de ambiente
-cp apps/api/.env.example apps/api/.env
-# Editar .env com suas credenciais PostgreSQL
-
-# Backend: criar banco e cliente Prisma
-cd apps/api
-npx prisma db push
-
-# Desenvolvimento (ambos frontend e backend)
-npm run dev
-
-# Ou individualmente:
-npm run dev:web   # http://localhost:5173
-npm run dev:api   # http://localhost:3000
-```
-
-## 📡 API Endpoints
-
-### Autenticação (público)
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| POST | `/auth/register` | Criar conta |
-| POST | `/auth/login` | Login |
-| GET | `/auth/me` | Usuário atual (protegido) |
-
-### Avisos (protegido)
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/notices` | Listar avisos |
-| POST | `/notices` | Criar aviso |
-| PATCH | `/notices/:id` | Atualizar aviso |
-| DELETE | `/notices/:id` | Deletar aviso |
-
-### Tarefas Semanais (protegido)
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/weekly-tasks` | Listar tarefas |
-| POST | `/weekly-tasks` | Criar tarefa |
-| POST | `/weekly-tasks/:id/complete` | Completar/toggle |
-| PATCH | `/weekly-tasks/:id` | Atualizar |
-| DELETE | `/weekly-tasks/:id` | Deletar |
-
-### Tarefas Mensais (protegido)
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/monthly-tasks` | Listar tarefas |
-| POST | `/monthly-tasks` | Criar tarefa |
-| POST | `/monthly-tasks/:id/complete` | Completar/toggle |
-| PATCH | `/monthly-tasks/:id` | Atualizar |
-| DELETE | `/monthly-tasks/:id` | Deletar |
-
-### Listas de Compras (protegido)
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/shopping` | Listar listas |
-| GET | `/shopping/:id` | Ver lista específica |
-| POST | `/shopping` | Criar lista |
-| DELETE | `/shopping/:id` | Deletar lista |
-| POST | `/shopping/:id/items` | Adicionar item |
-| PATCH | `/shopping/:listId/items/:itemId` | Toggle item |
-| DELETE | `/shopping/:listId/items/:itemId` | Remover item |
-
-## 🔐 Modelo de Dados
-
-```
-User
-├── id, email, password, name
-├── notices[]        # Avisos
-├── weeklyTasks[]    # Tarefas semanais
-├── monthlyTasks[]  # Tarefas mensais
-└── shoppingLists[] # Listas de compras
-    └── items[]     # Itens da lista
-```
-
-## 🌐 Internacionalização
-
-O app suporta **inglês** e **português**. O idioma é selecionado nas configurações e persistido no localStorage.
-
-## 🔧 Variáveis de Ambiente
-
-### apps/api/.env
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/habit_tracker"
-JWT_SECRET="sua-chave-secreta-aqui"
-PORT=3000
-```
-
-## 📦 Scripts
-
-```bash
-npm run dev        # Iniciar ambos (web + api)
-npm run dev:web    # Apenas frontend
-npm run dev:api    # Apenas backend
-npm run build      # Build production
-```
-
-## 🚢 Deploy
-
-### Railway (Recomendado)
-1. Criar projeto no Railway
-2. Adicionar PostgreSQL plugin
-3. Conectar repositório Git
-4. Configurar variáveis de ambiente:
-   - `DATABASE_URL` (do Railway)
-   - `JWT_SECRET` (gerar chave segura)
-
-### Frontend (Vercel/Netlify)
-- Build command: `npm run build`
-- Output directory: `apps/web/dist`
+### Casa
+- Múltiplas casas por usuário (N:N)
+- Convites com código + expiração
+- Troca rápida de casa via selector
 
 ---
 
-Criado em: 2026-03-24
+Criado: 2026-03-24

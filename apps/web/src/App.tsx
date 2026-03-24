@@ -1,142 +1,61 @@
-import { useState } from 'react'
-import { Button, Flex, Heading, Text } from '@radix-ui/themes'
-import { useTranslation } from 'react-i18next'
-import type { Task } from './types'
-import { useAppState } from './hooks/useAppState'
-import { useStreak } from './hooks/useStreak'
-import { Header } from './components/Header'
-import { StreakCard } from './components/StreakCard'
-import { TaskList } from './components/TaskList'
-import { AddTaskModal } from './components/AddTaskModal'
-import { RandomTaskModal } from './components/RandomTaskModal'
-import { TaskInProgress } from './components/TaskInProgress'
-import { CompletionModal } from './components/CompletionModal'
-import { GoalsSettings } from './components/GoalsSettings'
-import styles from './App.module.css'
+import { useEffect, useState } from 'react'
+import { Flex, Spinner } from '@radix-ui/themes'
+import { useAuth } from './context'
+import {
+  LandingPage,
+  LoginPage,
+  RegisterPage,
+  NoHouseholdPage,
+  DashboardPage,
+} from './pages'
 
-type View = 'home' | 'in-progress' | 'goals'
+type Route = '/' | '/login' | '/register'
+
+function getInitialRoute(): Route {
+  return (window.location.pathname as Route) || '/'
+}
 
 export default function App() {
-  const { t } = useTranslation()
-  const { tasks, goals, addTask, completeTask, removeTask, updateGoals } =
-    useAppState()
-  const streak = useStreak()
+  const { status } = useAuth()
+  const [route, setRoute] = useState<Route>(getInitialRoute)
 
-  const [view, setView] = useState<View>('home')
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [addTaskOpen, setAddTaskOpen] = useState(false)
-  const [randomTaskOpen, setRandomTaskOpen] = useState(false)
-  const [completionOpen, setCompletionOpen] = useState(false)
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const path = (e as CustomEvent<string>).detail
+      setRoute(path as Route)
+      window.history.pushState({}, '', path)
+    }
 
-  function handleSelectTask(task: Task) {
-    setSelectedTask(task)
-    setView('in-progress')
-  }
+    window.addEventListener('navigate', handleNavigate)
+    return () => window.removeEventListener('navigate', handleNavigate)
+  }, [])
 
-  function handleStartRandomTask(task: Task) {
-    setRandomTaskOpen(false)
-    setSelectedTask(task)
-    setView('in-progress')
-  }
-
-  function handleMarkDone() {
-    setCompletionOpen(true)
-  }
-
-  function handleGiveUp() {
-    setSelectedTask(null)
-    setView('home')
-  }
-
-  function handleCompletion(taskId: string, partial: boolean) {
-    completeTask(taskId, partial)
-    setCompletionOpen(false)
-    setSelectedTask(null)
-    setView('home')
-  }
-
-  function handleCloseCompletion() {
-    setCompletionOpen(false)
-  }
-
-  if (view === 'goals') {
+  // Loading state
+  if (status === 'loading') {
     return (
-      <div className={styles.container}>
-        <GoalsSettings
-          goals={goals}
-          onSave={updateGoals}
-          onBack={() => setView('home')}
-        />
-      </div>
+      <Flex minHeight="100vh" align="center" justify="center">
+        <Spinner size="3" />
+      </Flex>
     )
   }
 
-  if (view === 'in-progress' && selectedTask) {
-    return (
-      <div className={styles.container}>
-        <TaskInProgress
-          task={selectedTask}
-          onComplete={handleMarkDone}
-          onGiveUp={handleGiveUp}
-        />
-        <CompletionModal
-          open={completionOpen}
-          task={selectedTask}
-          onComplete={handleCompletion}
-          onClose={handleCloseCompletion}
-        />
-      </div>
-    )
+  // Unauthenticated → public pages
+  if (status === 'unauthenticated') {
+    switch (route) {
+      case '/login':
+        return <LoginPage />
+      case '/register':
+        return <RegisterPage />
+      default:
+        return <LandingPage />
+    }
   }
 
-  return (
-    <div className={styles.container}>
-      <Header onOpenGoals={() => setView('goals')} />
-      <StreakCard streak={streak} />
+  // Authenticated but no household
+  if (status === 'no-household') {
+    return <NoHouseholdPage />
+  }
 
-      <Flex direction="column" gap="3">
-        <Flex align="center" justify="between">
-          <Heading size="4">{t('home.todaysTasks')}</Heading>
-          <Text size="1" color="gray">
-            {t('home.pending', { count: tasks.filter((t) => !t.completedAt).length })}
-          </Text>
-        </Flex>
-        <TaskList
-          tasks={tasks}
-          onSelectTask={handleSelectTask}
-          onRemoveTask={removeTask}
-        />
-      </Flex>
-
-      <Flex className={styles.actionBar} gap="2">
-        <Button
-          variant="soft"
-          size="3"
-          onClick={() => setRandomTaskOpen(true)}
-          className={styles.actionButton}
-        >
-          {t('home.pickRandom')}
-        </Button>
-        <Button
-          size="3"
-          onClick={() => setAddTaskOpen(true)}
-          className={styles.actionButton}
-        >
-          {t('home.addTask')}
-        </Button>
-      </Flex>
-
-      <AddTaskModal
-        open={addTaskOpen}
-        onClose={() => setAddTaskOpen(false)}
-        onAdd={addTask}
-      />
-      <RandomTaskModal
-        open={randomTaskOpen}
-        onClose={() => setRandomTaskOpen(false)}
-        tasks={tasks}
-        onStart={handleStartRandomTask}
-      />
-    </div>
-  )
+  // Authenticated with household → Dashboard
+  return <DashboardPage />
 }
