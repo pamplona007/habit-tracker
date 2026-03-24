@@ -1,0 +1,23 @@
+.content {
+  border-radius: 12px;
+}
+
+.fullButton {
+  width: 100%;
+  background: var(--green-9) !important;
+  color: white !important;
+}
+
+.fullButton:hover {
+  background: var(--green-10) !important;
+}
+
+.partialButton {
+  width: 100%;
+  background: var(--yellow-3) !important;
+  color: var(--yellow-11) !important;
+}
+
+.partialButton:hover {
+  background: var(--yellow-4) !important;
+}

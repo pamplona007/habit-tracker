@@ -1,0 +1,9 @@
+.header {
+  border-bottom: 1px solid var(--gray-4);
+  margin-bottom: 16px;
+}
+
+.gearButton {
+  font-size: 1.2rem;
+  cursor: pointer;
+}

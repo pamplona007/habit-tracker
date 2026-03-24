@@ -1,0 +1,20 @@
+.content {
+  border-radius: 12px;
+}
+
+.dateInput {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-6);
+  background: var(--gray-1);
+  color: var(--gray-12);
+  font-size: 0.875rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.dateInput:focus {
+  border-color: var(--accent-8);
+}

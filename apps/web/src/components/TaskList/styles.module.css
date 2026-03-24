@@ -1,0 +1,9 @@
+.list {
+  width: 100%;
+}
+
+.emptyState {
+  background: var(--gray-2);
+  border-radius: 10px;
+  border: 1px dashed var(--gray-6);
+}
