@@ -105,3 +105,34 @@ authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
 
   return c.json({ user: fullUser })
 })
+
+// PATCH /auth/me — atualizar perfil
+authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
+  const user = c.get('user')
+  const { name, email } = await c.req.json()
+
+  if (name !== undefined && name.trim().length < 1) {
+    return c.json({ error: 'Name is required' }, 400)
+  }
+
+  if (email !== undefined) {
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing && existing.id !== user.id) {
+      return c.json({ error: 'Email already in use' }, 409)
+    }
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { name, email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      currentHouseholdId: true,
+      createdAt: true,
+    },
+  })
+
+  return c.json({ user: updated })
+})
