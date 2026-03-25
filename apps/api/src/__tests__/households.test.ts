@@ -260,3 +260,102 @@ describe('PATCH /households/:householdId/members/:userId', () => {
     expect(res.status).toBe(200)
   })
 })
+
+describe('DELETE /households/:householdId/members/:userId', () => {
+  beforeAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { contains: '@example.com' } },
+    })
+  })
+
+  it('owner can remove a member', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+
+    const res = await app.request(`/households/${householdId}/members/${memberUserId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+  })
+
+  it('owner can remove an admin', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const { userId: adminUserId } = await createTestUserAndJoin(householdId, 'ADMIN')
+
+    const res = await app.request(`/households/${householdId}/members/${adminUserId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    expect(res.status).toBe(200)
+  })
+
+  it('admin cannot remove members', async () => {
+    const { token: ownerToken, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { userId: adminUserId } = await createTestUserAndJoin(householdId, 'ADMIN')
+    const { token: adminToken } = await getTokenForUser(adminUserId)
+
+    const res = await app.request(`/households/${householdId}/members/${memberUserId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+      },
+    })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('member cannot remove members', async () => {
+    const { token: ownerToken, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { userId: otherUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { token: memberToken } = await getTokenForUser(memberUserId)
+
+    const res = await app.request(`/households/${householdId}/members/${otherUserId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${memberToken}`,
+      },
+    })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('owner cannot remove themselves', async () => {
+    const { token, householdId, user } = await createTestHousehold()
+
+    const res = await app.request(`/households/${householdId}/members/${user.id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('Cannot remove yourself. Use leave instead.')
+  })
+
+  it('cannot remove the last member', async () => {
+    const { token, householdId, user } = await createTestHousehold()
+
+    // Try to remove the only member (self) - should fail with different error
+    const res = await app.request(`/households/${householdId}/members/${user.id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    expect(res.status).toBe(400)
+  })
+})

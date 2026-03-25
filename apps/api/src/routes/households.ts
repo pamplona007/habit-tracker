@@ -297,3 +297,48 @@ householdsRoutes.patch('/:householdId/members/:userId', jwtMiddleware, loadUser,
 
   return c.json({ member: updated })
 })
+
+// DELETE /households/:householdId/members/:userId — remover membro
+householdsRoutes.delete('/:householdId/members/:userId', jwtMiddleware, loadUser, requireHouseholdMembership, async (c) => {
+  const householdId = c.get('householdId')
+  const targetUserId = c.req.param('userId')
+  const user = c.get('user')
+
+  // Only OWNER can remove members
+  const ownerMembership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: user.id } },
+  })
+
+  if (ownerMembership?.role !== 'OWNER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  // Cannot remove yourself
+  if (user.id === targetUserId) {
+    return c.json({ error: 'Cannot remove yourself. Use leave instead.' }, 400)
+  }
+
+  // Check if target exists
+  const targetMembership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: targetUserId } },
+  })
+
+  if (!targetMembership) {
+    return c.json({ error: 'Member not found' }, 404)
+  }
+
+  // Check if this is the last member
+  const memberCount = await prisma.householdMember.count({
+    where: { householdId },
+  })
+
+  if (memberCount <= 1) {
+    return c.json({ error: 'Cannot remove the last member' }, 400)
+  }
+
+  await prisma.householdMember.delete({
+    where: { householdId_userId: { householdId, userId: targetUserId } },
+  })
+
+  return c.json({ success: true })
+})
