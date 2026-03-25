@@ -136,3 +136,32 @@ authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
 
   return c.json({ user: updated })
 })
+
+// POST /auth/change-password
+authRoutes.post('/change-password', jwtMiddleware, loadUser, async (c) => {
+  const user = c.get('user')
+  const { currentPassword, newPassword } = await c.req.json()
+
+  if (!currentPassword || !newPassword) {
+    return c.json({ error: 'Current and new password are required' }, 400)
+  }
+
+  if (newPassword.length < 6) {
+    return c.json({ error: 'Password must be at least 6 characters' }, 400)
+  }
+
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+  const validPassword = await bcrypt.compare(currentPassword, dbUser!.password)
+
+  if (!validPassword) {
+    return c.json({ error: 'Current password is incorrect' }, 401)
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10)
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPassword },
+  })
+
+  return c.json({ success: true })
+})

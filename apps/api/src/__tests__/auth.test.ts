@@ -119,3 +119,73 @@ describe('PATCH /auth/me', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('POST /auth/change-password', () => {
+  beforeAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { contains: '@example.com' } },
+    })
+  })
+
+  it('changes password successfully', async () => {
+    const { token } = await createTestUser()
+
+    const res = await app.request('/auth/change-password', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentPassword: 'password123', newPassword: 'newpassword123' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+  })
+
+  it('rejects wrong current password', async () => {
+    const { token } = await createTestUser()
+
+    const res = await app.request('/auth/change-password', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentPassword: 'wrongpassword', newPassword: 'newpassword123' }),
+    })
+
+    expect(res.status).toBe(401)
+    const body = await res.json()
+    expect(body.error).toBe('Current password is incorrect')
+  })
+
+  it('rejects new password shorter than 6 chars', async () => {
+    const { token } = await createTestUser()
+
+    const res = await app.request('/auth/change-password', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentPassword: 'password123', newPassword: '12345' }),
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('Password must be at least 6 characters')
+  })
+
+  it('returns 401 without token', async () => {
+    const res = await app.request('/auth/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentPassword: 'old', newPassword: 'newpassword' }),
+    })
+    expect(res.status).toBe(401)
+  })
+})
