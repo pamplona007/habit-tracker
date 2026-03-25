@@ -31,9 +31,6 @@ app.get('/', (c) => c.json({
 // Auth (públicas: login, register)
 app.route('/auth', authRoutes)
 
-// /auth/me é protegida
-app.use('/auth/me', jwtMiddleware, loadUser)
-
 // Households (precisa de token, mas não de membership para criar/ver/join)
 app.use('/households/*', jwtMiddleware, loadUser)
 app.route('/households', householdsRoutes)

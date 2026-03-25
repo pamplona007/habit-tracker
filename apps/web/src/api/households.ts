@@ -34,4 +34,21 @@ export const householdsApi = {
     const { data } = await apiClient.post<{ invite: HouseholdInvite }>(`/households/${id}/invites`);
     return data.invite;
   },
+
+  update: async (id: string, data: { name: string }): Promise<Household> => {
+    const { data: response } = await apiClient.patch<{ household: Household }>(`/households/${id}`, data);
+    return response.household;
+  },
+
+  updateMemberRole: async (householdId: string, userId: string, role: 'ADMIN' | 'MEMBER'): Promise<HouseholdMember> => {
+    const { data: response } = await apiClient.patch<{ member: HouseholdMember }>(
+      `/households/${householdId}/members/${userId}`,
+      { role }
+    );
+    return response.member;
+  },
+
+  removeMember: async (householdId: string, userId: string): Promise<void> => {
+    await apiClient.delete(`/households/${householdId}/members/${userId}`);
+  },
 };

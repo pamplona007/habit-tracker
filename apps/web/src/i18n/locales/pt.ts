@@ -12,6 +12,9 @@ export const pt: TranslationKeys = {
     you: '(você)',
     members: 'membros',
     actionCannotBeUndone: 'Esta ação não pode ser desfeita.',
+    edit: 'Editar',
+    save: 'Salvar',
+    error: 'Algo deu errado. Tente novamente.',
   },
   auth: {
     login: 'Entrar',
@@ -19,6 +22,8 @@ export const pt: TranslationKeys = {
     logout: 'Sair',
     email: 'E-mail',
     password: 'Senha',
+    currentPassword: 'Senha atual',
+    newPassword: 'Nova senha',
     name: 'Nome',
     confirmPassword: 'Confirmar senha',
     noAccount: 'Não tem uma conta?',
@@ -33,6 +38,7 @@ export const pt: TranslationKeys = {
     passwordMinLength: 'Pelo menos 6 caracteres',
     confirmPasswordPlaceholder: 'Repita sua senha',
     invalidCredentials: 'E-mail ou senha inválidos',
+    error: 'Algo deu errado. Tente novamente.',
     passwordsDoNotMatch: 'As senhas não coincidem',
     passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
     failedToCreateAccount: 'Erro ao criar conta',
@@ -163,6 +169,12 @@ export const pt: TranslationKeys = {
     preferredLanguage: 'Idioma',
     languageEn: 'English',
     languagePt: 'Português',
+    changePassword: 'Alterar Senha',
+    currentPassword: 'Senha atual',
+    newPassword: 'Nova senha',
+    removeMember: 'Remover membro',
+    removeMemberMessage: 'Tem certeza que deseja remover {{name}} da casa?',
+    remove: 'Remover',
   },
   dashboard: {
     greetingMorning: 'Bom dia',
@@ -208,5 +220,56 @@ export const pt: TranslationKeys = {
     selectDuration: 'Selecione a duração',
     startNow: 'Começar Agora',
     rollAgain: 'Sortear Novamente',
+  },
+  landing: {
+    badge: 'Rastreamento colaborativo de hábitos',
+    title: {
+      line1: 'Construa melhores hábitos,',
+      line2: 'juntos.',
+    },
+    subtitle: 'Acompanhe tarefas diárias, sequências e afazeres domésticos com sua família. Mantenha-se organizado e motivado com sincronização em tempo real.',
+    cta: {
+      getStarted: 'Começar',
+      signIn: 'Entrar',
+    },
+    mockCard: {
+      title: 'Tarefas de Hoje',
+      streak: 'dias de sequência',
+      task1: 'Exercício matinal',
+      task2: 'Ler por 30 minutos',
+      task3: 'Limpar a cozinha',
+      complete: 'completo',
+      badge1: 'Tarefa feita!',
+      badge2: '4 membros online',
+    },
+    features: {
+      label: 'Funcionalidades',
+      title: 'Tudo que você precisa',
+      subtitle: 'Ferramentas poderosas para ajudar sua família a se manter organizada, motivada e conectada.',
+    },
+    howItWorks: {
+      label: 'Como funciona',
+      title: 'Comece em minutos',
+      step1: {
+        title: 'Crie sua conta',
+        desc: 'Cadastre-se em segundos e configure seu perfil.',
+      },
+      step2: {
+        title: 'Crie ou entre numa casa',
+        desc: 'Comece uma nova casa ou entre na casa existente da sua família.',
+      },
+      step3: {
+        title: 'Comece a rastrear hábitos',
+        desc: 'Crie tarefas, acompanhe progresso e construa hábitos duradouros juntos.',
+      },
+    },
+    ctaSection: {
+      title: 'Pronto para começar?',
+      subtitle: 'Junte-se a milhares de famílias construindo melhores hábitos juntos.',
+    },
+    footer: {
+      tagline: 'Feito com carinho para famílias em todo lugar',
+      copyright: '© 2026 Rastreador de Hábitos. Todos os direitos reservados.',
+    },
   },
 };
