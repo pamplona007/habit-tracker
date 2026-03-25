@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { prisma } from '../db'
 import { randomBytes } from 'crypto'
-import { requireHouseholdMembership } from '../middleware/auth'
+import { jwtMiddleware, loadUser, requireHouseholdMembership } from '../middleware/auth'
 import type { AppBindings } from '../types'
 import type { MiddlewareHandler } from 'hono'
 
@@ -237,4 +237,63 @@ householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (
   }
 
   return c.json({ success: true })
+})
+
+// PATCH /households/:householdId/members/:userId — atualizar role de membro
+householdsRoutes.patch('/:householdId/members/:userId', jwtMiddleware, loadUser, requireHouseholdMembership, async (c) => {
+  const householdId = c.get('householdId')
+  const targetUserId = c.req.param('userId')
+  const user = c.get('user')
+  const { role } = await c.req.json()
+
+  // Only OWNER can change roles
+  const ownerMembership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: user.id } },
+  })
+
+  if (ownerMembership?.role !== 'OWNER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  // Validate role
+  if (!['ADMIN', 'MEMBER'].includes(role)) {
+    return c.json({ error: 'Invalid role' }, 400)
+  }
+
+  // Check if target user is a member
+  const targetMembership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: targetUserId } },
+  })
+
+  if (!targetMembership) {
+    return c.json({ error: 'Member not found' }, 404)
+  }
+
+  // Cannot change own role if you are the last owner
+  if (user.id === targetUserId) {
+    const ownerCount = await prisma.householdMember.count({
+      where: { householdId, role: 'OWNER' },
+    })
+    if (ownerCount <= 1) {
+      return c.json({ error: 'Cannot change your own role' }, 400)
+    }
+  }
+
+  // Cannot demote last owner (when changing someone else)
+  if (targetMembership.role === 'OWNER') {
+    const ownerCount = await prisma.householdMember.count({
+      where: { householdId, role: 'OWNER' },
+    })
+    if (ownerCount <= 1) {
+      return c.json({ error: 'Cannot demote the last owner' }, 400)
+    }
+  }
+
+  const updated = await prisma.householdMember.update({
+    where: { householdId_userId: { householdId, userId: targetUserId } },
+    data: { role },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  })
+
+  return c.json({ member: updated })
 })

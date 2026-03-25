@@ -53,6 +53,31 @@ async function createTestHousehold(data: { role?: 'OWNER' | 'ADMIN' | 'MEMBER' }
   return { user, token, householdId: household.id }
 }
 
+// Helper to create a user and join a household with a specific role
+async function createTestUserAndJoin(householdId: string, role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER') {
+  const { user, token } = await createTestUser()
+
+  await prisma.householdMember.create({
+    data: {
+      householdId,
+      userId: user.id,
+      role,
+    },
+  })
+
+  return { userId: user.id, token }
+}
+
+// Helper to get token for an existing user
+async function getTokenForUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  })
+  if (!user) throw new Error('User not found')
+  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' })
+  return { user, token }
+}
+
 describe('PATCH /households/:householdId', () => {
   beforeAll(async () => {
     await prisma.user.deleteMany({
@@ -120,5 +145,118 @@ describe('PATCH /households/:householdId', () => {
     })
 
     expect(res.status).toBe(400)
+  })
+})
+
+describe('PATCH /households/:householdId/members/:userId', () => {
+  beforeAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { contains: '@example.com' } },
+    })
+  })
+
+  it('owner can change member to admin', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+
+    const res = await app.request(`/households/${householdId}/members/${memberUserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'ADMIN' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.member.role).toBe('ADMIN')
+  })
+
+  it('owner can change admin to member', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const { userId: adminUserId } = await createTestUserAndJoin(householdId, 'ADMIN')
+
+    const res = await app.request(`/households/${householdId}/members/${adminUserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'MEMBER' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.member.role).toBe('MEMBER')
+  })
+
+  it('admin cannot change roles', async () => {
+    const { token: ownerToken, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { userId: adminUserId } = await createTestUserAndJoin(householdId, 'ADMIN')
+    const { token: adminToken } = await getTokenForUser(adminUserId)
+
+    const res = await app.request(`/households/${householdId}/members/${memberUserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'ADMIN' }),
+    })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('member cannot change roles', async () => {
+    const { token: ownerToken, householdId } = await createTestHousehold()
+    const { userId: memberUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { userId: otherUserId } = await createTestUserAndJoin(householdId, 'MEMBER')
+    const { token: memberToken } = await getTokenForUser(memberUserId)
+
+    const res = await app.request(`/households/${householdId}/members/${otherUserId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${memberToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'ADMIN' }),
+    })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('owner cannot demote themselves if sole owner', async () => {
+    const { token, householdId, user } = await createTestHousehold()
+
+    const res = await app.request(`/households/${householdId}/members/${user.id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'MEMBER' }),
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('Cannot change your own role')
+  })
+
+  it('owner can demote themselves if another owner exists', async () => {
+    const { token, householdId, user } = await createTestHousehold()
+    await createTestUserAndJoin(householdId, 'OWNER')
+
+    const res = await app.request(`/households/${householdId}/members/${user.id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'ADMIN' }),
+    })
+
+    expect(res.status).toBe(200)
   })
 })
