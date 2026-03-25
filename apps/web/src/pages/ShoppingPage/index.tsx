@@ -8,6 +8,13 @@ import {
   useToggleShoppingItem,
   useDeleteShoppingItem,
 } from '../../hooks';
+import { Modal } from '../../components/Modal';
+import { PageHeader } from '../../components/PageHeader';
+import { LoadingState } from '../../components/LoadingState';
+import { EmptyState } from '../../components/EmptyState';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { FormField, InputField } from '../../components/FormField';
+import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function ShoppingPage() {
@@ -16,6 +23,7 @@ export function ShoppingPage() {
   const [showCreateListModal, setShowCreateListModal] = useState(false);
   const [selectedList, setSelectedList] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
+  const [deleteListId, setDeleteListId] = useState<string | null>(null);
 
   const { data: lists, isLoading } = useShoppingLists(householdId);
   const deleteList = useDeleteShoppingList();
@@ -27,7 +35,7 @@ export function ShoppingPage() {
   const checkedCount = activeList?.items.filter((i) => i.isChecked).length || 0;
   const totalCount = activeList?.items.length || 0;
 
-  const handleAddItem = async (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!activeList || !newItemName.trim()) return;
     await addItem.mutateAsync({
@@ -38,42 +46,40 @@ export function ShoppingPage() {
     setNewItemName('');
   };
 
-  const handleDeleteList = async (listId: string) => {
-    if (window.confirm('Delete this shopping list?')) {
-      await deleteList.mutateAsync({ householdId, listId });
-      setSelectedList(null);
+  const handleDeleteList = async () => {
+    if (deleteListId) {
+      await deleteList.mutateAsync({ householdId, listId: deleteListId });
+      setDeleteListId(null);
+      if (selectedList === deleteListId) {
+        setSelectedList(null);
+      }
     }
   };
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1>Shopping</h1>
-          <p className={styles.subtitle}>
-            {lists?.length || 0} lists
-          </p>
-        </div>
-        <button className={styles.addBtn} onClick={() => setShowCreateListModal(true)}>
-          <span className="material-symbols-outlined">add</span>
-          New list
-        </button>
-      </header>
+      <PageHeader
+        title="Shopping"
+        subtitle={`${lists?.length || 0} lists`}
+        action={{
+          label: 'New list',
+          icon: <span className="material-symbols-outlined">add</span>,
+          onClick: () => setShowCreateListModal(true),
+        }}
+      />
 
       {isLoading ? (
-        <div className={styles.loading}>
-          <div className={styles.spinner} />
-          <p>Loading lists...</p>
-        </div>
+        <LoadingState message="Loading lists..." />
       ) : lists?.length === 0 ? (
-        <div className={styles.empty}>
-          <span className="material-symbols-outlined">shopping_cart</span>
-          <h3>No shopping lists</h3>
-          <p>Create your first shopping list to get started</p>
-          <button className={styles.createBtn} onClick={() => setShowCreateListModal(true)}>
-            Create list
-          </button>
-        </div>
+        <EmptyState
+          icon="shopping_cart"
+          title="No shopping lists"
+          description="Create your first shopping list to get started"
+          action={{
+            label: 'Create list',
+            onClick: () => setShowCreateListModal(true),
+          }}
+        />
       ) : (
         <div className={styles.content}>
           <div className={styles.lists}>
@@ -93,7 +99,7 @@ export function ShoppingPage() {
                   className={styles.deleteListBtn}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteList(list.id);
+                    setDeleteListId(list.id);
                   }}
                 >
                   <span className="material-symbols-outlined">delete</span>
@@ -159,70 +165,74 @@ export function ShoppingPage() {
         </div>
       )}
 
-      {showCreateListModal && (
-        <CreateListModal
-          householdId={householdId}
-          onClose={() => setShowCreateListModal(false)}
-          onCreated={(id) => {
-            setSelectedList(id);
-            setShowCreateListModal(false);
-          }}
-        />
-      )}
+      <CreateListModal
+        isOpen={showCreateListModal}
+        onClose={() => setShowCreateListModal(false)}
+        householdId={householdId}
+        onCreated={(id) => {
+          setSelectedList(id);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteListId !== null}
+        onClose={() => setDeleteListId(null)}
+        onConfirm={handleDeleteList}
+        title="Delete shopping list?"
+        message="This will remove the list and all its items."
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }
 
 function CreateListModal({
-  householdId,
+  isOpen,
   onClose,
+  householdId,
   onCreated,
 }: {
-  householdId: string;
+  isOpen: boolean;
   onClose: () => void;
+  householdId: string;
   onCreated: (id: string) => void;
 }) {
   const [name, setName] = useState('');
   const createList = useCreateShoppingList();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const list = await createList.mutateAsync({ householdId, name });
+    setName('');
     onCreated(list.id);
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h2>New shopping list</h2>
-          <button onClick={onClose} className={styles.closeBtn}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className={styles.modalForm}>
-          <div className={styles.field}>
-            <label>List name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Weekly groceries"
-              required
-            />
-          </div>
-
-          <div className={styles.modalActions}>
-            <button type="button" onClick={onClose} className={styles.cancelBtn}>
-              Cancel
-            </button>
-            <button type="submit" className={styles.submitBtn} disabled={createList.isPending}>
-              {createList.isPending ? <span className={styles.spinner} /> : 'Create list'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="New shopping list"
+      actions={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" form="create-list-form" loading={createList.isPending}>
+            Create list
+          </Button>
+        </>
+      }
+    >
+      <form id="create-list-form" onSubmit={handleSubmit}>
+        <FormField label="List name">
+          <InputField
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Weekly groceries"
+            required
+          />
+        </FormField>
+      </form>
+    </Modal>
   );
 }

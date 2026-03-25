@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold, useCreateInvite, useLeaveHousehold } from '../../hooks';
+import { PageHeader } from '../../components/PageHeader';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function SettingsPage() {
@@ -11,6 +14,7 @@ export function SettingsPage() {
   const leaveHousehold = useLeaveHousehold();
   const [showInvite, setShowInvite] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const handleCreateInvite = async () => {
     const invite = await createInvite.mutateAsync();
@@ -25,17 +29,14 @@ export function SettingsPage() {
   };
 
   const handleLeave = async () => {
-    if (household && window.confirm(`Are you sure you want to leave ${household.name}?`)) {
-      await leaveHousehold.mutateAsync(householdId);
-      await refreshUser();
-    }
+    await leaveHousehold.mutateAsync(householdId);
+    await refreshUser();
+    setShowLeaveConfirm(false);
   };
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1>Settings</h1>
-      </header>
+      <PageHeader title="Settings" />
 
       <div className={styles.sections}>
         {/* Profile Section */}
@@ -84,14 +85,14 @@ export function SettingsPage() {
                     </button>
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={handleCreateInvite}
-                    className={styles.generateBtn}
-                    disabled={createInvite.isPending}
+                    loading={createInvite.isPending}
+                    iconLeft={<span className="material-symbols-outlined">add_link</span>}
                   >
-                    <span className="material-symbols-outlined">add_link</span>
                     Generate invite code
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -120,10 +121,13 @@ export function SettingsPage() {
 
               <div className={styles.divider} />
 
-              <button onClick={handleLeave} className={styles.leaveBtn}>
-                <span className="material-symbols-outlined">logout</span>
+              <Button
+                variant="ghost"
+                onClick={() => setShowLeaveConfirm(true)}
+                iconLeft={<span className="material-symbols-outlined">logout</span>}
+              >
                 Leave household
-              </button>
+              </Button>
             </div>
           </section>
         )}
@@ -159,13 +163,26 @@ export function SettingsPage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Account</h2>
           <div className={styles.card}>
-            <button onClick={logout} className={styles.logoutBtn}>
-              <span className="material-symbols-outlined">logout</span>
+            <Button
+              variant="ghost"
+              onClick={logout}
+              iconLeft={<span className="material-symbols-outlined">logout</span>}
+            >
               Log out
-            </button>
+            </Button>
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLeaveConfirm}
+        onClose={() => setShowLeaveConfirm(false)}
+        onConfirm={handleLeave}
+        title={`Leave ${household?.name}?`}
+        message="You will need an invite code to rejoin this household."
+        confirmLabel="Leave"
+        variant="danger"
+      />
     </div>
   );
 }

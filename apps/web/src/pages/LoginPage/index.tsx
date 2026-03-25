@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { FormField, InputField } from '../../components/FormField';
+import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function LoginPage() {
@@ -9,20 +11,16 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
 
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Invalid email or password');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -41,9 +39,8 @@ export function LoginPage() {
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.field}>
-            <label htmlFor="email">Email</label>
-            <input
+          <FormField label="Email">
+            <InputField
               id="email"
               type="email"
               value={email}
@@ -52,11 +49,10 @@ export function LoginPage() {
               required
               autoComplete="email"
             />
-          </div>
+          </FormField>
 
-          <div className={styles.field}>
-            <label htmlFor="password">Password</label>
-            <input
+          <FormField label="Password">
+            <InputField
               id="password"
               type="password"
               value={password}
@@ -65,18 +61,11 @@ export function LoginPage() {
               required
               autoComplete="current-password"
             />
-          </div>
+          </FormField>
 
-          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-            {isLoading ? (
-              <span className={styles.spinner} />
-            ) : (
-              <>
-                Sign in
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </>
-            )}
-          </button>
+          <Button type="submit" fullWidth>
+            Sign in
+          </Button>
         </form>
 
         <p className={styles.footer}>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { FormField, InputField } from '../../components/FormField';
+import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function RegisterPage() {
@@ -11,9 +13,8 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
 
@@ -27,15 +28,11 @@ export function RegisterPage() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
       await register(email, password, name);
       navigate('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create account');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -54,9 +51,8 @@ export function RegisterPage() {
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.field}>
-            <label htmlFor="name">Full name</label>
-            <input
+          <FormField label="Full name">
+            <InputField
               id="name"
               type="text"
               value={name}
@@ -65,11 +61,10 @@ export function RegisterPage() {
               required
               autoComplete="name"
             />
-          </div>
+          </FormField>
 
-          <div className={styles.field}>
-            <label htmlFor="email">Email</label>
-            <input
+          <FormField label="Email">
+            <InputField
               id="email"
               type="email"
               value={email}
@@ -78,11 +73,10 @@ export function RegisterPage() {
               required
               autoComplete="email"
             />
-          </div>
+          </FormField>
 
-          <div className={styles.field}>
-            <label htmlFor="password">Password</label>
-            <input
+          <FormField label="Password">
+            <InputField
               id="password"
               type="password"
               value={password}
@@ -91,11 +85,10 @@ export function RegisterPage() {
               required
               autoComplete="new-password"
             />
-          </div>
+          </FormField>
 
-          <div className={styles.field}>
-            <label htmlFor="confirmPassword">Confirm password</label>
-            <input
+          <FormField label="Confirm password">
+            <InputField
               id="confirmPassword"
               type="password"
               value={confirmPassword}
@@ -104,18 +97,11 @@ export function RegisterPage() {
               required
               autoComplete="new-password"
             />
-          </div>
+          </FormField>
 
-          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-            {isLoading ? (
-              <span className={styles.spinner} />
-            ) : (
-              <>
-                Create account
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </>
-            )}
-          </button>
+          <Button type="submit" fullWidth>
+            Create account
+          </Button>
         </form>
 
         <p className={styles.footer}>

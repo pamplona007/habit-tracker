@@ -80,6 +80,17 @@
   background-color: var(--surface-container-low);
 }
 
+.danger {
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-dim) 100%);
+  color: var(--on-error);
+  box-shadow: 0 4px 12px rgba(186, 26, 26, 0.25);
+}
+
+.danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(186, 26, 26, 0.35);
+}
+
 /* Full Width */
 .fullWidth {
   width: 100%;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholds, useCreateHousehold, useJoinHousehold, useSwitchHousehold } from '../../hooks';
+import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function NoHouseholdPage() {
@@ -22,7 +23,7 @@ export function NoHouseholdPage() {
     navigate('/dashboard');
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
     try {
@@ -34,7 +35,7 @@ export function NoHouseholdPage() {
     }
   };
 
-  const handleJoin = async (e: React.FormEvent) => {
+  const handleJoin = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError('');
     try {
@@ -148,20 +149,9 @@ export function NoHouseholdPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={createHousehold.isPending}
-            >
-              {createHousehold.isPending ? (
-                <span className={styles.spinner} />
-              ) : (
-                <>
-                  Create household
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </>
-              )}
-            </button>
+            <Button type="submit" fullWidth loading={createHousehold.isPending}>
+              Create household
+            </Button>
           </form>
         )}
 
@@ -187,20 +177,9 @@ export function NoHouseholdPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={joinHousehold.isPending}
-            >
-              {joinHousehold.isPending ? (
-                <span className={styles.spinner} />
-              ) : (
-                <>
-                  Join household
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </>
-              )}
-            </button>
+            <Button type="submit" fullWidth loading={joinHousehold.isPending}>
+              Join household
+            </Button>
           </form>
         )}
       </div>
