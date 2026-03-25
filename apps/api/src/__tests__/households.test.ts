@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test'
+import { describe, it, expect, afterEach } from 'bun:test'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -79,10 +79,9 @@ async function getTokenForUser(userId: string) {
 }
 
 describe('PATCH /households/:householdId', () => {
-  beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { contains: '@example.com' } },
-    })
+  afterEach(async () => {
+    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
   })
 
   it('updates household name as owner', async () => {
@@ -149,10 +148,9 @@ describe('PATCH /households/:householdId', () => {
 })
 
 describe('PATCH /households/:householdId/members/:userId', () => {
-  beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { contains: '@example.com' } },
-    })
+  afterEach(async () => {
+    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
   })
 
   it('owner can change member to admin', async () => {
@@ -227,7 +225,7 @@ describe('PATCH /households/:householdId/members/:userId', () => {
     expect(res.status).toBe(403)
   })
 
-  it('owner cannot demote themselves if sole owner', async () => {
+  it('owner cannot demote themselves', async () => {
     const { token, householdId, user } = await createTestHousehold()
 
     const res = await app.request(`/households/${householdId}/members/${user.id}`, {
@@ -241,14 +239,14 @@ describe('PATCH /households/:householdId/members/:userId', () => {
 
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toBe('Cannot change your own role')
+    expect(body.error).toBe('Cannot change the role of an owner')
   })
 
-  it('owner can demote themselves if another owner exists', async () => {
-    const { token, householdId, user } = await createTestHousehold()
-    await createTestUserAndJoin(householdId, 'OWNER')
+  it('owner cannot demote another owner', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const { userId: otherOwnerId } = await createTestUserAndJoin(householdId, 'OWNER')
 
-    const res = await app.request(`/households/${householdId}/members/${user.id}`, {
+    const res = await app.request(`/households/${householdId}/members/${otherOwnerId}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -257,15 +255,16 @@ describe('PATCH /households/:householdId/members/:userId', () => {
       body: JSON.stringify({ role: 'ADMIN' }),
     })
 
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('Cannot change the role of an owner')
   })
 })
 
 describe('DELETE /households/:householdId/members/:userId', () => {
-  beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { contains: '@example.com' } },
-    })
+  afterEach(async () => {
+    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
   })
 
   it('owner can remove a member', async () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test'
+import { describe, it, expect, afterEach } from 'bun:test'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -28,11 +28,9 @@ async function createTestUser(data: { email?: string; name?: string } = {}) {
 }
 
 describe('PATCH /auth/me', () => {
-  beforeAll(async () => {
-    // Clean up test users before tests run
-    await prisma.user.deleteMany({
-      where: { email: { contains: '@example.com' } },
-    })
+  afterEach(async () => {
+    await prisma.household.deleteMany({ where: { name: { contains: 'Test' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
   })
 
   it('updates name and returns updated user', async () => {
@@ -121,10 +119,9 @@ describe('PATCH /auth/me', () => {
 })
 
 describe('POST /auth/change-password', () => {
-  beforeAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { contains: '@example.com' } },
-    })
+  afterEach(async () => {
+    await prisma.household.deleteMany({ where: { name: { contains: 'Test' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
   })
 
   it('changes password successfully', async () => {

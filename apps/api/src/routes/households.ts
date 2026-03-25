@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { prisma } from '../db'
 import { randomBytes } from 'crypto'
-import { jwtMiddleware, loadUser, requireHouseholdMembership } from '../middleware/auth'
+import { requireHouseholdMembership } from '../middleware/auth'
 import type { AppBindings } from '../types'
 import type { MiddlewareHandler } from 'hono'
 
@@ -12,9 +12,9 @@ const requireHouseholdAdmin: MiddlewareHandler<AppBindings> = async (c, next) =>
   const user = c.get('user')
   const householdId = c.get('householdId')
 
-  const membership = await prisma.householdMember.findUnique({
-    where: { householdId_userId: { householdId, userId: user.id } },
-  })
+  const membership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
 
   if (!membership || membership.role === 'MEMBER') {
     return c.json({ error: 'Not authorized' }, 403)
@@ -177,7 +177,8 @@ householdsRoutes.patch('/:householdId', requireHouseholdMembership, requireHouse
 // POST /households/:householdId/invites — gerar convite
 householdsRoutes.post('/:householdId/invites', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
-  const { expiresInHours } = await c.req.json()
+  const body = await c.req.json().catch(() => ({}))
+  const { expiresInHours } = body
 
   const hours = Math.min(Math.max(Number(expiresInHours) || 24, 1), 168)
   const code = randomBytes(6).toString('hex').toUpperCase()
@@ -240,16 +241,16 @@ householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (
 })
 
 // PATCH /households/:householdId/members/:userId — atualizar role de membro
-householdsRoutes.patch('/:householdId/members/:userId', jwtMiddleware, loadUser, requireHouseholdMembership, async (c) => {
+householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
   const targetUserId = c.req.param('userId')
   const user = c.get('user')
   const { role } = await c.req.json()
 
-  // Only OWNER can change roles
-  const ownerMembership = await prisma.householdMember.findUnique({
-    where: { householdId_userId: { householdId, userId: user.id } },
-  })
+  // Only OWNER can change roles (derive from cached memberships)
+  const ownerMembership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
 
   if (ownerMembership?.role !== 'OWNER') {
     return c.json({ error: 'Not authorized' }, 403)
@@ -262,35 +263,20 @@ householdsRoutes.patch('/:householdId/members/:userId', jwtMiddleware, loadUser,
 
   // Check if target user is a member
   const targetMembership = await prisma.householdMember.findUnique({
-    where: { householdId_userId: { householdId, userId: targetUserId } },
+    where: { householdId_userId: { householdId, userId: targetUserId! } },
   })
 
   if (!targetMembership) {
     return c.json({ error: 'Member not found' }, 404)
   }
 
-  // Cannot change own role if you are the last owner
-  if (user.id === targetUserId) {
-    const ownerCount = await prisma.householdMember.count({
-      where: { householdId, role: 'OWNER' },
-    })
-    if (ownerCount <= 1) {
-      return c.json({ error: 'Cannot change your own role' }, 400)
-    }
-  }
-
-  // Cannot demote last owner (when changing someone else)
+  // Cannot change the role of an owner until an explicit ownership-transfer flow exists
   if (targetMembership.role === 'OWNER') {
-    const ownerCount = await prisma.householdMember.count({
-      where: { householdId, role: 'OWNER' },
-    })
-    if (ownerCount <= 1) {
-      return c.json({ error: 'Cannot demote the last owner' }, 400)
-    }
+    return c.json({ error: 'Cannot change the role of an owner' }, 400)
   }
 
   const updated = await prisma.householdMember.update({
-    where: { householdId_userId: { householdId, userId: targetUserId } },
+    where: { householdId_userId: { householdId, userId: targetUserId! } },
     data: { role },
     include: { user: { select: { id: true, name: true, email: true } } },
   })
@@ -299,15 +285,15 @@ householdsRoutes.patch('/:householdId/members/:userId', jwtMiddleware, loadUser,
 })
 
 // DELETE /households/:householdId/members/:userId — remover membro
-householdsRoutes.delete('/:householdId/members/:userId', jwtMiddleware, loadUser, requireHouseholdMembership, async (c) => {
+householdsRoutes.delete('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
   const targetUserId = c.req.param('userId')
   const user = c.get('user')
 
-  // Only OWNER can remove members
-  const ownerMembership = await prisma.householdMember.findUnique({
-    where: { householdId_userId: { householdId, userId: user.id } },
-  })
+  // Only OWNER can remove members (derive from cached memberships)
+  const ownerMembership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
 
   if (ownerMembership?.role !== 'OWNER') {
     return c.json({ error: 'Not authorized' }, 403)
@@ -316,15 +302,6 @@ householdsRoutes.delete('/:householdId/members/:userId', jwtMiddleware, loadUser
   // Cannot remove yourself
   if (user.id === targetUserId) {
     return c.json({ error: 'Cannot remove yourself. Use leave instead.' }, 400)
-  }
-
-  // Check if target exists
-  const targetMembership = await prisma.householdMember.findUnique({
-    where: { householdId_userId: { householdId, userId: targetUserId } },
-  })
-
-  if (!targetMembership) {
-    return c.json({ error: 'Member not found' }, 404)
   }
 
   // Check if this is the last member
@@ -336,8 +313,30 @@ householdsRoutes.delete('/:householdId/members/:userId', jwtMiddleware, loadUser
     return c.json({ error: 'Cannot remove the last member' }, 400)
   }
 
-  await prisma.householdMember.delete({
-    where: { householdId_userId: { householdId, userId: targetUserId } },
+  // Atomic: delete membership + fix removed user's currentHouseholdId
+  await prisma.$transaction(async (tx) => {
+    await tx.householdMember.delete({
+      where: { householdId_userId: { householdId, userId: targetUserId! } },
+    })
+
+    // If removed user's currentHouseholdId was this household, clear it
+    const removedUser = await tx.user.findUnique({
+      where: { id: targetUserId },
+      include: { memberships: true },
+    })
+
+    if (removedUser && removedUser.currentHouseholdId === householdId) {
+      const remainingMembership = removedUser.memberships.find(
+        (membership) => membership.householdId !== householdId,
+      )
+
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          currentHouseholdId: remainingMembership ? remainingMembership.householdId : null,
+        },
+      })
+    }
   })
 
   return c.json({ success: true })

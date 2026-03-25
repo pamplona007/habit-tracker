@@ -21,10 +21,17 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Don't redirect on 401 during auth endpoints - let the page handle the error
-    if (error.response?.status === 401 && !error.config.url.startsWith('/auth/')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response?.status === 401) {
+      const url = error.config?.url;
+      const isAuthEndpoint =
+        typeof url === 'string' &&
+        (url.startsWith('/auth/') || url.startsWith(`${API_URL}/auth/`));
+
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

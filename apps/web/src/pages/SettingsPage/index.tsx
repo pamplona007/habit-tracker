@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import {
   useHousehold,
   useCreateInvite,
   useLeaveHousehold,
-} from '../../hooks';
-import {
   useUpdateHousehold,
   useUpdateMemberRole,
   useRemoveMember,
-} from '../../hooks/useHouseholds';
+} from '../../hooks';
 import { authApi } from '../../api/auth';
 import { PageHeader } from '../../components/PageHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -71,21 +69,17 @@ export function SettingsPage() {
   const isAdmin = userRole === 'ADMIN' || isOwner;
 
   // Profile mutations
-  const updateProfileMutation = {
-    isPending: false,
-    mutateAsync: async (data: { name?: string; email?: string }) => {
-      const result = await authApi.updateProfile(data);
-      await queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me });
-      return result;
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { name?: string; email?: string }) => authApi.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me });
     },
-  };
+  });
 
-  const changePasswordMutation = {
-    isPending: false,
-    mutateAsync: async (data: { currentPassword: string; newPassword: string }) => {
-      return authApi.changePassword(data);
-    },
-  };
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string }) =>
+      authApi.changePassword(data),
+  });
 
   const handleCreateInvite = async () => {
     const invite = await createInvite.mutateAsync();
@@ -392,6 +386,7 @@ export function SettingsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label={t('settings.editRole')}
                                   onClick={() =>
                                     handleStartEditRole(member.userId, member.role as 'ADMIN' | 'MEMBER')
                                   }
@@ -401,6 +396,7 @@ export function SettingsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label={t('settings.removeMember')}
                                   onClick={() =>
                                     handleRemoveMember(member.userId, member.user.name)
                                   }

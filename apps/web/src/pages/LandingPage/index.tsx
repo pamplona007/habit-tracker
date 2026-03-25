@@ -190,7 +190,7 @@ export function LandingPage() {
               className={styles.featureCard}
               key={index}
               data-animate
-              style={{ animationDelay: `${index * 100}ms` }}
+              style={{ transitionDelay: `${index * 100}ms` }}
             >
               <div className={styles.featureIcon}>
                 <span className="material-symbols-outlined">{feature.icon}</span>

@@ -111,20 +111,34 @@ authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
   const user = c.get('user')
   const { name, email } = await c.req.json()
 
-  if (name !== undefined && name.trim().length < 1) {
+  const trimmedName = name?.trim()
+  const trimmedEmail = email != null ? email.trim().toLowerCase() : undefined
+
+  if (trimmedName !== undefined && trimmedName.length < 1) {
     return c.json({ error: 'Name is required' }, 400)
   }
 
-  if (email !== undefined) {
-    const existing = await prisma.user.findUnique({ where: { email } })
+  if (trimmedEmail !== undefined) {
+    if (trimmedEmail.length === 0) {
+      return c.json({ error: 'Email cannot be empty' }, 400)
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      return c.json({ error: 'Invalid email format' }, 400)
+    }
+    const existing = await prisma.user.findUnique({ where: { email: trimmedEmail } })
     if (existing && existing.id !== user.id) {
       return c.json({ error: 'Email already in use' }, 409)
     }
   }
 
+  const updateData: { name?: string; email?: string } = {}
+  if (trimmedName !== undefined) updateData.name = trimmedName
+  if (trimmedEmail !== undefined) updateData.email = trimmedEmail
+
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { name, email },
+    data: updateData,
     select: {
       id: true,
       email: true,
@@ -151,7 +165,12 @@ authRoutes.post('/change-password', jwtMiddleware, loadUser, async (c) => {
   }
 
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
-  const validPassword = await bcrypt.compare(currentPassword, dbUser!.password)
+
+  if (!dbUser) {
+    return c.json({ error: 'Current password is incorrect' }, 401)
+  }
+
+  const validPassword = await bcrypt.compare(currentPassword, dbUser.password)
 
   if (!validPassword) {
     return c.json({ error: 'Current password is incorrect' }, 401)
