@@ -3,8 +3,25 @@ import { prisma } from '../db'
 import { randomBytes } from 'crypto'
 import { requireHouseholdMembership } from '../middleware/auth'
 import type { AppBindings } from '../types'
+import type { MiddlewareHandler } from 'hono'
 
 export const householdsRoutes = new Hono<AppBindings>()
+
+// Verifica se o user é OWNER ou ADMIN da household (não pode ser só MEMBER)
+const requireHouseholdAdmin: MiddlewareHandler<AppBindings> = async (c, next) => {
+  const user = c.get('user')
+  const householdId = c.get('householdId')
+
+  const membership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: user.id } },
+  })
+
+  if (!membership || membership.role === 'MEMBER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  await next()
+}
 
 // POST /households — criar casa e já ser membro
 householdsRoutes.post('/', async (c) => {
@@ -133,6 +150,26 @@ householdsRoutes.get('/:householdId', requireHouseholdMembership, async (c) => {
   if (!household) {
     return c.json({ error: 'Household not found' }, 404)
   }
+
+  return c.json({ household })
+})
+
+// PATCH /households/:householdId — atualizar casa (nome)
+householdsRoutes.patch('/:householdId', requireHouseholdMembership, requireHouseholdAdmin, async (c) => {
+  const householdId = c.get('householdId')
+  const { name } = await c.req.json()
+
+  if (!name || name.trim().length < 2) {
+    return c.json({ error: 'Household name is required (min 2 chars)' }, 400)
+  }
+
+  const household = await prisma.household.update({
+    where: { id: householdId },
+    data: { name: name.trim() },
+    include: {
+      members: { include: { user: { select: { id: true, name: true, email: true } } } },
+    },
+  })
 
   return c.json({ household })
 })
