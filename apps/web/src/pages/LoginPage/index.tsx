@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { FormField, InputField } from '../../components/FormField';
 import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ export function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password');
+      setError(err instanceof Error ? err.message : t('auth.invalidCredentials'));
     }
   };
 
@@ -32,44 +34,44 @@ export function LoginPage() {
             <span className="material-symbols-outlined">home_tracker</span>
             <span>Habit</span>
           </Link>
-          <h1 className={styles.title}>Welcome back</h1>
-          <p className={styles.subtitle}>Sign in to continue tracking your habits</p>
+          <h1 className={styles.title}>{t('auth.login')}</h1>
+          <p className={styles.subtitle}>{t('auth.loginSubtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <FormField label="Email">
+          <FormField label={t('auth.email')}>
             <InputField
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               required
               autoComplete="email"
             />
           </FormField>
 
-          <FormField label="Password">
+          <FormField label={t('auth.password')}>
             <InputField
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('auth.passwordPlaceholder')}
               required
               autoComplete="current-password"
             />
           </FormField>
 
           <Button type="submit" fullWidth>
-            Sign in
+            {t('auth.signIn')}
           </Button>
         </form>
 
         <p className={styles.footer}>
-          Don't have an account? <Link to="/register">Sign up</Link>
+          {t('auth.noAccount')} <Link to="/register">{t('auth.signUp')}</Link>
         </p>
       </div>
 

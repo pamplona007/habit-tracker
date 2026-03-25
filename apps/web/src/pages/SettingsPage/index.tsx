@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold, useCreateInvite, useLeaveHousehold } from '../../hooks';
 import { PageHeader } from '../../components/PageHeader';
@@ -7,6 +8,7 @@ import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function SettingsPage() {
+  const { t, i18n } = useTranslation();
   const { user, logout, refreshUser } = useAuth();
   const householdId = user?.currentHouseholdId || '';
   const { data: household } = useHousehold(householdId);
@@ -36,12 +38,12 @@ export function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title="Settings" />
+      <PageHeader title={t('settings.title')} />
 
       <div className={styles.sections}>
         {/* Profile Section */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Profile</h2>
+          <h2 className={styles.sectionTitle}>{t('settings.profile')}</h2>
           <div className={styles.card}>
             <div className={styles.profileInfo}>
               <div className={styles.avatar}>
@@ -58,7 +60,7 @@ export function SettingsPage() {
         {/* Household Section */}
         {household && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Household</h2>
+            <h2 className={styles.sectionTitle}>{t('settings.household')}</h2>
             <div className={styles.card}>
               <div className={styles.householdInfo}>
                 <div className={styles.householdIcon}>
@@ -67,7 +69,7 @@ export function SettingsPage() {
                 <div className={styles.householdDetails}>
                   <p className={styles.householdName}>{household.name}</p>
                   <p className={styles.householdMeta}>
-                    {household.members?.length || 0} members
+                    {household.members?.length || 0} {t('settings.members')}
                   </p>
                 </div>
               </div>
@@ -75,8 +77,8 @@ export function SettingsPage() {
               <div className={styles.divider} />
 
               <div className={styles.inviteSection}>
-                <h3>Invite members</h3>
-                <p>Generate a code to invite others to your household</p>
+                <h3>{t('settings.inviteMembers')}</h3>
+                <p>{t('settings.inviteMembersDesc')}</p>
                 {showInvite && inviteCode ? (
                   <div className={styles.inviteCode}>
                     <span className={styles.code}>{inviteCode}</span>
@@ -91,7 +93,7 @@ export function SettingsPage() {
                     loading={createInvite.isPending}
                     iconLeft={<span className="material-symbols-outlined">add_link</span>}
                   >
-                    Generate invite code
+                    {t('settings.generateInviteCode')}
                   </Button>
                 )}
               </div>
@@ -100,7 +102,7 @@ export function SettingsPage() {
 
               {/* Members List */}
               <div className={styles.membersSection}>
-                <h3>Members</h3>
+                <h3>{t('settings.members')}</h3>
                 <div className={styles.membersList}>
                   {household.members?.map((member) => (
                     <div key={member.userId} className={styles.member}>
@@ -110,9 +112,9 @@ export function SettingsPage() {
                       <div className={styles.memberInfo}>
                         <span className={styles.memberName}>
                           {member.user.name}
-                          {member.userId === user?.id && ' (you)'}
+                          {member.userId === user?.id && ` ${t('common.you')}`}
                         </span>
-                        <span className={styles.memberRole}>{member.role}</span>
+                        <span className={styles.memberRole}>{t(`household.role.${member.role}`)}</span>
                       </div>
                     </div>
                   ))}
@@ -126,7 +128,7 @@ export function SettingsPage() {
                 onClick={() => setShowLeaveConfirm(true)}
                 iconLeft={<span className="material-symbols-outlined">logout</span>}
               >
-                Leave household
+                {t('settings.leaveHousehold')}
               </Button>
             </div>
           </section>
@@ -134,26 +136,23 @@ export function SettingsPage() {
 
         {/* Language Section */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Language</h2>
+          <h2 className={styles.sectionTitle}>{t('settings.language')}</h2>
           <div className={styles.card}>
             <div className={styles.optionRow}>
               <div className={styles.optionInfo}>
                 <span className="material-symbols-outlined">language</span>
                 <div>
-                  <p className={styles.optionLabel}>Language</p>
-                  <p className={styles.optionDesc}>Choose your preferred language</p>
+                  <p className={styles.optionLabel}>{t('settings.preferredLanguage')}</p>
+                  <p className={styles.optionDesc}>{t('settings.chooseLanguage')}</p>
                 </div>
               </div>
               <select
                 className={styles.select}
-                value={localStorage.getItem('language') || 'en'}
-                onChange={(e) => {
-                  localStorage.setItem('language', e.target.value);
-                  window.location.reload();
-                }}
+                value={i18n.language}
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
               >
-                <option value="en">English</option>
-                <option value="pt">Português</option>
+                <option value="en">{t('settings.languageEn')}</option>
+                <option value="pt">{t('settings.languagePt')}</option>
               </select>
             </div>
           </div>
@@ -161,14 +160,14 @@ export function SettingsPage() {
 
         {/* Account Section */}
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Account</h2>
+          <h2 className={styles.sectionTitle}>{t('settings.account')}</h2>
           <div className={styles.card}>
             <Button
               variant="ghost"
               onClick={logout}
               iconLeft={<span className="material-symbols-outlined">logout</span>}
             >
-              Log out
+              {t('auth.logout')}
             </Button>
           </div>
         </section>
@@ -178,9 +177,9 @@ export function SettingsPage() {
         isOpen={showLeaveConfirm}
         onClose={() => setShowLeaveConfirm(false)}
         onConfirm={handleLeave}
-        title={`Leave ${household?.name}?`}
-        message="You will need an invite code to rejoin this household."
-        confirmLabel="Leave"
+        title={`${t('settings.leaveHousehold')}?`}
+        message={t('household.leaveMessage')}
+        confirmLabel={t('household.leave')}
         variant="danger"
       />
     </div>

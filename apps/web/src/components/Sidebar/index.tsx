@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholds } from '../../hooks';
@@ -12,6 +13,7 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { data: households } = useHouseholds();
   const currentHousehold = Array.isArray(households)
@@ -22,7 +24,7 @@ export function Sidebar() {
     <aside className={styles.sidebar}>
       <div className={styles.header}>
         <div className={styles.logo}>
-          <span className={styles.logoText}>Ethereal</span>
+          <span className={styles.logoText}>{t('common.appName')}</span>
         </div>
         {currentHousehold && (
           <div className={styles.householdBadge}>
@@ -42,7 +44,7 @@ export function Sidebar() {
             }
           >
             <span className="material-symbols-outlined">{item.icon}</span>
-            <span>{item.labelKey.split('.').pop()}</span>
+            <span>{t(item.labelKey)}</span>
           </NavLink>
         ))}
       </nav>

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { FormField, InputField } from '../../components/FormField';
 import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register } = useAuth();
   const [name, setName] = useState('');
@@ -19,12 +21,12 @@ export function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('auth.passwordsDoNotMatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('auth.passwordTooShort'));
       return;
     }
 
@@ -32,7 +34,7 @@ export function RegisterPage() {
       await register(email, password, name);
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      setError(err instanceof Error ? err.message : t('auth.failedToCreateAccount'));
     }
   };
 
@@ -44,68 +46,68 @@ export function RegisterPage() {
             <span className="material-symbols-outlined">home_tracker</span>
             <span>Habit</span>
           </Link>
-          <h1 className={styles.title}>Create account</h1>
-          <p className={styles.subtitle}>Start building better habits today</p>
+          <h1 className={styles.title}>{t('auth.register')}</h1>
+          <p className={styles.subtitle}>{t('auth.registerSubtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <FormField label="Full name">
+          <FormField label={t('auth.name')}>
             <InputField
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder={t('auth.namePlaceholder')}
               required
               autoComplete="name"
             />
           </FormField>
 
-          <FormField label="Email">
+          <FormField label={t('auth.email')}>
             <InputField
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               required
               autoComplete="email"
             />
           </FormField>
 
-          <FormField label="Password">
+          <FormField label={t('auth.password')}>
             <InputField
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder={t('auth.passwordMinLength')}
               required
               autoComplete="new-password"
             />
           </FormField>
 
-          <FormField label="Confirm password">
+          <FormField label={t('auth.confirmPassword')}>
             <InputField
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat your password"
+              placeholder={t('auth.confirmPasswordPlaceholder')}
               required
               autoComplete="new-password"
             />
           </FormField>
 
           <Button type="submit" fullWidth>
-            Create account
+            {t('auth.register')}
           </Button>
         </form>
 
         <p className={styles.footer}>
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t('auth.hasAccount')} <Link to="/login">{t('auth.signIn')}</Link>
         </p>
       </div>
 

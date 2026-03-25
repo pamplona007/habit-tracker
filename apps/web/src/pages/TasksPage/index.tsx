@@ -178,7 +178,7 @@ export function TasksPage() {
         onClose={() => setDeleteTaskId(null)}
         onConfirm={handleDelete}
         title={t('common.confirmDelete')}
-        message="This action cannot be undone."
+        message={t('common.actionCannotBeUndone')}
         confirmLabel={t('common.delete')}
         variant="danger"
       />

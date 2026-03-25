@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import {
   useShoppingLists,
@@ -18,6 +19,7 @@ import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function ShoppingPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
   const [showCreateListModal, setShowCreateListModal] = useState(false);
@@ -59,24 +61,24 @@ export function ShoppingPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Shopping"
-        subtitle={`${lists?.length || 0} lists`}
+        title={t('shopping.title')}
+        subtitle={`${lists?.length || 0} ${t('shopping.title')}`}
         action={{
-          label: 'New list',
+          label: t('shopping.newList'),
           icon: <span className="material-symbols-outlined">add</span>,
           onClick: () => setShowCreateListModal(true),
         }}
       />
 
       {isLoading ? (
-        <LoadingState message="Loading lists..." />
+        <LoadingState message={t('shopping.loadingLists')} />
       ) : lists?.length === 0 ? (
         <EmptyState
           icon="shopping_cart"
-          title="No shopping lists"
-          description="Create your first shopping list to get started"
+          title={t('shopping.noShoppingLists')}
+          description={t('shopping.createFirstShoppingList')}
           action={{
-            label: 'Create list',
+            label: t('shopping.createShoppingList'),
             onClick: () => setShowCreateListModal(true),
           }}
         />
@@ -92,7 +94,7 @@ export function ShoppingPage() {
                 <div className={styles.listInfo}>
                   <span className={styles.listName}>{list.name}</span>
                   <span className={styles.listCount}>
-                    {list.items.filter((i) => i.isChecked).length}/{list.items.length} items
+                    {list.items.filter((i) => i.isChecked).length}/{list.items.length} {t('shopping.itemsCount')}
                   </span>
                 </div>
                 <button
@@ -122,7 +124,7 @@ export function ShoppingPage() {
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  placeholder="Add item..."
+                  placeholder={t('shopping.addItemPlaceholder')}
                   className={styles.addItemInput}
                 />
                 <button type="submit" className={styles.addItemBtn}>
@@ -133,7 +135,7 @@ export function ShoppingPage() {
               <div className={styles.itemsList}>
                 {activeList.items.length === 0 ? (
                   <div className={styles.noItems}>
-                    <p>No items yet. Add your first item above.</p>
+                    <p>{t('shopping.noItemsYet')}</p>
                   </div>
                 ) : (
                   activeList.items.map((item) => (
@@ -178,9 +180,9 @@ export function ShoppingPage() {
         isOpen={deleteListId !== null}
         onClose={() => setDeleteListId(null)}
         onConfirm={handleDeleteList}
-        title="Delete shopping list?"
-        message="This will remove the list and all its items."
-        confirmLabel="Delete"
+        title={t('shopping.deleteShoppingList')}
+        message={t('shopping.deleteShoppingListMessage')}
+        confirmLabel={t('shopping.delete')}
         variant="danger"
       />
     </div>
@@ -198,6 +200,7 @@ function CreateListModal({
   householdId: string;
   onCreated: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const createList = useCreateShoppingList();
 
@@ -212,23 +215,23 @@ function CreateListModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="New shopping list"
+      title={t('shopping.newShoppingList')}
       actions={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="submit" form="create-list-form" loading={createList.isPending}>
-            Create list
+            {t('shopping.createShoppingList')}
           </Button>
         </>
       }
     >
       <form id="create-list-form" onSubmit={handleSubmit}>
-        <FormField label="List name">
+        <FormField label={t('shopping.listName')}>
           <InputField
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Weekly groceries"
+            placeholder={t('shopping.weeklyGroceriesPlaceholder')}
             required
           />
         </FormField>

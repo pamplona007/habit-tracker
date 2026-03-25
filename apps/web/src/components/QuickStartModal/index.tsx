@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Task } from '../../types';
 import { TIMER_OPTIONS, type TimerDuration } from '../../utils/tasks';
 import { Button } from '../Button';
@@ -12,6 +13,7 @@ interface QuickStartModalProps {
 }
 
 export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalProps) {
+  const { t } = useTranslation();
   const { startTimer } = useTimer();
   const [selectedDuration, setSelectedDuration] = useState<TimerDuration>(25);
 
@@ -29,15 +31,15 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
   const getTaskTypeLabel = () => {
     switch (task.type) {
       case 'DAILY':
-        return 'Daily';
+        return t('tasks.types.DAILY');
       case 'WEEKLY':
-        return 'Weekly';
+        return t('tasks.types.WEEKLY');
       case 'MONTHLY':
-        return 'Monthly';
+        return t('tasks.types.MONTHLY');
       case 'ONE_TIME':
-        return 'One Time';
+        return t('tasks.types.ONE_TIME');
       default:
-        return 'Task';
+        return t('tasks.title');
     }
   };
 
@@ -63,7 +65,7 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
 
         {/* Content */}
         <div className={styles.content}>
-          <p className={styles.label}>Focus Recommendation</p>
+          <p className={styles.label}>{t('quickStart.focusRecommendation')}</p>
           <h2 className={styles.taskName}>{task.name}</h2>
           <div className={styles.badges}>
             <span className={styles.durationBadge}>{selectedDuration} MINS</span>
@@ -80,7 +82,7 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
 
         {/* Duration Selector */}
         <div className={styles.durationSection}>
-          <span className={styles.sectionLabel}>Select duration</span>
+          <span className={styles.sectionLabel}>{t('quickStart.selectDuration')}</span>
           <div className={styles.durationOptions}>
             {TIMER_OPTIONS.map((option) => (
               <button
@@ -97,11 +99,11 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
         {/* Actions */}
         <div className={styles.actions}>
           <Button variant="primary" size="lg" fullWidth onClick={handleStart}>
-            Start Now
+            {t('quickStart.startNow')}
           </Button>
           {onRollAgain && (
             <Button variant="outline" size="lg" fullWidth iconLeft={<span className="material-symbols-outlined">refresh</span>} onClick={handleRollAgain}>
-              Roll Again
+              {t('quickStart.rollAgain')}
             </Button>
           )}
         </div>

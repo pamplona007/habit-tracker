@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholds, useCreateHousehold, useJoinHousehold, useSwitchHousehold } from '../../hooks';
 import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function NoHouseholdPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
   const { data: households } = useHouseholds();
@@ -31,7 +33,7 @@ export function NoHouseholdPage() {
       await refreshUser();
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create household');
+      setError(err instanceof Error ? err.message : t('household.failedToCreate'));
     }
   };
 
@@ -43,7 +45,7 @@ export function NoHouseholdPage() {
       await refreshUser();
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Invalid or expired code');
+      setError(err instanceof Error ? err.message : t('household.invalidCode'));
     }
   };
 
@@ -56,11 +58,11 @@ export function NoHouseholdPage() {
           <div className={styles.avatar}>
             {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
-          <h1 className={styles.title}>Welcome, {user?.name}!</h1>
+          <h1 className={styles.title}>{t('household.noHousehold')}</h1>
           <p className={styles.subtitle}>
             {!hasHouseholds
-              ? "You're not part of any household yet. Create one or join an existing one."
-              : 'Select a household or create a new one.'}
+              ? t('household.createFirst')
+              : t('household.createFirst')}
           </p>
         </div>
 
@@ -68,7 +70,7 @@ export function NoHouseholdPage() {
           <>
             {hasHouseholds && (
               <div className={styles.householdsList}>
-                <h3>Your households</h3>
+                <h3>{t('household.yourHouseholds')}</h3>
                 {households.map((household) => (
                   <button
                     key={household.id}
@@ -84,7 +86,7 @@ export function NoHouseholdPage() {
                     <div className={styles.householdInfo}>
                       <span className={styles.householdName}>{household.name}</span>
                       <span className={styles.householdMeta}>
-                        {household.memberCount} members
+                        {household.memberCount} {t('common.members')}
                       </span>
                     </div>
                     {household.id === user?.currentHouseholdId && (
@@ -104,8 +106,8 @@ export function NoHouseholdPage() {
                   <span className="material-symbols-outlined">add_home</span>
                 </div>
                 <div className={styles.optionContent}>
-                  <h3>Create a household</h3>
-                  <p>Start a new household and invite your family</p>
+                  <h3>{t('household.createHousehold')}</h3>
+                  <p>{t('household.createDescription')}</p>
                 </div>
                 <span className="material-symbols-outlined arrow">arrow_forward</span>
               </button>
@@ -118,8 +120,8 @@ export function NoHouseholdPage() {
                   <span className="material-symbols-outlined">group_add</span>
                 </div>
                 <div className={styles.optionContent}>
-                  <h3>Join a household</h3>
-                  <p>Enter a code to join an existing household</p>
+                  <h3>{t('household.join')}</h3>
+                  <p>{t('household.joinDescription')}</p>
                 </div>
                 <span className="material-symbols-outlined arrow">arrow_forward</span>
               </button>
@@ -131,26 +133,26 @@ export function NoHouseholdPage() {
           <form onSubmit={handleCreate} className={styles.form}>
             <button type="button" onClick={() => setMode('choose')} className={styles.backBtn}>
               <span className="material-symbols-outlined">arrow_back</span>
-              Back
+              {t('common.back')}
             </button>
 
-            <h2>Create your household</h2>
+            <h2>{t('household.createYourHousehold')}</h2>
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.field}>
-              <label htmlFor="householdName">Household name</label>
+              <label htmlFor="householdName">{t('household.name')}</label>
               <input
                 id="householdName"
                 type="text"
                 value={householdName}
                 onChange={(e) => setHouseholdName(e.target.value)}
-                placeholder="The Silva Family"
+                placeholder={t('household.householdNamePlaceholder')}
                 required
               />
             </div>
 
             <Button type="submit" fullWidth loading={createHousehold.isPending}>
-              Create household
+              {t('household.create')}
             </Button>
           </form>
         )}
@@ -159,26 +161,26 @@ export function NoHouseholdPage() {
           <form onSubmit={handleJoin} className={styles.form}>
             <button type="button" onClick={() => setMode('choose')} className={styles.backBtn}>
               <span className="material-symbols-outlined">arrow_back</span>
-              Back
+              {t('common.back')}
             </button>
 
-            <h2>Join a household</h2>
+            <h2>{t('household.join')}</h2>
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.field}>
-              <label htmlFor="joinCode">Invite code</label>
+              <label htmlFor="joinCode">{t('household.inviteCode')}</label>
               <input
                 id="joinCode"
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Enter the invite code"
+                placeholder={t('household.inviteCodePlaceholder')}
                 required
               />
             </div>
 
             <Button type="submit" fullWidth loading={joinHousehold.isPending}>
-              Join household
+              {t('household.join')}
             </Button>
           </form>
         )}

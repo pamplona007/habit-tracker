@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useNotices, useCreateNotice, useDeleteNotice } from '../../hooks';
 import { Modal } from '../../components/Modal';
@@ -14,6 +15,7 @@ import styles from './styles.module.css';
 const PRIORITIES: NoticePriority[] = ['low', 'normal', 'high', 'urgent'];
 
 export function NoticesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,24 +37,24 @@ export function NoticesPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Notices"
-        subtitle={`${activeNotices.length} active notices`}
+        title={t('notices.title')}
+        subtitle={`${activeNotices.length} ${t('notices.activeNotices')}`}
         action={{
-          label: 'Add notice',
+          label: t('notices.addNotice'),
           icon: <span className="material-symbols-outlined">add</span>,
           onClick: () => setShowCreateModal(true),
         }}
       />
 
       {isLoading ? (
-        <LoadingState message="Loading notices..." />
+        <LoadingState message={t('notices.loadingNotices')} />
       ) : activeNotices.length === 0 ? (
         <EmptyState
           icon="campaign"
-          title="No notices yet"
-          description="Create your first notice to share with your household"
+          title={t('notices.noNoticesYet')}
+          description={t('notices.createFirstNotice')}
           action={{
-            label: 'Create notice',
+            label: t('notices.create'),
             onClick: () => setShowCreateModal(true),
           }}
         />
@@ -61,7 +63,7 @@ export function NoticesPage() {
           {activeNotices.map((notice) => (
             <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`}>
               <div className={styles.noticeHeader}>
-                <span className={styles.priorityBadge}>{notice.priority}</span>
+                <span className={styles.priorityBadge}>{t(`notices.priorities.${notice.priority}`)}</span>
                 <span className={styles.noticeDate}>
                   {new Date(notice.createdAt).toLocaleDateString()}
                 </span>
@@ -75,13 +77,13 @@ export function NoticesPage() {
                   className={styles.expandBtn}
                   onClick={() => setExpandedNotice(expandedNotice === notice.id ? null : notice.id)}
                 >
-                  {expandedNotice === notice.id ? 'Show less' : 'Show more'}
+                  {expandedNotice === notice.id ? t('notices.showLess') : t('notices.showMore')}
                 </button>
               )}
               <div className={styles.noticeActions}>
                 <button className={styles.deleteBtn} onClick={() => setDeleteNoticeId(notice.id)}>
                   <span className="material-symbols-outlined">delete</span>
-                  Delete
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -99,9 +101,9 @@ export function NoticesPage() {
         isOpen={deleteNoticeId !== null}
         onClose={() => setDeleteNoticeId(null)}
         onConfirm={handleDelete}
-        title="Delete notice?"
-        message="This action cannot be undone."
-        confirmLabel="Delete"
+        title={t('notices.deleteNotice')}
+        message={t('common.actionCannotBeUndone')}
+        confirmLabel={t('common.delete')}
         variant="danger"
       />
     </div>
@@ -117,6 +119,7 @@ function CreateNoticeModal({
   onClose: () => void;
   householdId: string;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<NoticePriority>('normal');
@@ -138,38 +141,38 @@ function CreateNoticeModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create notice"
+      title={t('notices.create')}
       actions={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="submit" form="create-notice-form" loading={createNotice.isPending}>
-            Create notice
+            {t('notices.create')}
           </Button>
         </>
       }
     >
       <form id="create-notice-form" onSubmit={handleSubmit}>
-        <FormField label="Title">
+        <FormField label={t('notices.name')}>
           <InputField
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Important announcement"
+            placeholder={t('notices.noticeTitlePlaceholder')}
             required
           />
         </FormField>
 
-        <FormField label="Content">
+        <FormField label={t('notices.content')}>
           <TextareaField
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your notice here..."
+            placeholder={t('notices.noticeContentPlaceholder')}
             rows={4}
             required
           />
         </FormField>
 
-        <FormField label="Priority">
+        <FormField label={t('notices.priority')}>
           <div className={styles.priorityOptions}>
             {PRIORITIES.map((p) => (
               <button
@@ -178,7 +181,7 @@ function CreateNoticeModal({
                 className={`${styles.priorityOption} ${styles[p]} ${priority === p ? styles.active : ''}`}
                 onClick={() => setPriority(p)}
               >
-                {p}
+                {t(`notices.priorities.${p}`)}
               </button>
             ))}
           </div>

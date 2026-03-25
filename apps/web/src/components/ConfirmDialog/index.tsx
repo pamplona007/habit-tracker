@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '../Button';
 import styles from './styles.module.css';
 
@@ -18,10 +19,11 @@ export function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -41,10 +43,10 @@ export function ConfirmDialog({
         <p className={styles.message}>{message}</p>
         <div className={styles.actions}>
           <Button variant="ghost" onClick={onClose}>
-            {cancelLabel}
+            {cancelLabel || t('common.cancel')}
           </Button>
           <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={handleConfirm}>
-            {confirmLabel}
+            {confirmLabel || t('common.confirm')}
           </Button>
         </div>
       </div>

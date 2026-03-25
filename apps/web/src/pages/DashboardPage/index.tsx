@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks, useStreak, useNotices, useShoppingLists } from '../../hooks';
 import { Link } from 'react-router-dom';
@@ -10,6 +11,7 @@ import styles from './styles.module.css';
 const SHOPPING_ICONS = ['local_grocery_store', 'home_repair_service', 'medical_services', 'inventory_2'];
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
   const { data: tasks } = useTasks(householdId);
@@ -51,9 +53,9 @@ export function DashboardPage() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t('dashboard.greetingMorning');
+    if (hour < 18) return t('dashboard.greetingAfternoon');
+    return t('dashboard.greetingEvening');
   };
 
   return (
@@ -70,7 +72,7 @@ export function DashboardPage() {
             <span className="material-symbols-outlined">local_fire_department</span>
             <div className={styles.streakInfo}>
               <span className={styles.streakValue}>{streak.current}</span>
-              <span className={styles.streakLabel}>Day Streak</span>
+              <span className={styles.streakLabel}>{t('dashboard.dayStreak')}</span>
             </div>
           </div>
         </section>
@@ -79,14 +81,14 @@ export function DashboardPage() {
         <section className={styles.focusSection}>
           <div className={styles.focusHeader}>
             <div>
-              <h2 className={styles.focusTitle}>Focus Today</h2>
+              <h2 className={styles.focusTitle}>{t('dashboard.focusToday')}</h2>
               <p className={styles.focusSubtitle}>
-                {pendingTasks.length} {pendingTasks.length === 1 ? 'Task' : 'Tasks'} Pending
+                {pendingTasks.length} {pendingTasks.length === 1 ? t('dashboard.task') : t('tasks.title')} {t('dashboard.tasksPending')}
               </p>
             </div>
             <button className={styles.quickStartBtn} onClick={handleQuickStart}>
               <span className="material-symbols-outlined">bolt</span>
-              Quick Start
+              {t('dashboard.quickStart')}
             </button>
           </div>
 
@@ -94,7 +96,7 @@ export function DashboardPage() {
             {todayTasks.length === 0 ? (
               <div className={styles.emptyState}>
                 <span className="material-symbols-outlined">check_circle</span>
-                <p>All caught up!</p>
+                <p>{t('dashboard.allCaughtUp')}</p>
               </div>
             ) : (
               todayTasks.map((task) => (
@@ -111,7 +113,7 @@ export function DashboardPage() {
                     </div>
                   </div>
                   <div className={styles.taskMeta}>
-                    <span className={styles.priorityBadge}>Daily</span>
+                    <span className={styles.priorityBadge}>{t(`tasks.types.${task.type}`)}</span>
                   </div>
                 </div>
               ))
@@ -125,28 +127,28 @@ export function DashboardPage() {
             <span className="material-symbols-outlined">local_fire_department</span>
             <div className={styles.statContent}>
               <span className={styles.statValue}>{streak.current}</span>
-              <span className={styles.statLabel}>Current Streak</span>
+              <span className={styles.statLabel}>{t('tasks.streak')}</span>
             </div>
           </div>
           <div className={styles.statCard}>
             <span className="material-symbols-outlined">emoji_events</span>
             <div className={styles.statContent}>
               <span className={styles.statValue}>{streak.longest}</span>
-              <span className={styles.statLabel}>Best Streak</span>
+              <span className={styles.statLabel}>{t('dashboard.bestStreak')}</span>
             </div>
           </div>
         </section>
 
         {/* Announcements Section */}
         <section className={styles.announcementsSection}>
-          <h2 className={styles.sectionTitle}>Announcements</h2>
+          <h2 className={styles.sectionTitle}>{t('dashboard.announcements')}</h2>
           {activeNotices.length === 0 ? (
             <div className={styles.noticeCard}>
               <div className={styles.noticeIcon}>
                 <span className="material-symbols-outlined">campaign</span>
               </div>
               <div className={styles.noticeContent}>
-                <p className={styles.noticeEmpty}>No active announcements</p>
+                <p className={styles.noticeEmpty}>{t('dashboard.noAnnouncements')}</p>
               </div>
             </div>
           ) : (
@@ -165,9 +167,9 @@ export function DashboardPage() {
         {sortedShoppingLists.length > 0 && (
           <section className={styles.shoppingSection}>
             <div className={styles.shoppingHeader}>
-              <h2 className={styles.sectionTitle}>Shopping Lists</h2>
+              <h2 className={styles.sectionTitle}>{t('dashboard.shoppingLists')}</h2>
               <Link to="/shopping" className={styles.viewAllLink}>
-                Manage
+                {t('dashboard.manage')}
                 <span className="material-symbols-outlined">chevron_right</span>
               </Link>
             </div>
@@ -182,7 +184,7 @@ export function DashboardPage() {
                   <div className={styles.shoppingInfo}>
                     <span className={styles.shoppingName}>{list.name}</span>
                     <span className={styles.shoppingCount}>
-                      {list.incompleteCount} {list.incompleteCount === 1 ? 'Item' : 'Items'}
+                      {list.incompleteCount} {list.incompleteCount === 1 ? t('dashboard.task') : t('dashboard.items')}
                     </span>
                   </div>
                 </Link>
@@ -195,15 +197,15 @@ export function DashboardPage() {
         <section className={styles.quickActions}>
           <Link to="/tasks" className={styles.quickAction}>
             <span className="material-symbols-outlined">add_task</span>
-            <span>Add Task</span>
+            <span>{t('tasks.create')}</span>
           </Link>
           <Link to="/shopping" className={styles.quickAction}>
             <span className="material-symbols-outlined">shopping_cart</span>
-            <span>Shopping</span>
+            <span>{t('nav.shopping')}</span>
           </Link>
           <Link to="/settings" className={styles.quickAction}>
             <span className="material-symbols-outlined">settings</span>
-            <span>Settings</span>
+            <span>{t('nav.settings')}</span>
           </Link>
         </section>
       </main>

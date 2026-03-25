@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useTimer } from '../../context/TimerContext';
 import { useCompleteTask } from '../../hooks';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +12,7 @@ const FOCUS_QUOTES = [
 ];
 
 export function TimerPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
   const completeTask = useCompleteTask();
@@ -72,7 +74,7 @@ export function TimerPage() {
         <button className={styles.minimizeBtn} onClick={handleMinimize}>
           <span className="material-symbols-outlined">keyboard_arrow_down</span>
         </button>
-        <span className={styles.focusBadge}>Focus Mode</span>
+        <span className={styles.focusBadge}>{t('timer.focusMode')}</span>
         <div className={styles.headerSpacer} />
       </header>
 
@@ -113,7 +115,7 @@ export function TimerPage() {
           <div className={styles.timerContent}>
             <span className={styles.timerValue}>{formatTime(timeLeft)}</span>
             <span className={styles.timerLabel}>
-              {isCompleted ? 'Completed!' : isRunning ? 'Focusing' : 'Paused'}
+              {isCompleted ? t('timer.completed') : isRunning ? t('timer.focusing') : t('timer.paused')}
             </span>
           </div>
         </div>
@@ -124,7 +126,7 @@ export function TimerPage() {
             <button
               className={styles.secondaryBtn}
               onClick={handleStop}
-              title="Stop session"
+              title={t('timer.stopSession')}
             >
               <span className="material-symbols-outlined">stop</span>
             </button>
@@ -132,7 +134,7 @@ export function TimerPage() {
             <button
               className={styles.primaryBtn}
               onClick={() => isRunning ? pauseTimer() : resumeTimer()}
-              title={isRunning ? 'Pause' : 'Resume'}
+              title={isRunning ? t('timer.pause') : t('timer.resume')}
             >
               <span className="material-symbols-outlined">
                 {isRunning ? 'pause' : 'play_arrow'}
@@ -142,7 +144,7 @@ export function TimerPage() {
             <button
               className={styles.secondaryBtn}
               onClick={handleMinimize}
-              title="Minimize to widget"
+              title={t('timer.minimizeToWidget')}
             >
               <span className="material-symbols-outlined">minimize</span>
             </button>
@@ -155,18 +157,18 @@ export function TimerPage() {
             <div className={styles.completedIcon}>
               <span className="material-symbols-outlined">check_circle</span>
             </div>
-            <h2 className={styles.completedTitle}>Great work!</h2>
+            <h2 className={styles.completedTitle}>{t('timer.greatWork')}</h2>
             <p className={styles.completedText}>
-              You completed {task.name}. Keep up the momentum!
+              {t('timer.youCompleted')} {task.name}. {t('timer.keepMomentum')}
             </p>
             <button className={styles.primaryActionBtn} onClick={resetTimer}>
-              Done
+              {t('timer.done')}
             </button>
           </div>
         ) : (
           <button className={styles.secondaryActionBtn} onClick={handleComplete}>
             <span className="material-symbols-outlined">check</span>
-            Mark as Completed
+            {t('timer.markAsCompleted')}
           </button>
         )}
 
