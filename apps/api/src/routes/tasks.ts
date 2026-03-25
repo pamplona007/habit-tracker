@@ -1,13 +1,15 @@
 import { Hono } from 'hono'
 import { prisma } from '../db'
 import { z } from 'zod'
+import type { AppBindings } from '../types'
 
-export const tasksRoutes = new Hono()
+export const tasksRoutes = new Hono<AppBindings>()
 
 const taskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME']).default('ONE_TIME'),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
   dayOfWeek: z.number().min(0).max(6).optional(),
   dayOfMonth: z.number().min(1).max(31).optional(),
   deadline: z.string().datetime().optional(),
@@ -39,7 +41,6 @@ tasksRoutes.get('/', async (c) => {
 // POST /households/:householdId/tasks
 tasksRoutes.post('/', async (c) => {
   const householdId = c.get('householdId')
-  const user = c.get('user')
   const data = await c.req.json()
 
   const parsed = taskSchema.parse(data)
@@ -49,6 +50,7 @@ tasksRoutes.post('/', async (c) => {
       name: parsed.name,
       description: parsed.description,
       type: parsed.type,
+      priority: parsed.priority,
       dayOfWeek: parsed.dayOfWeek ?? null,
       dayOfMonth: parsed.dayOfMonth ?? null,
       deadline: parsed.deadline ? new Date(parsed.deadline) : null,

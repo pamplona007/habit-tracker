@@ -2,8 +2,9 @@ import { Hono } from 'hono'
 import { prisma } from '../db'
 import { randomBytes } from 'crypto'
 import { requireHouseholdMembership } from '../middleware/auth'
+import type { AppBindings } from '../types'
 
-export const householdsRoutes = new Hono()
+export const householdsRoutes = new Hono<AppBindings>()
 
 // POST /households — criar casa e já ser membro
 householdsRoutes.post('/', async (c) => {

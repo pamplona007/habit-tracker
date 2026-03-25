@@ -99,6 +99,7 @@ model Task {
   name        String
   description String?
   type        TaskType  @default(ONE_TIME)
+  priority    TaskPriority @default(normal)
   dayOfWeek   Int?      // 0-6 (Sunday-Saturday), only if type=WEEKLY
   dayOfMonth  Int?       // 1-31, only if type=MONTHLY
   deadline    DateTime? // only if type=ONE_TIME
@@ -110,6 +111,13 @@ model Task {
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   completions TaskCompletion[]
+}
+
+enum TaskPriority {
+  low
+  normal
+  high
+  urgent
 }
 
 enum TaskType {

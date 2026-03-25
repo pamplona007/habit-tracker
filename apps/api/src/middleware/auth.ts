@@ -1,6 +1,7 @@
-import { Context, Next } from 'hono'
+import type { Context, Next } from 'hono'
 import { jwt } from 'hono/jwt'
 import { prisma } from '../db'
+import type { AppBindings, AuthUser } from '../types'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
@@ -12,7 +13,7 @@ export const jwtMiddleware = jwt({
 })
 
 // Carrega user com memberships (N:N)
-export async function loadUser(c: Context, next: Next) {
+export async function loadUser(c: Context<AppBindings>, next: Next) {
   try {
     const payload = c.get('jwtPayload')
     const user = await prisma.user.findUnique({
@@ -22,7 +23,7 @@ export async function loadUser(c: Context, next: Next) {
           include: { household: { select: { id: true, name: true } } },
         },
       },
-    })
+    }) as AuthUser | null
 
     if (!user) {
       return c.json({ error: 'User not found' }, 401)
@@ -37,7 +38,7 @@ export async function loadUser(c: Context, next: Next) {
 
 // Verifica se o user é membro da householdId no path
 // Deve ser usado APÓS loadUser
-export async function requireHouseholdMembership(c: Context, next: Next) {
+export async function requireHouseholdMembership(c: Context<AppBindings>, next: Next) {
   const user = c.get('user')
   const householdId = c.req.param('householdId')
 
@@ -56,7 +57,7 @@ export async function requireHouseholdMembership(c: Context, next: Next) {
 }
 
 // Verifica se o user tem alguma household ativa (currentHouseholdId)
-export async function requireCurrentHousehold(c: Context, next: Next) {
+export async function requireCurrentHousehold(c: Context<AppBindings>, next: Next) {
   const user = c.get('user')
 
   if (!user.currentHouseholdId) {

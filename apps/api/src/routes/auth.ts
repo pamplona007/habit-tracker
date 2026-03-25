@@ -3,8 +3,9 @@ import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, jwtMiddleware, loadUser } from '../middleware/auth'
+import type { AppBindings } from '../types'
 
-export const authRoutes = new Hono()
+export const authRoutes = new Hono<AppBindings>()
 
 // POST /auth/register
 authRoutes.post('/register', async (c) => {

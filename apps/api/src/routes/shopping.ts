@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { prisma } from '../db'
 import { z } from 'zod'
+import type { AppBindings } from '../types'
 
-export const shoppingRoutes = new Hono()
+export const shoppingRoutes = new Hono<AppBindings>()
 
 const itemSchema = z.object({
   name: z.string().min(1),
