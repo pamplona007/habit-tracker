@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks, useStreak, useCreateTask, useCompleteTask, useUncompleteTask, useDeleteTask } from '../../hooks';
+import { computeUserTaskFields } from '../../utils/tasks';
 import { Modal } from '../../components/Modal';
 import { PageHeader } from '../../components/PageHeader';
 import { LoadingState } from '../../components/LoadingState';
@@ -35,12 +36,15 @@ export function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
 
-  const { data: allTasks } = useTasks(householdId);
-  const { data: tasks, isLoading } = useTasks(householdId, filter === 'ALL' ? undefined : filter);
+  const { data: allTasks, isLoading: isLoadingAll } = useTasks(householdId);
+  const { data: filteredTasks, isLoading: isLoadingFiltered } = useTasks(householdId, filter === 'ALL' ? undefined : filter);
+  const isLoading = isLoadingAll || isLoadingFiltered;
   const streak = useStreak(allTasks);
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
   const deleteTask = useDeleteTask();
+
+  const tasks = user?.id ? computeUserTaskFields(filteredTasks || [], user.id) : filteredTasks || [];
 
   const handleToggleComplete = async (task: Task) => {
     if (task.userCompleted) {
@@ -57,8 +61,8 @@ export function TasksPage() {
     }
   };
 
-  const pendingTasks = tasks?.filter((t) => !t.userCompleted) || [];
-  const completedTasks = tasks?.filter((t) => t.userCompleted) || [];
+  const pendingTasks = tasks.filter((t) => !t.userCompleted);
+  const completedTasks = tasks.filter((t) => t.userCompleted);
 
   return (
     <div className={styles.page}>
@@ -97,7 +101,7 @@ export function TasksPage() {
 
       {isLoading ? (
         <LoadingState message={t('common.loading')} />
-      ) : tasks?.length === 0 ? (
+      ) : tasks.length === 0 ? (
         <EmptyState
           icon="task_alt"
           title={t('tasks.noTasks')}

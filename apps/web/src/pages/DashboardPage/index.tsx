@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks, useStreak, useNotices, useShoppingLists } from '../../hooks';
+import { computeUserTaskFields, getRandomPendingTask } from '../../utils/tasks';
 import { Link } from 'react-router-dom';
 import { QuickStartModal } from '../../components/QuickStartModal';
-import { getRandomPendingTask } from '../../utils/tasks';
 import type { Task } from '../../types';
 import styles from './styles.module.css';
 
@@ -14,8 +14,8 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
-  const { data: tasks } = useTasks(householdId);
-  const streak = useStreak(tasks);
+  const { data: rawTasks } = useTasks(householdId);
+  const streak = useStreak(rawTasks);
   const { data: notices } = useNotices(householdId);
   const { data: shoppingLists } = useShoppingLists(householdId);
 
@@ -29,25 +29,28 @@ export function DashboardPage() {
     .sort((a, b) => b.incompleteCount - a.incompleteCount)
     .slice(0, 4) || [];
 
-  const pendingTasks = tasks?.filter((t) => !t.userCompleted) || [];
+  const tasks = useMemo(
+    () => (user?.id ? computeUserTaskFields(rawTasks || [], user.id) : rawTasks || []),
+    [rawTasks, user],
+  );
+  const pendingTasks = useMemo(() => tasks.filter((t) => !t.userCompleted), [tasks]);
   const todayTasks = pendingTasks.slice(0, 2);
 
-  const handleQuickStart = () => {
-    if (tasks) {
-      const randomTask = getRandomPendingTask(tasks);
-      setQuickStartTask(randomTask);
-    }
-  };
+  const handleQuickStart = useCallback(() => {
+    const randomTask = getRandomPendingTask(pendingTasks);
+    setQuickStartTask(randomTask);
+  }, [pendingTasks]);
 
-  const handleRollAgain = (currentTask: Task) => {
-    if (tasks) {
-      const newPendingTasks = tasks.filter((t) => !t.userCompleted && t.id !== currentTask.id);
+  const handleRollAgain = useCallback(
+    (currentTask: Task) => {
+      const newPendingTasks = pendingTasks.filter((t) => t.id !== currentTask.id);
       if (newPendingTasks.length > 0) {
         const randomIndex = Math.floor(Math.random() * newPendingTasks.length);
         setQuickStartTask(newPendingTasks[randomIndex]);
       }
-    }
-  };
+    },
+    [pendingTasks],
+  );
 
   const activeNotices = notices?.filter((n) => n.isActive).slice(0, 3) || [];
 

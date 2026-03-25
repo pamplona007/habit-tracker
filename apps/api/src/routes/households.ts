@@ -3,8 +3,25 @@ import { prisma } from '../db'
 import { randomBytes } from 'crypto'
 import { requireHouseholdMembership } from '../middleware/auth'
 import type { AppBindings } from '../types'
+import type { MiddlewareHandler } from 'hono'
 
 export const householdsRoutes = new Hono<AppBindings>()
+
+// Verifica se o user é OWNER ou ADMIN da household (não pode ser só MEMBER)
+const requireHouseholdAdmin: MiddlewareHandler<AppBindings> = async (c, next) => {
+  const user = c.get('user')
+  const householdId = c.get('householdId')
+
+  const membership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
+
+  if (!membership || membership.role === 'MEMBER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  await next()
+}
 
 // POST /households — criar casa e já ser membro
 householdsRoutes.post('/', async (c) => {
@@ -137,10 +154,31 @@ householdsRoutes.get('/:householdId', requireHouseholdMembership, async (c) => {
   return c.json({ household })
 })
 
+// PATCH /households/:householdId — atualizar casa (nome)
+householdsRoutes.patch('/:householdId', requireHouseholdMembership, requireHouseholdAdmin, async (c) => {
+  const householdId = c.get('householdId')
+  const { name } = await c.req.json()
+
+  if (!name || name.trim().length < 2) {
+    return c.json({ error: 'Household name is required (min 2 chars)' }, 400)
+  }
+
+  const household = await prisma.household.update({
+    where: { id: householdId },
+    data: { name: name.trim() },
+    include: {
+      members: { include: { user: { select: { id: true, name: true, email: true } } } },
+    },
+  })
+
+  return c.json({ household })
+})
+
 // POST /households/:householdId/invites — gerar convite
 householdsRoutes.post('/:householdId/invites', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
-  const { expiresInHours } = await c.req.json()
+  const body = await c.req.json().catch(() => ({}))
+  const { expiresInHours } = body
 
   const hours = Math.min(Math.max(Number(expiresInHours) || 24, 1), 168)
   const code = randomBytes(6).toString('hex').toUpperCase()
@@ -198,6 +236,108 @@ householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (
       data: { currentHouseholdId: otherMembership?.householdId ?? null },
     })
   }
+
+  return c.json({ success: true })
+})
+
+// PATCH /households/:householdId/members/:userId — atualizar role de membro
+householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
+  const householdId = c.get('householdId')
+  const targetUserId = c.req.param('userId')
+  const user = c.get('user')
+  const { role } = await c.req.json()
+
+  // Only OWNER can change roles (derive from cached memberships)
+  const ownerMembership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
+
+  if (ownerMembership?.role !== 'OWNER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  // Validate role
+  if (!['ADMIN', 'MEMBER'].includes(role)) {
+    return c.json({ error: 'Invalid role' }, 400)
+  }
+
+  // Check if target user is a member
+  const targetMembership = await prisma.householdMember.findUnique({
+    where: { householdId_userId: { householdId, userId: targetUserId! } },
+  })
+
+  if (!targetMembership) {
+    return c.json({ error: 'Member not found' }, 404)
+  }
+
+  // Cannot change the role of an owner until an explicit ownership-transfer flow exists
+  if (targetMembership.role === 'OWNER') {
+    return c.json({ error: 'Cannot change the role of an owner' }, 400)
+  }
+
+  const updated = await prisma.householdMember.update({
+    where: { householdId_userId: { householdId, userId: targetUserId! } },
+    data: { role },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  })
+
+  return c.json({ member: updated })
+})
+
+// DELETE /households/:householdId/members/:userId — remover membro
+householdsRoutes.delete('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
+  const householdId = c.get('householdId')
+  const targetUserId = c.req.param('userId')
+  const user = c.get('user')
+
+  // Only OWNER can remove members (derive from cached memberships)
+  const ownerMembership = user.memberships?.find(
+    (m: { householdId: string; role: string }) => m.householdId === householdId,
+  )
+
+  if (ownerMembership?.role !== 'OWNER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  // Cannot remove yourself
+  if (user.id === targetUserId) {
+    return c.json({ error: 'Cannot remove yourself. Use leave instead.' }, 400)
+  }
+
+  // Check if this is the last member
+  const memberCount = await prisma.householdMember.count({
+    where: { householdId },
+  })
+
+  if (memberCount <= 1) {
+    return c.json({ error: 'Cannot remove the last member' }, 400)
+  }
+
+  // Atomic: delete membership + fix removed user's currentHouseholdId
+  await prisma.$transaction(async (tx) => {
+    await tx.householdMember.delete({
+      where: { householdId_userId: { householdId, userId: targetUserId! } },
+    })
+
+    // If removed user's currentHouseholdId was this household, clear it
+    const removedUser = await tx.user.findUnique({
+      where: { id: targetUserId },
+      include: { memberships: true },
+    })
+
+    if (removedUser && removedUser.currentHouseholdId === householdId) {
+      const remainingMembership = removedUser.memberships.find(
+        (membership) => membership.householdId !== householdId,
+      )
+
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          currentHouseholdId: remainingMembership ? remainingMembership.householdId : null,
+        },
+      })
+    }
+  })
 
   return c.json({ success: true })
 })

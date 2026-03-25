@@ -7,12 +7,17 @@ import { Button } from '../../components/Button';
 import styles from './styles.module.css';
 
 export function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'en' ? 'pt' : 'en');
+    localStorage.setItem('language', i18n.language === 'en' ? 'pt' : 'en');
+  };
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -22,7 +27,11 @@ export function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('auth.invalidCredentials'));
+      const raw =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        (err instanceof Error ? err.message : '');
+      const key = raw.toLowerCase().includes('invalid') ? 'auth.invalidCredentials' : 'common.error';
+      setError(t(key));
     }
   };
 
@@ -34,6 +43,10 @@ export function LoginPage() {
             <span className="material-symbols-outlined">home_tracker</span>
             <span>Habit</span>
           </Link>
+          <button className={styles.langSwitch} onClick={toggleLanguage}>
+            <span className="material-symbols-outlined">translate</span>
+            {i18n.language === 'en' ? 'PT' : 'EN'}
+          </button>
           <h1 className={styles.title}>{t('auth.login')}</h1>
           <p className={styles.subtitle}>{t('auth.loginSubtitle')}</p>
         </div>
