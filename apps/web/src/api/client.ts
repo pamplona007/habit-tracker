@@ -20,8 +20,8 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Don't redirect on 401 during auth/me - let the auth context handle it
-    if (error.response?.status === 401 && error.config.url !== '/auth/me') {
+    // Don't redirect on 401 during auth endpoints - let the page handle the error
+    if (error.response?.status === 401 && !error.config.url.startsWith('/auth/')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
