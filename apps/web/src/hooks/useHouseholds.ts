@@ -1,88 +1,68 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { householdsApi } from '../api'
-import { AUTH_KEYS } from './useAuth'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { householdsApi } from '../api/households';
 
 export const HOUSEHOLD_KEYS = {
   all: ['households'] as const,
   one: (id: string) => ['households', id] as const,
-}
+};
 
 export function useHouseholds() {
   return useQuery({
     queryKey: HOUSEHOLD_KEYS.all,
     queryFn: householdsApi.list,
-  })
+  });
 }
 
-export function useHousehold(id: string | null) {
+export function useHousehold(id: string) {
   return useQuery({
-    queryKey: HOUSEHOLD_KEYS.one(id!),
-    queryFn: () => householdsApi.get(id!),
-    enabled: Boolean(id),
-  })
+    queryKey: HOUSEHOLD_KEYS.one(id),
+    queryFn: () => householdsApi.get(id),
+    enabled: !!id,
+  });
 }
 
 export function useCreateHousehold() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: householdsApi.create,
+    mutationFn: (name: string) => householdsApi.create(name),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all })
-      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me })
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all });
     },
-  })
+  });
 }
 
 export function useJoinHousehold() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: householdsApi.join,
+    mutationFn: (code: string) => householdsApi.join(code),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all })
-      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me })
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all });
     },
-  })
+  });
 }
 
 export function useSwitchHousehold() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: householdsApi.switch,
+    mutationFn: (id: string) => householdsApi.switch(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all })
-      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me })
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all });
     },
-  })
+  });
 }
 
 export function useLeaveHousehold() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: householdsApi.leave,
+    mutationFn: (id: string) => householdsApi.leave(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all })
-      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me })
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.all });
     },
-  })
+  });
 }
 
-export function useCreateInvite() {
-  const queryClient = useQueryClient()
-
+export function useCreateInvite(householdId: string) {
   return useMutation({
-    mutationFn: ({
-      householdId,
-      expiresInHours,
-    }: {
-      householdId: string
-      expiresInHours?: number
-    }) => householdsApi.createInvite(householdId, expiresInHours),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.one(vars.householdId) })
-    },
-  })
+    mutationFn: () => householdsApi.createInvite(householdId),
+  });
 }

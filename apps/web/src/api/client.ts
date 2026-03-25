@@ -1,28 +1,31 @@
-import axios from 'axios'
+import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const apiClient = axios.create({
-  baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' },
-})
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// Interceptor: injeta token automaticamente
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth-token')
+  const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
 
-// Interceptor: limpa token em 401 (o AuthContext trata o resto)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth-token')
+    // Don't redirect on 401 during auth/me - let the auth context handle it
+    if (error.response?.status === 401 && error.config.url !== '/auth/me') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);

@@ -1,6 +1,10 @@
-export { LandingPage } from './LandingPage'
-export { LoginPage } from './LoginPage'
-export { RegisterPage } from './RegisterPage'
-export { NoHouseholdPage } from './NoHouseholdPage'
-export { DashboardPage } from './DashboardPage'
-export { SettingsPage } from './SettingsPage'
+export { LandingPage } from './LandingPage';
+export { LoginPage } from './LoginPage';
+export { RegisterPage } from './RegisterPage';
+export { NoHouseholdPage } from './NoHouseholdPage';
+export { DashboardPage } from './DashboardPage';
+export { TasksPage } from './TasksPage';
+export { NoticesPage } from './NoticesPage';
+export { ShoppingPage } from './ShoppingPage';
+export { SettingsPage } from './SettingsPage';
+export { TimerPage } from './TimerPage';

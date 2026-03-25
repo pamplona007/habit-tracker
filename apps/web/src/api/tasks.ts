@@ -1,62 +1,40 @@
-import { apiClient } from './client'
-
-export type TaskType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME'
-
-export type Task = {
-  id: string
-  name: string
-  description: string | null
-  type: TaskType
-  dayOfWeek: number | null
-  dayOfMonth: number | null
-  deadline: string | null
-  isActive: boolean
-  completedAt: string | null
-  createdAt: string
-  updatedAt: string
-  completions: Array<{
-    id: string
-    completedAt: string
-    type: 'FULL' | 'PARTIAL'
-    user: { id: string; name: string | null }
-  }>
-}
+import { apiClient } from './client';
+import type { Task, TaskType, TaskPriority, CompletionType } from '../types';
 
 export const tasksApi = {
-  list: async (householdId: string, type?: TaskType) => {
-    const params = type ? { type } : {}
-    const res = await apiClient.get<{ tasks: Task[] }>(`/households/${householdId}/tasks`, { params })
-    return res.data.tasks
+  list: async (householdId: string, type?: TaskType): Promise<Task[]> => {
+    const params = type ? { type } : {};
+    const { data } = await apiClient.get<{ tasks: Task[] }>(`/households/${householdId}/tasks`, { params });
+    return data.tasks;
   },
 
-  create: async (householdId: string, data: Partial<Task>) => {
-    const res = await apiClient.post<{ task: Task }>(`/households/${householdId}/tasks`, data)
-    return res.data.task
+  create: async (householdId: string, task: {
+    name: string;
+    description?: string;
+    type: TaskType;
+    priority?: TaskPriority;
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    deadline?: string;
+  }): Promise<Task> => {
+    const { data } = await apiClient.post<{ task: Task }>(`/households/${householdId}/tasks`, task);
+    return data.task;
   },
 
-  update: async (householdId: string, taskId: string, data: Partial<Task>) => {
-    const res = await apiClient.patch<{ task: Task }>(
-      `/households/${householdId}/tasks/${taskId}`,
-      data
-    )
-    return res.data.task
+  update: async (householdId: string, taskId: string, updates: Partial<Task>): Promise<Task> => {
+    const { data } = await apiClient.patch<{ task: Task }>(`/households/${householdId}/tasks/${taskId}`, updates);
+    return data.task;
   },
 
-  complete: async (householdId: string, taskId: string, type: 'FULL' | 'PARTIAL' = 'FULL') => {
-    const res = await apiClient.post<{ completion: Task['completions'][0] }>(
-      `/households/${householdId}/tasks/${taskId}/complete`,
-      { type }
-    )
-    return res.data.completion
+  complete: async (householdId: string, taskId: string, type: CompletionType): Promise<void> => {
+    await apiClient.post(`/households/${householdId}/tasks/${taskId}/complete`, { type });
   },
 
-  // Toggle: if already completed today, undo it
-  toggleComplete: async (householdId: string, taskId: string) => {
-    const res = await apiClient.delete(`/households/${householdId}/tasks/${taskId}/complete`)
-    return res.data
+  uncomplete: async (householdId: string, taskId: string): Promise<void> => {
+    await apiClient.delete(`/households/${householdId}/tasks/${taskId}/complete`);
   },
 
-  delete: async (householdId: string, taskId: string) => {
-    await apiClient.delete(`/households/${householdId}/tasks/${taskId}`)
+  delete: async (householdId: string, taskId: string): Promise<void> => {
+    await apiClient.delete(`/households/${householdId}/tasks/${taskId}`);
   },
-}
+};

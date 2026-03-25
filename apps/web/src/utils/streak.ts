@@ -1,99 +1,71 @@
-import type { DayRecord, Goals } from '../types'
-import { getWeekStart, getDaysInRange } from './dates'
+import type { Task } from '../types';
 
-function subtractDay(date: string): string {
-  const d = new Date(date + 'T00:00:00')
-  d.setDate(d.getDate() - 1)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+export interface Streak {
+  current: number;
+  longest: number;
+  lastCompletedDate: string | null;
 }
 
-function getWeekEnd(weekStart: string): string {
-  const d = new Date(weekStart + 'T00:00:00')
-  d.setDate(d.getDate() + 6)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+export function calculateStreak(tasks: Task[]): Streak {
+  // Get all completions by the current user, sorted by date descending
+  const allCompletions = tasks
+    .flatMap((task) =>
+      task.completions.map((c) => ({
+        date: new Date(c.completedAt),
+        userId: c.userId,
+      }))
+    )
+    .filter((c) => c.date) // Filter out invalid dates
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-function isWeekComplete(weekStart: string, today: string): boolean {
-  const weekEnd = getWeekEnd(weekStart)
-  return weekEnd < today
-}
-
-function countActiveDaysInWeek(
-  weekStart: string,
-  recordMap: Map<string, DayRecord>,
-  today: string
-): number {
-  const weekEnd = getWeekEnd(weekStart)
-  const endDate = weekEnd < today ? weekEnd : today
-  const days = getDaysInRange(weekStart, endDate)
-  return days.filter((d) => {
-    const rec = recordMap.get(d)
-    return rec !== undefined && rec.completedTaskIds.length > 0
-  }).length
-}
-
-export function calculateStreak(
-  dayRecords: DayRecord[],
-  goals: Goals,
-  todayDate: string
-): number {
-  const recordMap = new Map<string, DayRecord>()
-  for (const rec of dayRecords) {
-    recordMap.set(rec.date, rec)
+  if (allCompletions.length === 0) {
+    return { current: 0, longest: 0, lastCompletedDate: null };
   }
 
-  // Track which weeks have been evaluated to avoid re-checking
-  const weekMetGoal = new Map<string, boolean>()
+  // Get unique dates (day only, no time)
+  const uniqueDates = [...new Set(allCompletions.map((c) => c.date.toISOString().split('T')[0]))].sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime()
+  );
 
-  function weekMeetGoal(weekStart: string): boolean {
-    if (weekMetGoal.has(weekStart)) return weekMetGoal.get(weekStart)!
-    const count = countActiveDaysInWeek(weekStart, recordMap, todayDate)
-    const met = count >= goals.weeklyMinDays
-    weekMetGoal.set(weekStart, met)
-    return met
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+
+  // Calculate current streak (must include today or yesterday to be "current")
+  if (uniqueDates[0] === today || uniqueDates[0] === yesterday) {
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const expectedDate = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
+      if (uniqueDates[i] === expectedDate) {
+        tempStreak++;
+      } else {
+        break;
+      }
+    }
+    currentStreak = tempStreak;
   }
 
-  let streak = 0
-  let current = todayDate
+  // Calculate longest streak
+  tempStreak = 1;
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prevDate = new Date(uniqueDates[i - 1]);
+    const currDate = new Date(uniqueDates[i]);
+    const diffDays = (prevDate.getTime() - currDate.getTime()) / 86400000;
 
-  while (true) {
-    const rec = recordMap.get(current)
-    const isActive = rec !== undefined && rec.completedTaskIds.length > 0
-    const weekStart = getWeekStart(current)
-    const weekDone = isWeekComplete(weekStart, todayDate)
-
-    if (isActive) {
-      streak++
-      current = subtractDay(current)
-      continue
+    if (diffDays === 1) {
+      tempStreak++;
+    } else {
+      longestStreak = Math.max(longestStreak, tempStreak);
+      tempStreak = 1;
     }
-
-    // Day is not active. Check if the week still met goal
-    if (weekDone && weekMeetGoal(weekStart)) {
-      // Week met goal even though this day wasn't active — streak continues
-      streak++
-      current = subtractDay(current)
-      continue
-    }
-
-    // If the week is not yet complete (ongoing week), we allow the day to pass
-    // without breaking the streak since the week isn't over
-    if (!weekDone) {
-      // Don't count inactive days in the current week but don't break yet
-      // Only go back if there's still hope (week isn't failed yet)
-      // Stop extending streak for this week's inactive days
-      break
-    }
-
-    // Week ended and didn't meet goal, streak breaks
-    break
   }
+  longestStreak = Math.max(longestStreak, tempStreak, currentStreak);
 
-  return streak
+  return {
+    current: currentStreak,
+    longest: longestStreak,
+    lastCompletedDate: uniqueDates[0] || null,
+  };
 }

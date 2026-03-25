@@ -1,62 +1,97 @@
-import { createContext, useContext, type ReactNode } from 'react'
-import { useAuthMe, useAuthLogin, useAuthRegister, useLogout } from '../hooks'
-import type { User } from '../api'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import type { User } from '../types';
+import { authApi } from '../api/auth';
 
-type AuthStatus = 'loading' | 'unauthenticated' | 'no-household' | 'authenticated'
-
-type AuthContextValue = {
-  user: User | null
-  status: AuthStatus
-  isLoading: boolean
-  login: ReturnType<typeof useAuthLogin>['mutate']
-  register: ReturnType<typeof useAuthRegister>['mutate']
-  logout: ReturnType<typeof useLogout>['mutate']
-  loginError: string | null
-  registerError: string | null
-  isLoggingIn: boolean
-  isRegistering: boolean
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: user, isLoading, error } = useAuthMe()
-  const loginMutation = useAuthLogin()
-  const registerMutation = useAuthRegister()
-  const logoutMutation = useLogout()
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasToken, setHasToken] = useState(false);
 
-  const hasToken = Boolean(localStorage.getItem('auth-token'))
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        setHasToken(true);
+        try {
+          const userData = await authApi.me();
+          setUser(userData);
+        } catch {
+          localStorage.removeItem('token');
+          setHasToken(false);
+        }
+      }
+      setIsLoading(false);
+    };
 
-  const status: AuthStatus = isLoading
-    ? 'loading'
-    : !hasToken || error
-    ? 'unauthenticated'
-    : !user?.currentHouseholdId
-    ? 'no-household'
-    : 'authenticated'
+    initAuth();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const response = await authApi.login(email, password);
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    setUser(response.user);
+    setHasToken(true);
+  };
+
+  const register = async (email: string, password: string, name: string) => {
+    const response = await authApi.register(email, password, name);
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    setUser(response.user);
+    setHasToken(true);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setHasToken(false);
+  };
+
+  const refreshUser = async () => {
+    const userData = await authApi.me();
+    setUser(userData);
+  };
+
+  // isAuthenticated is true when:
+  // - We have a valid user OR
+  // - We have a token and we're still loading (to prevent redirect during auth check)
+  const isAuthenticated = !!user || (hasToken && isLoading);
 
   return (
     <AuthContext.Provider
       value={{
-        user: user ?? null,
-        status,
+        user,
         isLoading,
-        login: loginMutation.mutate,
-        register: registerMutation.mutate,
-        logout: logoutMutation.mutate,
-        loginError: loginMutation.error ? String(loginMutation.error) : null,
-        registerError: registerMutation.error ? String(registerMutation.error) : null,
-        isLoggingIn: loginMutation.isPending,
-        isRegistering: registerMutation.isPending,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        refreshUser,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
-  return ctx
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

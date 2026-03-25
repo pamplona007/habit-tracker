@@ -1,92 +1,149 @@
-const pt = {
-  // App
-  appName: 'Habit Tracker',
+import type { TranslationKeys } from './en';
 
-  // Header
-  header: {
-    openGoals: 'Abrir configurações de metas',
-  },
-
-  // Home
-  home: {
-    todaysTasks: 'Tarefas de Hoje',
-    pending: '{{count}} pendente',
-    pickRandom: '🎲 Tarefa aleatória',
-    addTask: '+ Adicionar Tarefa',
-  },
-
-  // StreakCard
-  streak: {
-    days: 'dias seguidos',
-    start: 'Comece sua sequência hoje!',
-  },
-
-  // TaskList
-  taskList: {
-    empty: 'Nenhuma tarefa ainda. Adicione uma para começar!',
-  },
-
-  // AddTaskModal
-  addTask: {
-    title: 'Adicionar Tarefa',
-    namePlaceholder: 'ex: Ir correr',
-    nameLabel: 'Nome da tarefa *',
-    nameRequired: 'O nome da tarefa é obrigatório.',
-    deadlineLabel: 'Prazo (opcional)',
+export const pt: TranslationKeys = {
+  common: {
+    appName: 'Rastreador de Hábitos',
+    loading: 'Carregando...',
+    save: 'Salvar',
     cancel: 'Cancelar',
-    add: 'Adicionar',
-  },
-
-  // RandomTaskModal
-  randomTask: {
-    title: 'Tarefa Aleatória',
-    allDone: 'Todas as tarefas concluídas! Adicione mais para continuar.',
+    delete: 'Excluir',
+    edit: 'Editar',
+    create: 'Criar',
     close: 'Fechar',
-    due: 'Prazo {{date}}',
-    pickAnother: 'Outra tarefa',
-    letsDoIt: 'Bora lá!',
-  },
-
-  // CompletionModal
-  completion: {
-    title: 'Como foi?',
-    fullyCompleted: 'Totalmente concluída ✅',
-    partiallyCompleted: 'Parcialmente concluída 🟡',
-    cancel: 'Cancelar',
-  },
-
-  // TaskInProgress
-  inProgress: {
-    label: 'EM ANDAMENTO',
-    markDone: 'Marcar como feita',
-    giveUp: 'Desistir',
-  },
-
-  // GoalsSettings
-  goals: {
-    title: 'Metas',
-    description:
-      'Defina suas metas mínimas de atividade. A sequência é mantida quando você atinge sua meta semanal, mesmo nos dias em que não conclui uma tarefa.',
-    weeklyLabel: 'Dias ativos por semana (mínimo)',
-    weeklyHint: 'Quantos dias por semana você pretende completar ao menos uma tarefa.',
-    weeklyError: 'Deve ser entre 1 e 7.',
-    monthlyLabel: 'Dias ativos por mês (mínimo)',
-    monthlyHint: 'Sua meta geral de atividade mensal.',
-    monthlyError: 'Deve ser entre 1 e 31.',
-    save: 'Salvar Metas',
     back: 'Voltar',
+    next: 'Próximo',
+    confirm: 'Confirmar',
+    confirmDelete: 'Tem certeza que deseja excluir?',
+    search: 'Buscar',
+    noResults: 'Nenhum resultado encontrado',
+    error: 'Ocorreu um erro',
+    retry: 'Tentar novamente',
   },
-
-  // LanguageSettings
-  language: {
-    title: 'Idioma',
-    label: 'Idioma do app',
+  auth: {
+    login: 'Entrar',
+    register: 'Cadastrar',
+    logout: 'Sair',
+    email: 'E-mail',
+    password: 'Senha',
+    name: 'Nome',
+    confirmPassword: 'Confirmar senha',
+    forgotPassword: 'Esqueceu a senha?',
+    noAccount: 'Não tem uma conta?',
+    hasAccount: 'Já tem uma conta?',
+    loginSuccess: 'Bem-vindo de volta!',
+    registerSuccess: 'Conta criada com sucesso!',
   },
-
-  // Settings page (if unified)
+  household: {
+    create: 'Criar casa',
+    join: 'Entrar numa casa',
+    joinCode: 'Código da casa',
+    leave: 'Sair da casa',
+    switch: 'Trocar de casa',
+    members: 'Membros',
+    invites: 'Convites',
+    inviteCode: 'Código de convite',
+    generateInvite: 'Gerar convite',
+    copyCode: 'Copiar código',
+    noHousehold: 'Você não faz parte de nenhuma casa',
+    createFirst: 'Crie sua primeira casa ou entre em uma existente',
+    name: 'Nome da casa',
+    role: {
+      OWNER: 'Dono',
+      ADMIN: 'Admin',
+      MEMBER: 'Membro',
+    },
+  },
+  tasks: {
+    title: 'Tarefas',
+    create: 'Criar tarefa',
+    name: 'Nome da tarefa',
+    namePlaceholder: 'Exercício matinal',
+    description: 'Descrição',
+    descriptionPlaceholder: '30 minutos de cardio',
+    type: 'Tipo',
+    priority: 'Prioridade',
+    deadline: 'Prazo',
+    filters: {
+      all: 'Todos',
+    },
+    types: {
+      DAILY: 'Diária',
+      WEEKLY: 'Semanal',
+      MONTHLY: 'Mensal',
+      ONE_TIME: 'Única',
+    },
+    priorities: {
+      low: 'Baixa',
+      normal: 'Normal',
+      high: 'Alta',
+      urgent: 'Urgente',
+    },
+    dayOfWeek: 'Dia da semana',
+    dayOfMonth: 'Dia do mês',
+    complete: 'Completar',
+    uncomplete: 'Desfazer',
+    completed: 'Completada',
+    pending: 'Pendente',
+    todo: 'A Fazer',
+    streak: 'Sequência atual',
+    longestStreak: 'Maior sequência',
+    noTasks: 'Nenhuma tarefa ainda',
+    createFirst: 'Crie sua primeira tarefa para começar',
+    startTimer: 'Iniciar timer',
+    stopTimer: 'Parar timer',
+    fullCompletion: 'Completo',
+    partialCompletion: 'Parcial',
+    days: {
+      0: 'Domingo',
+      1: 'Segunda',
+      2: 'Terça',
+      3: 'Quarta',
+      4: 'Quinta',
+      5: 'Sexta',
+      6: 'Sábado',
+    },
+  },
+  notices: {
+    title: 'Avisos',
+    create: 'Criar aviso',
+    name: 'Título',
+    content: 'Conteúdo',
+    priority: 'Prioridade',
+    priorities: {
+      low: 'Baixa',
+      normal: 'Normal',
+      high: 'Alta',
+      urgent: 'Urgente',
+    },
+    noNotices: 'Nenhum aviso',
+    createFirst: 'Crie seu primeiro aviso',
+  },
+  shopping: {
+    title: 'Compras',
+    createList: 'Criar lista',
+    addItem: 'Adicionar item',
+    itemName: 'Nome do item',
+    quantity: 'Quantidade',
+    noLists: 'Nenhuma lista de compras',
+    createFirst: 'Crie sua primeira lista de compras',
+    checked: 'Marcado',
+    unchecked: 'Desmarcado',
+  },
   settings: {
     title: 'Configurações',
+    profile: 'Perfil',
+    household: 'Casa',
+    language: 'Idioma',
+    theme: 'Tema',
+    notifications: 'Notificações',
+    account: 'Conta',
+    deleteAccount: 'Excluir conta',
   },
-} as const
-
-export default pt
+  nav: {
+    dashboard: 'Painel',
+    tasks: 'Tarefas',
+    notices: 'Avisos',
+    shopping: 'Compras',
+    settings: 'Configurações',
+  },
+};

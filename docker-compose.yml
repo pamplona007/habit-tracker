@@ -34,7 +34,7 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ./apps/api/src:/app/src:ro
+      - ./apps/api:/app:ro
     command: bun run --watch src/index.ts
 
   web:
@@ -46,12 +46,11 @@ services:
     depends_on:
       - api
     environment:
-      VITE_API_URL: http://api:3000
+      VITE_API_URL: http://localhost:3000
     ports:
       - '5173:5173'
     volumes:
-      - ./apps/web/src:/app/src:ro
-      - ./apps/web/index.html:/app/index.html:ro
+      - ./apps/web:/app:ro
     command: npm run dev -- --host
 
 volumes:

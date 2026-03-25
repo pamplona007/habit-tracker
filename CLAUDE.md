@@ -135,13 +135,19 @@ src/
 
 ---
 
+## Stitch Screens
+
+Design system e screens disponíveis em: `projects/1440029435138039410`
+
+---
+
 ## Regras de Estilo
 
-- **CSS Modules** — cada componente na sua pasta com `styles.module.css`
-- **Radix UI** para componentes (Box, Flex, Text, Button, Card, Dialog, Select, Checkbox, Badge, Progress, Avatar, TextArea, TextField, IconButton)
-- **Variáveis Radix** para cores: `var(--accent-9)`, `var(--gray-3)` — nunca hex hardcoded
-- Espaçamento em múltiplos de 4px
-
+- **Tailwind CSS v4** — classes utilitárias no JSX
+- **Design Tokens** — definidos em `@theme` no `index.css` (ex: `text-primary`, `bg-surface-container-lowest`)
+- **Espaçamento** — classes Tailwind (p-4, m-6, gap-4, etc.)
+- **Border Radius** — `rounded-lg` para containers, `rounded-full` para botões
+- **Material Symbols** — ícone via `<span className="material-symbols-outlined">{icon}</span>`
 ---
 
 ## Views (App.tsx)
@@ -178,20 +184,3 @@ docker compose down         # Parar
 docker compose exec api bun run prisma db push
 docker compose exec api bun run prisma/seed.ts
 ```
-
----
-
-## Pendências
-
-1. ✅ Auth + Household (N:N)
-2. ✅ Tarefas (daily/weekly/monthly/one-time)
-3. ✅ Streak + Timer + Random + Completion (FULL/PARTIAL)
-4. ✅ Avisos com priority
-5. ✅ Listas de compras com quantidade
-6. ✅ Sidebar com household selector + mobile
-7. ✅ Página de configurações (membros + convites)
-8. ✅ i18n EN/PT
-9. ❌ Editar perfil do usuário
-10. ❌ Histórico de completions
-11. ❌ Notificações / lembretes
-12. ❌ Deploy (Railway / Vercel)

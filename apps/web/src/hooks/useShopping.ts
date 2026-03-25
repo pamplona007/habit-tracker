@@ -1,99 +1,85 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { shoppingApi } from '../api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { shoppingApi } from '../api/shopping';
+import type { ShoppingItem } from '../types';
 
 export const SHOPPING_KEYS = {
   all: (householdId: string) => ['households', householdId, 'shopping'] as const,
-  one: (householdId: string, listId: string) =>
-    ['households', householdId, 'shopping', listId] as const,
-}
+};
 
-export function useShoppingLists(householdId: string | null) {
+export function useShoppingLists(householdId: string) {
   return useQuery({
-    queryKey: SHOPPING_KEYS.all(householdId!),
-    queryFn: () => shoppingApi.list(householdId!),
-    enabled: Boolean(householdId),
-  })
+    queryKey: SHOPPING_KEYS.all(householdId),
+    queryFn: () => shoppingApi.list(householdId),
+    enabled: !!householdId,
+  });
 }
 
 export function useCreateShoppingList() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ householdId, name }: { householdId: string; name: string }) =>
-      shoppingApi.createList(householdId, name),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(vars.householdId) })
+    mutationFn: (params: { householdId: string; name: string }) =>
+      shoppingApi.createList(params.householdId, params.name),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
     },
-  })
+  });
 }
 
 export function useDeleteShoppingList() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ householdId, listId }: { householdId: string; listId: string }) =>
-      shoppingApi.deleteList(householdId, listId),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(vars.householdId) })
+    mutationFn: (params: { householdId: string; listId: string }) =>
+      shoppingApi.deleteList(params.householdId, params.listId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
     },
-  })
+  });
 }
 
 export function useAddShoppingItem() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      householdId,
-      listId,
-      name,
-      quantity = 1,
-    }: {
-      householdId: string
-      listId: string
-      name: string
-      quantity?: number
-    }) => shoppingApi.addItem(householdId, listId, name, quantity),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(vars.householdId) })
+    mutationFn: (params: { householdId: string; listId: string; name: string; quantity?: string }) =>
+      shoppingApi.addItem(params.householdId, params.listId, params.name, params.quantity),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
     },
-  })
+  });
 }
 
-export function useToggleShoppingItem() {
-  const queryClient = useQueryClient()
-
+export function useUpdateShoppingItem() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      householdId,
-      listId,
-      itemId,
-    }: {
-      householdId: string
-      listId: string
-      itemId: string
-    }) => shoppingApi.toggleItem(householdId, listId, itemId),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(vars.householdId) })
+    mutationFn: (params: {
+      householdId: string;
+      listId: string;
+      itemId: string;
+      updates: Partial<ShoppingItem>;
+    }) => shoppingApi.updateItem(params.householdId, params.listId, params.itemId, params.updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
     },
-  })
+  });
 }
 
 export function useDeleteShoppingItem() {
-  const queryClient = useQueryClient()
-
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      householdId,
-      listId,
-      itemId,
-    }: {
-      householdId: string
-      listId: string
-      itemId: string
-    }) => shoppingApi.deleteItem(householdId, listId, itemId),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(vars.householdId) })
+    mutationFn: (params: { householdId: string; listId: string; itemId: string }) =>
+      shoppingApi.deleteItem(params.householdId, params.listId, params.itemId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
     },
-  })
+  });
+}
+
+export function useToggleShoppingItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { householdId: string; listId: string; itemId: string }) =>
+      shoppingApi.toggleItem(params.householdId, params.listId, params.itemId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: SHOPPING_KEYS.all(variables.householdId) });
+    },
+  });
 }

@@ -1,20 +1,212 @@
 .page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  background: var(--surface-container-low);
 }
 
-.card {
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-16);
+  max-width: 480px;
+  margin: 0 auto;
   width: 100%;
-  max-width: 360px;
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-4);
-  padding: var(--space-6);
+}
+
+.header {
+  margin-bottom: var(--space-8);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+  text-decoration: none;
+}
+
+.logo .material-symbols-outlined {
+  font-size: 32px;
+  color: var(--primary);
+}
+
+.logo span:last-child {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.subtitle {
+  color: var(--on-surface-variant);
+  font-size: 1rem;
 }
 
 .form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.error {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--error-container);
+  color: var(--on-error-container);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--on-surface);
+}
+
+.field input {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-container-low);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--on-surface);
+  transition: background-color var(--transition-fast);
+}
+
+.field input::placeholder {
+  color: var(--on-surface-variant);
+}
+
+.field input:focus {
+  outline: none;
+  background-color: var(--surface-container-high);
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: var(--space-4);
+  transition: all var(--transition-base);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: var(--primary-dim);
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submitBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--on-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.footer {
+  margin-top: var(--space-8);
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.footer a {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.visual {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16);
+}
+
+.visualContent {
   width: 100%;
+  max-width: 380px;
+}
+
+.mockCard {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mockTitle {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: var(--space-6);
+}
+
+.mockItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mockItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: white;
+  font-size: 1rem;
+}
+
+.mockItem .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--primary-fixed);
+}
+
+@media (max-width: 1024px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .visual {
+    display: none;
+  }
+
+  .container {
+    padding: var(--space-8);
+  }
 }

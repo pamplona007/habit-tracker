@@ -1,19 +1,308 @@
-.card {
-  background: var(--primary-container);
-  border-radius: 12px;
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  background-color: var(--surface);
+}
+
+.container {
   width: 100%;
-  margin-bottom: 24px;
+  max-width: 480px;
 }
 
-.fireEmoji {
-  font-size: 2.5rem;
-  line-height: 1;
+.header {
+  text-align: center;
+  margin-bottom: var(--space-8);
 }
 
-.streakNumber {
-  font-size: 4rem;
-  font-weight: 800;
+.avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-4);
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.subtitle {
+  color: var(--on-surface-variant);
+  font-size: 1rem;
+}
+
+.householdsList {
+  margin-bottom: var(--space-6);
+}
+
+.householdsList h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-3);
+  padding-left: var(--space-4);
+}
+
+.householdCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  text-align: left;
+  transition: all var(--transition-base);
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.householdCard:hover {
+  background-color: var(--surface-container-low);
+  transform: translateX(4px);
+}
+
+.householdCard.current {
+  background-color: var(--primary-container);
+}
+
+.householdCard:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.householdIcon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-container-high);
+  border-radius: var(--radius-lg);
+}
+
+.householdCard.current .householdIcon {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.householdIcon .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.householdInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.householdName {
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.householdMeta {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.currentBadge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-2);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-sm);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.optionCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background-color: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  text-align: left;
+  transition: all var(--transition-base);
+  width: 100%;
+}
+
+.optionCard:hover {
+  background-color: var(--surface-container-low);
+  transform: translateX(4px);
+}
+
+.optionIcon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-container);
+  border-radius: var(--radius-lg);
+}
+
+.optionIcon .material-symbols-outlined {
+  font-size: 28px;
   color: var(--on-primary-container);
-  line-height: 1;
-  font-family: var(--font-display);
+}
+
+.optionContent {
+  flex: 1;
+}
+
+.optionContent h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: var(--space-1);
+}
+
+.optionContent p {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+}
+
+.optionCard .arrow {
+  font-size: 24px;
+  color: var(--on-surface-variant);
+}
+
+.form {
+  background-color: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.form h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--on-surface-variant);
+  font-weight: 500;
+  font-size: 0.875rem;
+  width: fit-content;
+  padding: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.backBtn:hover {
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+.backBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.error {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--error-container);
+  color: var(--on-error-container);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--on-surface);
+}
+
+.field input {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-container-low);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--on-surface);
+  transition: background-color var(--transition-fast);
+}
+
+.field input::placeholder {
+  color: var(--on-surface-variant);
+}
+
+.field input:focus {
+  outline: none;
+  background-color: var(--surface-container-high);
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all var(--transition-base);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: var(--primary-dim);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submitBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--on-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

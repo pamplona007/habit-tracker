@@ -1,34 +1,19 @@
-import { apiClient } from './client'
-
-export type User = {
-  id: string
-  email: string
-  name: string | null
-  currentHouseholdId: string | null
-  memberships: Array<{
-    household: { id: string; name: string }
-  }>
-  createdAt: string
-}
-
-export type AuthResponse = {
-  user: User
-  token: string
-}
+import { apiClient } from './client';
+import type { AuthResponse, User } from '../types';
 
 export const authApi = {
-  register: async (data: { email: string; password: string; name?: string }) => {
-    const res = await apiClient.post<AuthResponse>('/auth/register', data)
-    return res.data
+  login: async (email: string, password: string): Promise<AuthResponse> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/login', { email, password });
+    return data;
   },
 
-  login: async (data: { email: string; password: string }) => {
-    const res = await apiClient.post<AuthResponse>('/auth/login', data)
-    return res.data
+  register: async (email: string, password: string, name: string): Promise<AuthResponse> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/register', { email, password, name });
+    return data;
   },
 
-  me: async () => {
-    const res = await apiClient.get<{ user: User }>('/auth/me')
-    return res.data.user
+  me: async (): Promise<User> => {
+    const { data } = await apiClient.get<{ user: User }>('/auth/me');
+    return data.user;
   },
-}
+};

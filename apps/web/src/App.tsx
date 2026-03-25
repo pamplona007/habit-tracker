@@ -1,61 +1,154 @@
-import { useEffect, useState } from 'react'
-import { Flex, Spinner } from '@radix-ui/themes'
-import { useAuth } from './context'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import { Sidebar } from './components/layout/Sidebar';
 import {
   LandingPage,
   LoginPage,
   RegisterPage,
   NoHouseholdPage,
   DashboardPage,
-} from './pages'
+  TasksPage,
+  NoticesPage,
+  ShoppingPage,
+  SettingsPage,
+  TimerPage,
+} from './pages';
+import './i18n';
+import styles from './App.module.css';
 
-type Route = '/' | '/login' | '/register'
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-function getInitialRoute(): Route {
-  return (window.location.pathname as Route) || '/'
+        {/* Protected routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <TasksPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notices"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <NoticesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shopping"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ShoppingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <SettingsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/timer/:taskId"
+          element={
+            <ProtectedRoute>
+              <TimerPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* No Household route */}
+        <Route
+          path="/no-household"
+          element={
+            <ProtectedLayout>
+              <NoHouseholdPage />
+            </ProtectedLayout>
+          }
+        />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default function App() {
-  const { status } = useAuth()
-  const [route, setRoute] = useState<Route>(getInitialRoute)
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isLoading, isAuthenticated, user } = useAuth();
 
-  useEffect(() => {
-    const handleNavigate = (e: Event) => {
-      const path = (e as CustomEvent<string>).detail
-      setRoute(path as Route)
-      window.history.pushState({}, '', path)
-    }
-
-    window.addEventListener('navigate', handleNavigate)
-    return () => window.removeEventListener('navigate', handleNavigate)
-  }, [])
-
-  // Loading state
-  if (status === 'loading') {
+  if (isLoading) {
     return (
-      <Flex minHeight="100vh" align="center" justify="center">
-        <Spinner size="3" />
-      </Flex>
-    )
+      <div className={styles.loading}>
+        <div className={styles.spinner} />
+      </div>
+    );
   }
 
-  // Unauthenticated → public pages
-  if (status === 'unauthenticated') {
-    switch (route) {
-      case '/login':
-        return <LoginPage />
-      case '/register':
-        return <RegisterPage />
-      default:
-        return <LandingPage />
-    }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Authenticated but no household
-  if (status === 'no-household') {
-    return <NoHouseholdPage />
+  if (!user?.currentHouseholdId) {
+    return <Navigate to="/no-household" replace />;
   }
 
-  // Authenticated with household → Dashboard
-  return <DashboardPage />
+  return <>{children}</>;
 }
+
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { isLoading, isAuthenticated } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.spinner} />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={styles.layout}>
+      <Sidebar />
+      <main className={styles.main}>{children}</main>
+    </div>
+  );
+}
+
+export default App;

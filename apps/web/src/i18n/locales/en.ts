@@ -1,92 +1,149 @@
-const en = {
-  // App
-  appName: 'Habit Tracker',
-
-  // Header
-  header: {
-    openGoals: 'Open goals settings',
-  },
-
-  // Home
-  home: {
-    todaysTasks: "Today's Tasks",
-    pending: '{{count}} pending',
-    pickRandom: '🎲 Pick a random task',
-    addTask: '+ Add Task',
-  },
-
-  // StreakCard
-  streak: {
-    days: 'day streak',
-    start: 'Start your streak today!',
-  },
-
-  // TaskList
-  taskList: {
-    empty: 'No tasks yet. Add one to get started!',
-  },
-
-  // AddTaskModal
-  addTask: {
-    title: 'Add Task',
-    namePlaceholder: 'e.g. Go for a run',
-    nameLabel: 'Task name *',
-    nameRequired: 'Task name is required.',
-    deadlineLabel: 'Deadline (optional)',
+export const en = {
+  common: {
+    appName: 'Habit Tracker',
+    loading: 'Loading...',
+    save: 'Save',
     cancel: 'Cancel',
-    add: 'Add',
-  },
-
-  // RandomTaskModal
-  randomTask: {
-    title: 'Random Task',
-    allDone: 'All tasks completed! Add more tasks to keep going.',
+    delete: 'Delete',
+    edit: 'Edit',
+    create: 'Create',
     close: 'Close',
-    due: 'Due {{date}}',
-    pickAnother: 'Pick another',
-    letsDoIt: "Let's do it!",
+    back: 'Back',
+    next: 'Next',
+    confirm: 'Confirm',
+    confirmDelete: 'Are you sure you want to delete?',
+    search: 'Search',
+    noResults: 'No results found',
+    error: 'An error occurred',
+    retry: 'Retry',
   },
-
-  // CompletionModal
-  completion: {
-    title: 'How did it go?',
-    fullyCompleted: 'Fully completed ✅',
-    partiallyCompleted: 'Partially completed 🟡',
-    cancel: 'Cancel',
+  auth: {
+    login: 'Log in',
+    register: 'Register',
+    logout: 'Log out',
+    email: 'Email',
+    password: 'Password',
+    name: 'Name',
+    confirmPassword: 'Confirm password',
+    forgotPassword: 'Forgot password?',
+    noAccount: "Don't have an account?",
+    hasAccount: 'Already have an account?',
+    loginSuccess: 'Welcome back!',
+    registerSuccess: 'Account created successfully!',
   },
-
-  // TaskInProgress
-  inProgress: {
-    label: 'IN PROGRESS',
-    markDone: 'Mark as done',
-    giveUp: 'Give up',
+  household: {
+    create: 'Create household',
+    join: 'Join household',
+    joinCode: 'Household code',
+    leave: 'Leave household',
+    switch: 'Switch household',
+    members: 'Members',
+    invites: 'Invites',
+    inviteCode: 'Invite code',
+    generateInvite: 'Generate invite',
+    copyCode: 'Copy code',
+    noHousehold: 'You are not part of any household',
+    createFirst: 'Create your first household or join an existing one',
+    name: 'Household name',
+    role: {
+      OWNER: 'Owner',
+      ADMIN: 'Admin',
+      MEMBER: 'Member',
+    },
   },
-
-  // GoalsSettings
-  goals: {
-    title: 'Goals',
-    description:
-      "Set your minimum activity targets. A streak is maintained when you meet your weekly goal even on days you don't complete a task.",
-    weeklyLabel: 'Active days per week (minimum)',
-    weeklyHint: 'How many days per week you aim to complete at least one task.',
-    weeklyError: 'Must be between 1 and 7.',
-    monthlyLabel: 'Active days per month (minimum)',
-    monthlyHint: 'Your overall monthly activity target.',
-    monthlyError: 'Must be between 1 and 31.',
-    save: 'Save Goals',
-    back: 'Go back',
+  tasks: {
+    title: 'Tasks',
+    create: 'Create task',
+    name: 'Task name',
+    namePlaceholder: 'Morning exercise',
+    description: 'Description',
+    descriptionPlaceholder: '30 minutes of cardio',
+    type: 'Type',
+    priority: 'Priority',
+    deadline: 'Deadline',
+    filters: {
+      all: 'All',
+    },
+    types: {
+      DAILY: 'Daily',
+      WEEKLY: 'Weekly',
+      MONTHLY: 'Monthly',
+      ONE_TIME: 'One time',
+    },
+    priorities: {
+      low: 'Low',
+      normal: 'Normal',
+      high: 'High',
+      urgent: 'Urgent',
+    },
+    dayOfWeek: 'Day of week',
+    dayOfMonth: 'Day of month',
+    complete: 'Complete',
+    uncomplete: 'Undo',
+    completed: 'Completed',
+    pending: 'Pending',
+    todo: 'To Do',
+    streak: 'Current streak',
+    longestStreak: 'Longest streak',
+    noTasks: 'No tasks yet',
+    createFirst: 'Create your first task to get started',
+    startTimer: 'Start timer',
+    stopTimer: 'Stop timer',
+    fullCompletion: 'Full',
+    partialCompletion: 'Partial',
+    days: {
+      0: 'Sunday',
+      1: 'Monday',
+      2: 'Tuesday',
+      3: 'Wednesday',
+      4: 'Thursday',
+      5: 'Friday',
+      6: 'Saturday',
+    },
   },
-
-  // LanguageSettings
-  language: {
-    title: 'Language',
-    label: 'App language',
+  notices: {
+    title: 'Notices',
+    create: 'Create notice',
+    name: 'Title',
+    content: 'Content',
+    priority: 'Priority',
+    priorities: {
+      low: 'Low',
+      normal: 'Normal',
+      high: 'High',
+      urgent: 'Urgent',
+    },
+    noNotices: 'No notices',
+    createFirst: 'Create your first notice',
   },
-
-  // Settings page (if unified)
+  shopping: {
+    title: 'Shopping',
+    createList: 'Create list',
+    addItem: 'Add item',
+    itemName: 'Item name',
+    quantity: 'Quantity',
+    noLists: 'No shopping lists',
+    createFirst: 'Create your first shopping list',
+    checked: 'Checked',
+    unchecked: 'Unchecked',
+  },
   settings: {
     title: 'Settings',
+    profile: 'Profile',
+    household: 'Household',
+    language: 'Language',
+    theme: 'Theme',
+    notifications: 'Notifications',
+    account: 'Account',
+    deleteAccount: 'Delete account',
   },
-} as const
+  nav: {
+    dashboard: 'Dashboard',
+    tasks: 'Tasks',
+    notices: 'Notices',
+    shopping: 'Shopping',
+    settings: 'Settings',
+  },
+};
 
-export default en
+export type TranslationKeys = typeof en;

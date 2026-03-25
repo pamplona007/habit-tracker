@@ -1,26 +1,330 @@
-.container {
+.page {
+  padding: var(--space-8);
   max-width: 600px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-8);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
 
 .section {
-  padding: var(--space-4);
 }
 
-.code {
-  font-family: var(--font-display);
-  letter-spacing: 0.1em;
+.sectionTitle {
+  font-size: 0.75rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-3);
+  padding-left: var(--space-4);
 }
 
-.codeBox {
-  background: var(--surface-container-high);
-  border-radius: var(--radius-3);
-  padding: var(--space-4) var(--space-6);
-  width: 100%;
-  text-align: center;
+.card {
+  background-color: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+}
+
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.userName {
+  font-weight: 600;
   color: var(--on-surface);
 }
 
-.dialogContent {
-  max-width: 400px;
+.userEmail {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+}
+
+.householdInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.householdIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-container);
+  border-radius: var(--radius-lg);
+}
+
+.householdIcon .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--on-primary-container);
+}
+
+.householdDetails {
+  flex: 1;
+}
+
+.householdName {
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.householdMeta {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--surface-container-high);
+  margin: var(--space-5) 0;
+}
+
+.inviteSection h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: var(--space-1);
+}
+
+.inviteSection p {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-4);
+}
+
+.inviteCode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+}
+
+.code {
+  flex: 1;
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+}
+
+.copyBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--on-surface-variant);
+  transition: all var(--transition-fast);
+}
+
+.copyBtn:hover {
+  background-color: var(--surface-container-high);
+  color: var(--on-surface);
+}
+
+.copyBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.generateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  background-color: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  color: var(--primary);
+  transition: all var(--transition-fast);
+}
+
+.generateBtn:hover:not(:disabled) {
+  background-color: var(--surface-container-high);
+}
+
+.generateBtn:disabled {
+  opacity: 0.7;
+}
+
+.generateBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.membersSection h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: var(--space-3);
+}
+
+.membersList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.memberAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-container-high);
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.memberRole {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.leaveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  color: var(--error);
+  transition: all var(--transition-fast);
+}
+
+.leaveBtn:hover {
+  background-color: var(--error-container);
+}
+
+.leaveBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.optionInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.optionInfo .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--on-surface-variant);
+}
+
+.optionLabel {
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.optionDesc {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.select {
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--surface-container-low);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  color: var(--on-surface);
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  background-color: var(--surface-container-high);
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  color: var(--error);
+  transition: all var(--transition-fast);
+}
+
+.logoutBtn:hover {
+  background-color: var(--error-container);
+}
+
+.logoutBtn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--space-4);
+    padding-bottom: calc(var(--space-4) + 80px);
+  }
 }
