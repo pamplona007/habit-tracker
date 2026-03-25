@@ -8,7 +8,7 @@
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "npm run dev --workspace=apps/api",
     "dev": "npm run dev:web & npm run dev:api",
-    "build": "turbo build",
+    "build": "bun run build --workspace=apps/web && bun run build --workspace=apps/api",
     "start": "bun run apps/api/src/index.ts"
   },
   "devDependencies": {
