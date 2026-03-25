@@ -10,6 +10,9 @@ export const en = {
     you: '(you)',
     members: 'members',
     actionCannotBeUndone: 'This action cannot be undone.',
+    edit: 'Edit',
+    save: 'Save',
+    error: 'Something went wrong. Please try again.',
   },
   auth: {
     login: 'Log in',
@@ -17,6 +20,8 @@ export const en = {
     logout: 'Log out',
     email: 'Email',
     password: 'Password',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
     name: 'Name',
     confirmPassword: 'Confirm password',
     noAccount: "Don't have an account?",
@@ -31,6 +36,7 @@ export const en = {
     passwordMinLength: 'At least 6 characters',
     confirmPasswordPlaceholder: 'Repeat your password',
     invalidCredentials: 'Invalid email or password',
+    error: 'Something went wrong. Please try again.',
     passwordsDoNotMatch: 'Passwords do not match',
     passwordTooShort: 'Password must be at least 6 characters',
     failedToCreateAccount: 'Failed to create account',
@@ -161,6 +167,12 @@ export const en = {
     preferredLanguage: 'Language',
     languageEn: 'English',
     languagePt: 'Português',
+    changePassword: 'Change Password',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    removeMember: 'Remove member',
+    removeMemberMessage: 'Are you sure you want to remove {{name}} from the household?',
+    remove: 'Remove',
   },
   dashboard: {
     greetingMorning: 'Good morning',
@@ -206,6 +218,57 @@ export const en = {
     selectDuration: 'Select duration',
     startNow: 'Start Now',
     rollAgain: 'Roll Again',
+  },
+  landing: {
+    badge: 'Collaborative habit tracking',
+    title: {
+      line1: 'Build better habits,',
+      line2: 'together.',
+    },
+    subtitle: 'Track daily tasks, streaks, and household chores with your family. Stay organized and motivated with real-time sync.',
+    cta: {
+      getStarted: 'Get started',
+      signIn: 'Sign in',
+    },
+    mockCard: {
+      title: "Today's Tasks",
+      streak: 'day streak',
+      task1: 'Morning exercise',
+      task2: 'Read 30 minutes',
+      task3: 'Clean kitchen',
+      complete: 'complete',
+      badge1: 'Task done!',
+      badge2: '4 members online',
+    },
+    features: {
+      label: 'Features',
+      title: 'Everything you need',
+      subtitle: 'Powerful tools to help your household stay organized, motivated, and connected.',
+    },
+    howItWorks: {
+      label: 'How it works',
+      title: 'Get started in minutes',
+      step1: {
+        title: 'Create your account',
+        desc: 'Sign up in seconds and set up your profile.',
+      },
+      step2: {
+        title: 'Create or join a household',
+        desc: 'Start a new household or join your family\'s existing one.',
+      },
+      step3: {
+        title: 'Start tracking habits',
+        desc: 'Create tasks, track progress, and build lasting habits together.',
+      },
+    },
+    ctaSection: {
+      title: 'Ready to get started?',
+      subtitle: 'Join thousands of families building better habits together.',
+    },
+    footer: {
+      tagline: 'Built with care for families everywhere',
+      copyright: '© 2026 Habit Tracker. All rights reserved.',
+    },
   },
 };
 
