@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono'
-import type { User, HouseholdMember } from '@prisma/client'
+import type { User, HouseholdMember } from './generated/client'
 
 // User type returned from DB (includes memberships)
 export type AuthUser = User & {
