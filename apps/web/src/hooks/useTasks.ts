@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '../api/tasks';
-import type { Task, TaskType, CompletionType } from '../types';
+import type { Task, TaskType, CompletionType, TaskPriority } from '../types';
 import { calculateStreak, type Streak } from '../utils/streak';
 
 export const TASK_KEYS = {
@@ -33,6 +33,7 @@ export function useCreateTask() {
         dayOfWeek?: number;
         dayOfMonth?: number;
         deadline?: string;
+        priority?: TaskPriority;
       };
     }) => tasksApi.create(params.householdId, params.task),
     onSuccess: (_, variables) => {
