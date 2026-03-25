@@ -66,3 +66,34 @@ export function useCreateInvite(householdId: string) {
     mutationFn: () => householdsApi.createInvite(householdId),
   });
 }
+
+export function useUpdateHousehold(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string }) => householdsApi.update(householdId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.one(householdId) });
+    },
+  });
+}
+
+export function useUpdateMemberRole(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: 'ADMIN' | 'MEMBER' }) =>
+      householdsApi.updateMemberRole(householdId, userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.one(householdId) });
+    },
+  });
+}
+
+export function useRemoveMember(householdId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => householdsApi.removeMember(householdId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLD_KEYS.one(householdId) });
+    },
+  });
+}
