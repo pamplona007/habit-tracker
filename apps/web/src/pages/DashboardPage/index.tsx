@@ -58,16 +58,6 @@ export function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      {/* Top App Bar */}
-      <header className={styles.topBar}>
-        <button className={styles.menuBtn}>
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-        <span className={styles.brand}>Ethereal</span>
-        <div className={styles.avatar}>
-          {user?.name?.charAt(0).toUpperCase() || 'U'}
-        </div>
-      </header>
 
       <main className={styles.main}>
         {/* Hero Section */}

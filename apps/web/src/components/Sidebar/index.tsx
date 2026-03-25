@@ -22,8 +22,7 @@ export function Sidebar() {
     <aside className={styles.sidebar}>
       <div className={styles.header}>
         <div className={styles.logo}>
-          <span className="material-symbols-outlined">home_tracker</span>
-          <span className={styles.logoText}>Habit</span>
+          <span className={styles.logoText}>Ethereal</span>
         </div>
         {currentHousehold && (
           <div className={styles.householdBadge}>

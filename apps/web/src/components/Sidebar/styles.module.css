@@ -12,10 +12,16 @@
 }
 
 .header {
-  padding: var(--space-6);
+  padding: var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  background-color: rgba(249, 249, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .logo {
@@ -31,9 +37,11 @@
 
 .logoText {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--on-surface);
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-style: italic;
+  color: var(--primary);
+  letter-spacing: -0.02em;
 }
 
 .householdBadge {

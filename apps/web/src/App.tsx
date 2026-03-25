@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { Sidebar } from './components/layout/Sidebar';
+import { useTimer } from './context/TimerContext';
 import {
   LandingPage,
   LoginPage,
@@ -15,6 +15,8 @@ import {
 } from './pages';
 import './i18n';
 import styles from './App.module.css';
+import { Sidebar } from './components/Sidebar';
+import { TimerWidget } from './components/TimerWidget';
 
 function App() {
   return (
@@ -73,14 +75,6 @@ function App() {
               <Layout>
                 <SettingsPage />
               </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/timer/:taskId"
-          element={
-            <ProtectedRoute>
-              <TimerPage />
             </ProtectedRoute>
           }
         />
@@ -143,10 +137,18 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const { isActive, isMinimized } = useTimer();
+
   return (
     <div className={styles.layout}>
       <Sidebar />
-      <main className={styles.main}>{children}</main>
+      <main className={styles.main}>
+        <TimerWidget />
+        <div className={styles.content}>
+          {children}
+        </div>
+      </main>
+      {isActive && !isMinimized && <TimerPage />}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { Task } from '../../types';
 import { TIMER_OPTIONS, type TimerDuration } from '../../utils/tasks';
 import { Button } from '../Button';
+import { useTimer } from '../../context/TimerContext';
 import styles from './styles.module.css';
 
 interface QuickStartModalProps {
@@ -12,11 +12,12 @@ interface QuickStartModalProps {
 }
 
 export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalProps) {
-  const navigate = useNavigate();
+  const { startTimer } = useTimer();
   const [selectedDuration, setSelectedDuration] = useState<TimerDuration>(25);
 
   const handleStart = () => {
-    navigate(`/timer/${task.id}`, { state: { duration: selectedDuration, task } });
+    startTimer(task, selectedDuration);
+    onClose();
   };
 
   const handleRollAgain = () => {
