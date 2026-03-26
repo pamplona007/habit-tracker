@@ -217,6 +217,7 @@
 
 .addItemInput {
   flex: 1;
+  width: 100%;
   padding: var(--space-3) var(--space-4);
   background-color: var(--surface-container-low);
   border: none;

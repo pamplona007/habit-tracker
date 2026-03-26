@@ -8,6 +8,8 @@
   margin-left: 280px;
   background-color: var(--surface);
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .content {

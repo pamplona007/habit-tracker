@@ -2,6 +2,7 @@
   padding: var(--space-8);
   max-width: 800px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .header {
@@ -503,6 +504,37 @@
   .page {
     padding: var(--space-4);
     padding-bottom: calc(var(--space-4) + 80px);
+  }
+
+  .filters {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+  }
+
+  .streakBar {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .taskCard {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .taskContent {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .taskPriority,
+  .taskType {
+    flex-shrink: 0;
+  }
+
+  .deleteBtn {
+    opacity: 1;
   }
 
   .header {
