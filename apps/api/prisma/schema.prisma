@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+
 
 generator client {
   provider = "prisma-client"
@@ -10,7 +10,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// ============== Models ==============
+
 
 model Household {
   id        String   @id @default(uuid())
@@ -52,7 +52,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Casa "ativa" no momento (para facilitar queries)
+
   currentHouseholdId String?
 
   memberships  HouseholdMember[]
@@ -69,7 +69,7 @@ model HouseholdInvite {
   householdId String
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
-  usedById String?  // preenchido quando utilizado
+  usedById String?
 }
 
 model Notice {
@@ -100,9 +100,9 @@ model Task {
   description String?
   type        TaskType  @default(ONE_TIME)
   priority    TaskPriority @default(normal)
-  dayOfWeek   Int?      // 0-6 (Sunday-Saturday), only if type=WEEKLY
-  dayOfMonth  Int?       // 1-31, only if type=MONTHLY
-  deadline    DateTime? // only if type=ONE_TIME
+  dayOfWeek   Int?
+  dayOfMonth  Int?
+  deadline    DateTime?
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

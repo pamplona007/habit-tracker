@@ -37,38 +37,31 @@ export function SettingsPage() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
-  // Profile edit state
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  // Password change modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Household name edit state
   const [isEditingHouseholdName, setIsEditingHouseholdName] = useState(false);
   const [householdName, setHouseholdName] = useState(household?.name || '');
 
-  // Member removal confirmation
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [memberToRemoveName, setMemberToRemoveName] = useState<string | null>(null);
 
-  // Role change state
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberRole, setEditingMemberRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
 
-  // Determine user role in household
   const userMembership = household?.members?.find((m) => m.userId === user?.id);
   const userRole = userMembership?.role;
   const isOwner = userRole === 'OWNER';
   const isAdmin = userRole === 'ADMIN' || isOwner;
 
-  // Profile mutations
   const updateProfileMutation = useMutation({
     mutationFn: (data: { name?: string; email?: string }) => authApi.updateProfile(data),
     onSuccess: () => {
@@ -99,7 +92,6 @@ export function SettingsPage() {
     setShowLeaveConfirm(false);
   };
 
-  // Profile handlers
   const handleEditProfile = () => {
     setProfileName(user?.name || '');
     setProfileEmail(user?.email || '');
@@ -123,7 +115,6 @@ export function SettingsPage() {
     setProfileError(null);
   };
 
-  // Password modal handlers
   const handleOpenPasswordModal = () => {
     setCurrentPassword('');
     setNewPassword('');
@@ -153,7 +144,6 @@ export function SettingsPage() {
     }
   };
 
-  // Household name handlers
   const handleEditHouseholdName = () => {
     setHouseholdName(household?.name || '');
     setIsEditingHouseholdName(true);
@@ -170,7 +160,6 @@ export function SettingsPage() {
     setIsEditingHouseholdName(false);
   };
 
-  // Member role handlers
   const handleStartEditRole = (memberId: string, currentRole: 'ADMIN' | 'MEMBER') => {
     setEditingMemberId(memberId);
     setEditingMemberRole(currentRole);
@@ -185,7 +174,6 @@ export function SettingsPage() {
     setEditingMemberId(null);
   };
 
-  // Member removal handlers
   const handleRemoveMember = (memberId: string, memberName: string) => {
     setMemberToRemove(memberId);
     setMemberToRemoveName(memberName);
@@ -200,16 +188,15 @@ export function SettingsPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="settings-page">
       <PageHeader title={t('settings.title')} />
 
       <div className={styles.sections}>
-        {/* Profile Section */}
-        <section className={styles.section}>
+        <section className={styles.section} data-testid="profile-section">
           <h2 className={styles.sectionTitle}>{t('settings.profile')}</h2>
           <div className={styles.card}>
             <div className={styles.profileInfo}>
-              <div className={styles.avatar}>
+              <div className={styles.avatar} data-testid="user-avatar">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
               {isEditingProfile ? (
@@ -221,6 +208,7 @@ export function SettingsPage() {
                       className={styles.input}
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value)}
+                      data-testid="profile-name-input"
                     />
                   </div>
                   <div className={styles.formField}>
@@ -230,14 +218,15 @@ export function SettingsPage() {
                       className={styles.input}
                       value={profileEmail}
                       onChange={(e) => setProfileEmail(e.target.value)}
+                      data-testid="profile-email-input"
                     />
                   </div>
                   {profileError && <p className={styles.error}>{profileError}</p>}
                   <div className={styles.profileEditActions}>
-                    <Button variant="ghost" onClick={handleCancelProfileEdit}>
+                    <Button variant="ghost" onClick={handleCancelProfileEdit} data-testid="cancel-profile-btn">
                       {t('common.cancel')}
                     </Button>
-                    <Button variant="primary" onClick={handleSaveProfile}>
+                    <Button variant="primary" onClick={handleSaveProfile} data-testid="save-profile-btn">
                       {t('common.save')}
                     </Button>
                   </div>
@@ -245,14 +234,14 @@ export function SettingsPage() {
               ) : (
                 <div className={styles.profileDisplay}>
                   <div className={styles.profileText}>
-                    <p className={styles.userName}>{user?.name}</p>
-                    <p className={styles.userEmail}>{user?.email}</p>
+                    <p className={styles.userName} data-testid="user-name">{user?.name}</p>
+                    <p className={styles.userEmail} data-testid="user-email">{user?.email}</p>
                   </div>
                   <div className={styles.profileActions}>
-                    <Button variant="ghost" size="sm" onClick={handleEditProfile}>
+                    <Button variant="ghost" size="sm" onClick={handleEditProfile} data-testid="edit-profile-btn">
                       {t('common.edit')}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={handleOpenPasswordModal}>
+                    <Button variant="ghost" size="sm" onClick={handleOpenPasswordModal} data-testid="change-password-btn">
                       {t('settings.changePassword')}
                     </Button>
                   </div>
@@ -262,9 +251,8 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Household Section */}
         {household && (
-          <section className={styles.section}>
+          <section className={styles.section} data-testid="household-section">
             <h2 className={styles.sectionTitle}>{t('settings.household')}</h2>
             <div className={styles.card}>
               <div className={styles.householdInfo}>
@@ -279,31 +267,33 @@ export function SettingsPage() {
                         className={styles.input}
                         value={householdName}
                         onChange={(e) => setHouseholdName(e.target.value)}
+                        data-testid="household-name-input"
                       />
                       <div className={styles.inlineActions}>
-                        <Button variant="ghost" size="sm" onClick={handleCancelHouseholdNameEdit}>
+                        <Button variant="ghost" size="sm" onClick={handleCancelHouseholdNameEdit} data-testid="cancel-household-name-btn">
                           {t('common.cancel')}
                         </Button>
-                        <Button variant="primary" size="sm" onClick={handleSaveHouseholdName}>
+                        <Button variant="primary" size="sm" onClick={handleSaveHouseholdName} data-testid="save-household-name-btn">
                           {t('common.save')}
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <p className={styles.householdName}>
+                      <p className={styles.householdName} data-testid="household-name">
                         {household.name}
                         {isAdmin && (
                           <button
                             className={styles.editIconBtn}
                             onClick={handleEditHouseholdName}
                             aria-label={t('common.edit')}
+                            data-testid="edit-household-name-btn"
                           >
                             <span className="material-symbols-outlined">edit</span>
                           </button>
                         )}
                       </p>
-                      <p className={styles.householdMeta}>
+                      <p className={styles.householdMeta} data-testid="household-members-count">
                         {household.members?.length || 0} {t('settings.members')}
                       </p>
                     </>
@@ -313,13 +303,13 @@ export function SettingsPage() {
 
               <div className={styles.divider} />
 
-              <div className={styles.inviteSection}>
+              <div className={styles.inviteSection} data-testid="invite-section">
                 <h3>{t('settings.inviteMembers')}</h3>
                 <p>{t('settings.inviteMembersDesc')}</p>
                 {showInvite && inviteCode ? (
-                  <div className={styles.inviteCode}>
-                    <span className={styles.code}>{inviteCode}</span>
-                    <button onClick={handleCopyCode} className={styles.copyBtn}>
+                  <div className={styles.inviteCode} data-testid="invite-code-display">
+                    <span className={styles.code} data-testid="invite-code">{inviteCode}</span>
+                    <button onClick={handleCopyCode} className={styles.copyBtn} data-testid="copy-invite-code-btn">
                       <span className="material-symbols-outlined">content_copy</span>
                     </button>
                   </div>
@@ -329,6 +319,7 @@ export function SettingsPage() {
                     onClick={handleCreateInvite}
                     loading={createInvite.isPending}
                     iconLeft={<span className="material-symbols-outlined">add_link</span>}
+                    data-testid="generate-invite-code-btn"
                   >
                     {t('settings.generateInviteCode')}
                   </Button>
@@ -337,17 +328,16 @@ export function SettingsPage() {
 
               <div className={styles.divider} />
 
-              {/* Members List */}
-              <div className={styles.membersSection}>
+              <div className={styles.membersSection} data-testid="members-section">
                 <h3>{t('settings.members')}</h3>
-                <div className={styles.membersList}>
+                <div className={styles.membersList} data-testid="members-list">
                   {household.members?.map((member) => (
-                    <div key={member.userId} className={styles.member}>
+                    <div key={member.userId} className={styles.member} data-testid={`member-${member.userId}`}>
                       <div className={styles.memberAvatar}>
                         {member.user.name.charAt(0).toUpperCase()}
                       </div>
                       <div className={styles.memberInfo}>
-                        <span className={styles.memberName}>
+                        <span className={styles.memberName} data-testid={`member-name-${member.userId}`}>
                           {member.user.name}
                           {member.userId === user?.id && ` ${t('common.you')}`}
                         </span>
@@ -366,6 +356,7 @@ export function SettingsPage() {
                                   onChange={(e) =>
                                     setEditingMemberRole(e.target.value as 'ADMIN' | 'MEMBER')
                                   }
+                                  data-testid="role-select"
                                 >
                                   <option value="ADMIN">{t('household.role.ADMIN')}</option>
                                   <option value="MEMBER">{t('household.role.MEMBER')}</option>
@@ -374,10 +365,11 @@ export function SettingsPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleSaveRole(member.userId)}
+                                  data-testid="save-role-btn"
                                 >
                                   {t('common.save')}
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={handleCancelRoleEdit}>
+                                <Button variant="ghost" size="sm" onClick={handleCancelRoleEdit} data-testid="cancel-role-btn">
                                   {t('common.cancel')}
                                 </Button>
                               </div>
@@ -390,6 +382,7 @@ export function SettingsPage() {
                                   onClick={() =>
                                     handleStartEditRole(member.userId, member.role as 'ADMIN' | 'MEMBER')
                                   }
+                                  data-testid="edit-role-btn"
                                 >
                                   <span className="material-symbols-outlined">edit</span>
                                 </Button>
@@ -400,6 +393,7 @@ export function SettingsPage() {
                                   onClick={() =>
                                     handleRemoveMember(member.userId, member.user.name)
                                   }
+                                  data-testid="remove-member-btn"
                                 >
                                   <span className="material-symbols-outlined">person_remove</span>
                                 </Button>
@@ -419,6 +413,7 @@ export function SettingsPage() {
                 variant="ghost"
                 onClick={() => setShowLeaveConfirm(true)}
                 iconLeft={<span className="material-symbols-outlined">logout</span>}
+                data-testid="leave-household-btn"
               >
                 {t('settings.leaveHousehold')}
               </Button>
@@ -426,8 +421,7 @@ export function SettingsPage() {
           </section>
         )}
 
-        {/* Language Section */}
-        <section className={styles.section}>
+        <section className={styles.section} data-testid="language-section">
           <h2 className={styles.sectionTitle}>{t('settings.language')}</h2>
           <div className={styles.card}>
             <div className={styles.optionRow}>
@@ -442,6 +436,7 @@ export function SettingsPage() {
                 className={styles.select}
                 value={i18n.language}
                 onChange={(e) => i18n.changeLanguage(e.target.value)}
+                data-testid="language-select"
               >
                 <option value="en">{t('settings.languageEn')}</option>
                 <option value="pt">{t('settings.languagePt')}</option>
@@ -450,14 +445,14 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Account Section */}
-        <section className={styles.section}>
+        <section className={styles.section} data-testid="account-section">
           <h2 className={styles.sectionTitle}>{t('settings.account')}</h2>
           <div className={styles.card}>
             <Button
               variant="ghost"
               onClick={logout}
               iconLeft={<span className="material-symbols-outlined">logout</span>}
+              data-testid="logout-btn"
             >
               {t('auth.logout')}
             </Button>
@@ -465,7 +460,6 @@ export function SettingsPage() {
         </section>
       </div>
 
-      {/* Leave Household Confirmation */}
       <ConfirmDialog
         isOpen={showLeaveConfirm}
         onClose={() => setShowLeaveConfirm(false)}
@@ -476,7 +470,6 @@ export function SettingsPage() {
         variant="danger"
       />
 
-      {/* Remove Member Confirmation */}
       <ConfirmDialog
         isOpen={!!memberToRemove}
         onClose={() => setMemberToRemove(null)}
@@ -487,7 +480,6 @@ export function SettingsPage() {
         variant="danger"
       />
 
-      {/* Password Change Modal */}
       <Modal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}

@@ -10,7 +10,6 @@ const itemSchema = z.object({
   quantity: z.number().min(1).default(1),
 })
 
-// GET /households/:householdId/shopping
 shoppingRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
 
@@ -23,7 +22,6 @@ shoppingRoutes.get('/', async (c) => {
   return c.json({ lists })
 })
 
-// GET /households/:householdId/shopping/:id
 shoppingRoutes.get('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')
@@ -40,7 +38,6 @@ shoppingRoutes.get('/:id', async (c) => {
   return c.json({ list })
 })
 
-// POST /households/:householdId/shopping
 shoppingRoutes.post('/', async (c) => {
   const householdId = c.get('householdId')
   const { name } = await c.req.json()
@@ -60,7 +57,6 @@ shoppingRoutes.post('/', async (c) => {
   return c.json({ list }, 201)
 })
 
-// POST /households/:householdId/shopping/:id/items
 shoppingRoutes.post('/:id/items', async (c) => {
   const householdId = c.get('householdId')
   const listId = c.req.param('id')
@@ -87,7 +83,6 @@ shoppingRoutes.post('/:id/items', async (c) => {
   return c.json({ item }, 201)
 })
 
-// PATCH /households/:householdId/shopping/:listId/items/:itemId
 shoppingRoutes.patch('/:listId/items/:itemId', async (c) => {
   const householdId = c.get('householdId')
   const { listId, itemId } = c.req.param()
@@ -116,7 +111,6 @@ shoppingRoutes.patch('/:listId/items/:itemId', async (c) => {
   return c.json({ item: updated })
 })
 
-// DELETE /households/:householdId/shopping/:listId/items/:itemId
 shoppingRoutes.delete('/:listId/items/:itemId', async (c) => {
   const householdId = c.get('householdId')
   const { listId, itemId } = c.req.param()
@@ -129,12 +123,19 @@ shoppingRoutes.delete('/:listId/items/:itemId', async (c) => {
     return c.json({ error: 'List not found' }, 404)
   }
 
+  const item = await prisma.shoppingItem.findFirst({
+    where: { id: itemId, listId },
+  })
+
+  if (!item) {
+    return c.json({ error: 'Item not found' }, 404)
+  }
+
   await prisma.shoppingItem.delete({ where: { id: itemId } })
 
   return c.json({ success: true })
 })
 
-// DELETE /households/:householdId/shopping/:id
 shoppingRoutes.delete('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')

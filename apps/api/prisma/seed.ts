@@ -10,7 +10,7 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Clean existing data
+
   await prisma.taskCompletion.deleteMany()
   await prisma.task.deleteMany()
   await prisma.notice.deleteMany()
@@ -21,7 +21,7 @@ async function main() {
   await prisma.household.deleteMany()
   await prisma.user.deleteMany()
 
-  // Create test user
+
   const password = await bcrypt.hash('123456', 10)
   const user = await prisma.user.create({
     data: {
@@ -31,7 +31,7 @@ async function main() {
     },
   })
 
-  // Create second test user (for invite testing)
+
   const user2 = await prisma.user.create({
     data: {
       email: 'yasmin@email.com',
@@ -40,7 +40,7 @@ async function main() {
     },
   })
 
-  // Create household
+
   const household = await prisma.household.create({
     data: {
       name: 'Casa Pamplona',
@@ -54,18 +54,18 @@ async function main() {
     include: { members: true },
   })
 
-  // Set current household for user
+
   await prisma.user.update({
     where: { id: user.id },
     data: { currentHouseholdId: household.id },
   })
 
-  // Create invite code
+
   const inviteCode = randomBytes(6).toString('hex').toUpperCase()
   await prisma.householdInvite.create({
     data: {
       code: inviteCode,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       householdId: household.id,
     },
   })
@@ -74,7 +74,7 @@ async function main() {
   console.log(`📋 Invite code: ${inviteCode}`)
   console.log(`🔑 Login: pamplona@email.com / 123456`)
 
-  // Create notices
+
   await prisma.notice.createMany({
     data: [
       {
@@ -105,7 +105,7 @@ async function main() {
     ],
   })
 
-  // Create tasks
+
   await prisma.task.createMany({
     data: [
       {
@@ -145,7 +145,7 @@ async function main() {
     ],
   })
 
-  // Create shopping list
+
   const shoppingList = await prisma.shoppingList.create({
     data: {
       name: 'Supermercado semanal',

@@ -59,7 +59,7 @@ export function ShoppingPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="shopping-page">
       <PageHeader
         title={t('shopping.title')}
         subtitle={`${lists?.length || 0} ${t('shopping.title')}`}
@@ -67,6 +67,7 @@ export function ShoppingPage() {
           label: t('shopping.newList'),
           icon: <span className="material-symbols-outlined">add</span>,
           onClick: () => setShowCreateListModal(true),
+          testId: 'create-list-btn',
         }}
       />
 
@@ -83,13 +84,14 @@ export function ShoppingPage() {
           }}
         />
       ) : (
-        <div className={styles.content}>
-          <div className={styles.lists}>
+        <div className={styles.content} data-testid="shopping-content">
+          <div className={styles.lists} data-testid="shopping-lists">
             {lists?.map((list) => (
               <button
                 key={list.id}
                 className={`${styles.listCard} ${activeList?.id === list.id ? styles.active : ''}`}
                 onClick={() => setSelectedList(list.id)}
+                data-testid={`shopping-list-${list.id}`}
               >
                 <div className={styles.listInfo}>
                   <span className={styles.listName}>{list.name}</span>
@@ -103,6 +105,7 @@ export function ShoppingPage() {
                     e.stopPropagation();
                     setDeleteListId(list.id);
                   }}
+                  data-testid={`delete-list-btn-${list.id}`}
                 >
                   <span className="material-symbols-outlined">delete</span>
                 </button>
@@ -111,38 +114,40 @@ export function ShoppingPage() {
           </div>
 
           {activeList && (
-            <div className={styles.listDetail}>
+            <div className={styles.listDetail} data-testid="shopping-list-detail">
               <div className={styles.listHeader}>
-                <h2>{activeList.name}</h2>
-                <span className={styles.progress}>
+                <h2 data-testid="active-list-name">{activeList.name}</h2>
+                <span className={styles.progress} data-testid="shopping-progress">
                   {checkedCount}/{totalCount}
                 </span>
               </div>
 
-              <form onSubmit={handleAddItem} className={styles.addItemForm}>
+              <form onSubmit={handleAddItem} className={styles.addItemForm} data-testid="add-item-form">
                 <input
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   placeholder={t('shopping.addItemPlaceholder')}
                   className={styles.addItemInput}
+                  data-testid="add-item-input"
                 />
-                <button type="submit" className={styles.addItemBtn}>
+                <button type="submit" className={styles.addItemBtn} data-testid="add-item-btn">
                   <span className="material-symbols-outlined">add</span>
                 </button>
               </form>
 
-              <div className={styles.itemsList}>
+              <div className={styles.itemsList} data-testid="shopping-items-list">
                 {activeList.items.length === 0 ? (
-                  <div className={styles.noItems}>
+                  <div className={styles.noItems} data-testid="no-items-message">
                     <p>{t('shopping.noItemsYet')}</p>
                   </div>
                 ) : (
                   activeList.items.map((item) => (
-                    <div key={item.id} className={`${styles.itemCard} ${item.isChecked ? styles.checked : ''}`}>
+                    <div key={item.id} className={`${styles.itemCard} ${item.isChecked ? styles.checked : ''}`} data-testid={`shopping-item-${item.id}`}>
                       <button
                         className={styles.checkBtn}
                         onClick={() => toggleItem.mutateAsync({ householdId, listId: activeList.id, itemId: item.id })}
+                        data-testid={`toggle-item-btn-${item.id}`}
                       >
                         <span className="material-symbols-outlined">
                           {item.isChecked ? 'check_circle' : 'radio_button_unchecked'}
@@ -155,6 +160,7 @@ export function ShoppingPage() {
                       <button
                         className={styles.deleteItemBtn}
                         onClick={() => deleteItem.mutateAsync({ householdId, listId: activeList.id, itemId: item.id })}
+                        data-testid={`delete-item-btn-${item.id}`}
                       >
                         <span className="material-symbols-outlined">close</span>
                       </button>
@@ -218,14 +224,14 @@ function CreateListModal({
       title={t('shopping.newShoppingList')}
       actions={
         <>
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" form="create-list-form" loading={createList.isPending}>
+          <Button variant="ghost" onClick={onClose} data-testid="cancel-list-btn">{t('common.cancel')}</Button>
+          <Button type="submit" form="create-list-form" loading={createList.isPending} data-testid="create-list-submit-btn">
             {t('shopping.createShoppingList')}
           </Button>
         </>
       }
     >
-      <form id="create-list-form" onSubmit={handleSubmit}>
+      <form id="create-list-form" onSubmit={handleSubmit} data-testid="create-list-form">
         <FormField label={t('shopping.listName')}>
           <InputField
             type="text"
@@ -233,6 +239,7 @@ function CreateListModal({
             onChange={(e) => setName(e.target.value)}
             placeholder={t('shopping.weeklyGroceriesPlaceholder')}
             required
+            data-testid="list-name-input"
           />
         </FormField>
       </form>

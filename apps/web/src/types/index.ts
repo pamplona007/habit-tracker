@@ -1,4 +1,3 @@
-// User & Auth
 export interface User {
   id: string;
   email: string;
@@ -11,7 +10,6 @@ export interface AuthResponse {
   user: User;
 }
 
-// Household
 export interface Household {
   id: string;
   name: string;
@@ -34,7 +32,6 @@ export interface HouseholdInvite {
   householdName: string;
 }
 
-// Tasks
 export type TaskType = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type CompletionType = 'FULL' | 'PARTIAL';
@@ -64,7 +61,6 @@ export interface TaskCompletion {
   userId: string;
 }
 
-// Notices
 export type NoticePriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export interface Notice {
@@ -80,7 +76,6 @@ export interface Notice {
   createdBy: string;
 }
 
-// Shopping
 export interface ShoppingList {
   id: string;
   name: string;
@@ -97,7 +92,6 @@ export interface ShoppingItem {
   listId: string;
 }
 
-// Streak
 export interface Streak {
   current: number;
   longest: number;

@@ -7,7 +7,7 @@ import type { MiddlewareHandler } from 'hono'
 
 export const householdsRoutes = new Hono<AppBindings>()
 
-// Verifica se o user é OWNER ou ADMIN da household (não pode ser só MEMBER)
+
 const requireHouseholdAdmin: MiddlewareHandler<AppBindings> = async (c, next) => {
   const user = c.get('user')
   const householdId = c.get('householdId')
@@ -23,7 +23,7 @@ const requireHouseholdAdmin: MiddlewareHandler<AppBindings> = async (c, next) =>
   await next()
 }
 
-// POST /households — criar casa e já ser membro
+
 householdsRoutes.post('/', async (c) => {
   const user = c.get('user')
   const { name } = await c.req.json()
@@ -47,7 +47,7 @@ householdsRoutes.post('/', async (c) => {
     },
   })
 
-  // Define como household ativa do user
+
   await prisma.user.update({
     where: { id: user.id },
     data: { currentHouseholdId: household.id },
@@ -56,7 +56,7 @@ householdsRoutes.post('/', async (c) => {
   return c.json({ household }, 201)
 })
 
-// GET /households — listar casas que o user é membro
+
 householdsRoutes.get('/', async (c) => {
   const user = c.get('user')
 
@@ -78,7 +78,7 @@ householdsRoutes.get('/', async (c) => {
   return c.json({ households: memberships.map((m) => m.household) })
 })
 
-// POST /households/join — entrar com código
+
 householdsRoutes.post('/join', async (c) => {
   const user = c.get('user')
   const { code } = await c.req.json()
@@ -104,7 +104,7 @@ householdsRoutes.post('/join', async (c) => {
     return c.json({ error: 'This invite has expired' }, 400)
   }
 
-  // Atomic: marca invite como usado E cria membership
+
   const result = await prisma.$transaction([
     prisma.householdInvite.update({
       where: { id: invite.id },
@@ -122,7 +122,7 @@ householdsRoutes.post('/join', async (c) => {
         },
       },
     }),
-    // Define como household ativa
+
     prisma.user.update({
       where: { id: user.id },
       data: { currentHouseholdId: invite.householdId },
@@ -132,7 +132,7 @@ householdsRoutes.post('/join', async (c) => {
   return c.json({ household: result[1].household })
 })
 
-// GET /households/:householdId — detalhes de uma casa (precisa ser membro via middleware)
+
 householdsRoutes.get('/:householdId', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
 
@@ -154,7 +154,7 @@ householdsRoutes.get('/:householdId', requireHouseholdMembership, async (c) => {
   return c.json({ household })
 })
 
-// PATCH /households/:householdId — atualizar casa (nome)
+
 householdsRoutes.patch('/:householdId', requireHouseholdMembership, requireHouseholdAdmin, async (c) => {
   const householdId = c.get('householdId')
   const { name } = await c.req.json()
@@ -174,7 +174,7 @@ householdsRoutes.patch('/:householdId', requireHouseholdMembership, requireHouse
   return c.json({ household })
 })
 
-// POST /households/:householdId/invites — gerar convite
+
 householdsRoutes.post('/:householdId/invites', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
   const body = await c.req.json().catch(() => ({}))
@@ -194,7 +194,7 @@ householdsRoutes.post('/:householdId/invites', requireHouseholdMembership, async
   return c.json({ invite: { code: invite.code, expiresAt: invite.expiresAt } }, 201)
 })
 
-// POST /households/:householdId/switch — trocar casa ativa
+
 householdsRoutes.post('/:householdId/switch', requireHouseholdMembership, async (c) => {
   const user = c.get('user')
   const householdId = c.get('householdId')
@@ -207,7 +207,7 @@ householdsRoutes.post('/:householdId/switch', requireHouseholdMembership, async 
   return c.json({ success: true })
 })
 
-// POST /households/:householdId/leave — sair da casa
+
 householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (c) => {
   const user = c.get('user')
   const householdId = c.get('householdId')
@@ -226,7 +226,7 @@ householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (
     },
   })
 
-  // Se era a casa ativa, troca para outra
+
   if (user.currentHouseholdId === householdId) {
     const otherMembership = await prisma.householdMember.findFirst({
       where: { userId: user.id },
@@ -240,14 +240,14 @@ householdsRoutes.post('/:householdId/leave', requireHouseholdMembership, async (
   return c.json({ success: true })
 })
 
-// PATCH /households/:householdId/members/:userId — atualizar role de membro
+
 householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
   const targetUserId = c.req.param('userId')
   const user = c.get('user')
   const { role } = await c.req.json()
 
-  // Only OWNER can change roles (derive from cached memberships)
+
   const ownerMembership = user.memberships?.find(
     (m: { householdId: string; role: string }) => m.householdId === householdId,
   )
@@ -256,12 +256,12 @@ householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembersh
     return c.json({ error: 'Not authorized' }, 403)
   }
 
-  // Validate role
+
   if (!['ADMIN', 'MEMBER'].includes(role)) {
     return c.json({ error: 'Invalid role' }, 400)
   }
 
-  // Check if target user is a member
+
   const targetMembership = await prisma.householdMember.findUnique({
     where: { householdId_userId: { householdId, userId: targetUserId! } },
   })
@@ -270,7 +270,7 @@ householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembersh
     return c.json({ error: 'Member not found' }, 404)
   }
 
-  // Cannot change the role of an owner until an explicit ownership-transfer flow exists
+
   if (targetMembership.role === 'OWNER') {
     return c.json({ error: 'Cannot change the role of an owner' }, 400)
   }
@@ -284,13 +284,13 @@ householdsRoutes.patch('/:householdId/members/:userId', requireHouseholdMembersh
   return c.json({ member: updated })
 })
 
-// DELETE /households/:householdId/members/:userId — remover membro
+
 householdsRoutes.delete('/:householdId/members/:userId', requireHouseholdMembership, async (c) => {
   const householdId = c.get('householdId')
   const targetUserId = c.req.param('userId')
   const user = c.get('user')
 
-  // Only OWNER can remove members (derive from cached memberships)
+
   const ownerMembership = user.memberships?.find(
     (m: { householdId: string; role: string }) => m.householdId === householdId,
   )
@@ -299,12 +299,12 @@ householdsRoutes.delete('/:householdId/members/:userId', requireHouseholdMembers
     return c.json({ error: 'Not authorized' }, 403)
   }
 
-  // Cannot remove yourself
+
   if (user.id === targetUserId) {
     return c.json({ error: 'Cannot remove yourself. Use leave instead.' }, 400)
   }
 
-  // Check if this is the last member
+
   const memberCount = await prisma.householdMember.count({
     where: { householdId },
   })
@@ -313,13 +313,13 @@ householdsRoutes.delete('/:householdId/members/:userId', requireHouseholdMembers
     return c.json({ error: 'Cannot remove the last member' }, 400)
   }
 
-  // Atomic: delete membership + fix removed user's currentHouseholdId
+
   await prisma.$transaction(async (tx) => {
     await tx.householdMember.delete({
       where: { householdId_userId: { householdId, userId: targetUserId! } },
     })
 
-    // If removed user's currentHouseholdId was this household, clear it
+
     const removedUser = await tx.user.findUnique({
       where: { id: targetUserId },
       include: { memberships: true },

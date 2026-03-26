@@ -35,7 +35,7 @@ export function NoticesPage() {
   const activeNotices = notices?.filter((n) => n.isActive) || [];
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="notices-page">
       <PageHeader
         title={t('notices.title')}
         subtitle={`${activeNotices.length} ${t('notices.activeNotices')}`}
@@ -43,6 +43,7 @@ export function NoticesPage() {
           label: t('notices.addNotice'),
           icon: <span className="material-symbols-outlined">add</span>,
           onClick: () => setShowCreateModal(true),
+          testId: 'add-notice-btn',
         }}
       />
 
@@ -59,16 +60,16 @@ export function NoticesPage() {
           }}
         />
       ) : (
-        <div className={styles.noticeList}>
+        <div className={styles.noticeList} data-testid="notice-list">
           {activeNotices.map((notice) => (
-            <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`}>
+            <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`} data-testid={`notice-card-${notice.id}`}>
               <div className={styles.noticeHeader}>
-                <span className={styles.priorityBadge}>{t(`notices.priorities.${notice.priority}`)}</span>
+                <span className={styles.priorityBadge} data-testid={`notice-priority-${notice.priority}`}>{t(`notices.priorities.${notice.priority}`)}</span>
                 <span className={styles.noticeDate}>
                   {new Date(notice.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <h3 className={styles.noticeTitle}>{notice.title}</h3>
+              <h3 className={styles.noticeTitle} data-testid={`notice-title-${notice.id}`}>{notice.title}</h3>
               <p className={`${styles.noticeContent} ${expandedNotice === notice.id ? styles.expanded : ''}`}>
                 {notice.content}
               </p>
@@ -81,7 +82,7 @@ export function NoticesPage() {
                 </button>
               )}
               <div className={styles.noticeActions}>
-                <button className={styles.deleteBtn} onClick={() => setDeleteNoticeId(notice.id)}>
+                <button className={styles.deleteBtn} onClick={() => setDeleteNoticeId(notice.id)} data-testid={`delete-notice-btn-${notice.id}`}>
                   <span className="material-symbols-outlined">delete</span>
                   {t('common.delete')}
                 </button>
@@ -144,14 +145,14 @@ function CreateNoticeModal({
       title={t('notices.create')}
       actions={
         <>
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" form="create-notice-form" loading={createNotice.isPending}>
+          <Button variant="ghost" onClick={onClose} data-testid="cancel-notice-btn">{t('common.cancel')}</Button>
+          <Button type="submit" form="create-notice-form" loading={createNotice.isPending} data-testid="create-notice-submit-btn">
             {t('notices.create')}
           </Button>
         </>
       }
     >
-      <form id="create-notice-form" onSubmit={handleSubmit}>
+      <form id="create-notice-form" onSubmit={handleSubmit} data-testid="create-notice-form">
         <FormField label={t('notices.name')}>
           <InputField
             type="text"
@@ -159,6 +160,7 @@ function CreateNoticeModal({
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('notices.noticeTitlePlaceholder')}
             required
+            data-testid="notice-title-input"
           />
         </FormField>
 
@@ -169,17 +171,19 @@ function CreateNoticeModal({
             placeholder={t('notices.noticeContentPlaceholder')}
             rows={4}
             required
+            data-testid="notice-content-input"
           />
         </FormField>
 
         <FormField label={t('notices.priority')}>
-          <div className={styles.priorityOptions}>
+          <div className={styles.priorityOptions} data-testid="notice-priority-options">
             {PRIORITIES.map((p) => (
               <button
                 key={p}
                 type="button"
                 className={`${styles.priorityOption} ${styles[p]} ${priority === p ? styles.active : ''}`}
                 onClick={() => setPriority(p)}
+                data-testid={`notice-priority-${p}`}
               >
                 {t(`notices.priorities.${p}`)}
               </button>

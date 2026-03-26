@@ -81,9 +81,9 @@ removeMember: async (householdId: string, userId: string): Promise<void>
 
 #### `apps/web/src/hooks/useHouseholds.ts`
 ```ts
-useUpdateHousehold(householdId: string)    // mutation
-useUpdateMemberRole(householdId: string)   // mutation
-useRemoveMember(householdId: string)       // mutation
+useUpdateHousehold(householdId: string)
+useUpdateMemberRole(householdId: string)
+useRemoveMember(householdId: string)
 ```
 
 ### 2.3 SettingsPage Components

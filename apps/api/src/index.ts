@@ -1,21 +1,44 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { jwtMiddleware, loadUser, requireHouseholdMembership, requireCurrentHousehold } from './middleware/auth'
+import { HTTPException } from 'hono/http-exception'
+import { jwtMiddleware, loadUser, requireHouseholdMembership } from './middleware/auth'
 import { authRoutes } from './routes/auth'
 import { householdsRoutes } from './routes/households'
 import { noticesRoutes } from './routes/notices'
 import { tasksRoutes } from './routes/tasks'
 import { shoppingRoutes } from './routes/shopping'
+import { z } from 'zod'
 
 const app = new Hono()
 
-// Middleware global
+app.use('*', async (c, next) => {
+  const start = Date.now()
+  const method = c.req.method
+  const path = c.req.path
+  const headers = c.req.header()
+  console.log(`[${new Date().toISOString()}] --> ${method} ${path}`)
+  console.log('  Headers:', JSON.stringify(headers, null, 2))
+  await next()
+  const duration = Date.now() - start
+  console.log(`[${new Date().toISOString()}] <-- ${method} ${path} [${c.res.status}] ${duration}ms`)
+})
+
+app.onError((err, c) => {
+  if (err instanceof z.ZodError) {
+    return c.json({ error: 'Validation error', details: err.errors }, 400)
+  }
+  if (err instanceof HTTPException) {
+    return c.json({ error: err.message }, err.status)
+  }
+  console.error('Unhandled error:', err)
+  return c.json({ error: 'Internal server error' }, 500)
+})
+
 app.use('*', cors({
   origin: '*',
   credentials: true,
 }))
 
-// Root
 app.get('/', (c) => c.json({
   message: 'Habit Tracker API',
   version: '3.0.0',
@@ -28,14 +51,11 @@ app.get('/', (c) => c.json({
   },
 }))
 
-// Auth (públicas: login, register)
 app.route('/auth', authRoutes)
 
-// Households (precisa de token, mas não de membership para criar/ver/join)
 app.use('/households/*', jwtMiddleware, loadUser)
 app.route('/households', householdsRoutes)
 
-// Resources com householdId no path (precisa ser membro)
 app.use('/households/:householdId/notices/*', requireHouseholdMembership)
 app.use('/households/:householdId/tasks/*', requireHouseholdMembership)
 app.use('/households/:householdId/shopping/*', requireHouseholdMembership)
@@ -44,7 +64,6 @@ app.route('/households/:householdId/notices', noticesRoutes)
 app.route('/households/:householdId/tasks', tasksRoutes)
 app.route('/households/:householdId/shopping', shoppingRoutes)
 
-// Health
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 export default app

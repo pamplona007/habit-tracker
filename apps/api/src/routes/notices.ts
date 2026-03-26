@@ -14,7 +14,7 @@ const noticeSchema = z.object({
   endDate: z.string().datetime().optional(),
 })
 
-// GET /households/:householdId/notices
+
 noticesRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
 
@@ -26,7 +26,7 @@ noticesRoutes.get('/', async (c) => {
   return c.json({ notices })
 })
 
-// POST /households/:householdId/notices
+
 noticesRoutes.post('/', async (c) => {
   const householdId = c.get('householdId')
   const data = await c.req.json()
@@ -48,7 +48,7 @@ noticesRoutes.post('/', async (c) => {
   return c.json({ notice }, 201)
 })
 
-// PATCH /households/:householdId/notices/:id
+
 noticesRoutes.patch('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')
@@ -74,7 +74,7 @@ noticesRoutes.patch('/:id', async (c) => {
   return c.json({ notice: updated })
 })
 
-// DELETE /households/:householdId/notices/:id
+
 noticesRoutes.delete('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')

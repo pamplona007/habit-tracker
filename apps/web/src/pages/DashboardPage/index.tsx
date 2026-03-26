@@ -62,34 +62,32 @@ export function DashboardPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="dashboard-page">
 
       <main className={styles.main}>
-        {/* Hero Section */}
-        <section className={styles.heroSection}>
+        <section className={styles.heroSection} data-testid="hero-section">
           <div className={styles.heroContent}>
-            <p className={styles.greetingLabel}>{getGreeting()}</p>
-            <h2 className={styles.greetingName}>{user?.name}</h2>
+            <p className={styles.greetingLabel} data-testid="greeting-label">{getGreeting()}</p>
+            <h2 className={styles.greetingName} data-testid="greeting-name">{user?.name}</h2>
           </div>
-          <div className={styles.streakBadge}>
+          <div className={styles.streakBadge} data-testid="streak-badge">
             <span className="material-symbols-outlined">local_fire_department</span>
             <div className={styles.streakInfo}>
-              <span className={styles.streakValue}>{streak.current}</span>
+              <span className={styles.streakValue} data-testid="streak-current">{streak.current}</span>
               <span className={styles.streakLabel}>{t('dashboard.dayStreak')}</span>
             </div>
           </div>
         </section>
 
-        {/* Focus Today Section */}
-        <section className={styles.focusSection}>
+        <section className={styles.focusSection} data-testid="focus-section">
           <div className={styles.focusHeader}>
             <div>
-              <h2 className={styles.focusTitle}>{t('dashboard.focusToday')}</h2>
-              <p className={styles.focusSubtitle}>
+              <h2 className={styles.focusTitle} data-testid="focus-title">{t('dashboard.focusToday')}</h2>
+              <p className={styles.focusSubtitle} data-testid="pending-tasks-count">
                 {pendingTasks.length} {pendingTasks.length === 1 ? t('dashboard.task') : t('tasks.title')} {t('dashboard.tasksPending')}
               </p>
             </div>
-            <button className={styles.quickStartBtn} onClick={handleQuickStart}>
+            <button className={styles.quickStartBtn} onClick={handleQuickStart} data-testid="quick-start-btn">
               <span className="material-symbols-outlined">bolt</span>
               {t('dashboard.quickStart')}
             </button>
@@ -97,13 +95,13 @@ export function DashboardPage() {
 
           <div className={styles.tasksGrid}>
             {todayTasks.length === 0 ? (
-              <div className={styles.emptyState}>
+              <div className={styles.emptyState} data-testid="empty-state">
                 <span className="material-symbols-outlined">check_circle</span>
-                <p>{t('dashboard.allCaughtUp')}</p>
+                <p data-testid="all-caught-up-text">{t('dashboard.allCaughtUp')}</p>
               </div>
             ) : (
               todayTasks.map((task) => (
-                <div key={task.id} className={styles.taskCard}>
+                <div key={task.id} className={styles.taskCard} data-testid={`task-card-${task.id}`}>
                   <div className={styles.taskCardContent}>
                     <div className={styles.taskInfo}>
                       <h3 className={styles.taskName}>{task.name}</h3>
@@ -124,16 +122,15 @@ export function DashboardPage() {
           </div>
         </section>
 
-        {/* Streak Stats */}
-        <section className={styles.statsSection}>
-          <div className={styles.statCard}>
+        <section className={styles.statsSection} data-testid="stats-section">
+          <div className={styles.statCard} data-testid="streak-stat-card">
             <span className="material-symbols-outlined">local_fire_department</span>
             <div className={styles.statContent}>
-              <span className={styles.statValue}>{streak.current}</span>
+              <span className={styles.statValue} data-testid="streak-value">{streak.current}</span>
               <span className={styles.statLabel}>{t('tasks.streak')}</span>
             </div>
           </div>
-          <div className={styles.statCard}>
+          <div className={styles.statCard} data-testid="best-streak-stat-card">
             <span className="material-symbols-outlined">emoji_events</span>
             <div className={styles.statContent}>
               <span className={styles.statValue}>{streak.longest}</span>
@@ -142,21 +139,20 @@ export function DashboardPage() {
           </div>
         </section>
 
-        {/* Announcements Section */}
-        <section className={styles.announcementsSection}>
-          <h2 className={styles.sectionTitle}>{t('dashboard.announcements')}</h2>
+        <section className={styles.announcementsSection} data-testid="announcements-section">
+          <h2 className={styles.sectionTitle} data-testid="announcements-title">{t('dashboard.announcements')}</h2>
           {activeNotices.length === 0 ? (
-            <div className={styles.noticeCard}>
+            <div className={styles.noticeCard} data-testid="no-notices-card">
               <div className={styles.noticeIcon}>
                 <span className="material-symbols-outlined">campaign</span>
               </div>
               <div className={styles.noticeContent}>
-                <p className={styles.noticeEmpty}>{t('dashboard.noAnnouncements')}</p>
+                <p className={styles.noticeEmpty} data-testid="no-notices-text">{t('dashboard.noAnnouncements')}</p>
               </div>
             </div>
           ) : (
             activeNotices.map((notice) => (
-              <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`}>
+              <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`} data-testid={`notice-card-${notice.id}`}>
                 <div className={styles.noticeContent}>
                   <span className={styles.noticeTitle}>{notice.title}</span>
                   <span className={styles.noticeText}>{notice.content}</span>
@@ -166,19 +162,18 @@ export function DashboardPage() {
           )}
         </section>
 
-        {/* Shopping Lists Section */}
         {sortedShoppingLists.length > 0 && (
-          <section className={styles.shoppingSection}>
+          <section className={styles.shoppingSection} data-testid="shopping-section">
             <div className={styles.shoppingHeader}>
-              <h2 className={styles.sectionTitle}>{t('dashboard.shoppingLists')}</h2>
-              <Link to="/shopping" className={styles.viewAllLink}>
+              <h2 className={styles.sectionTitle} data-testid="shopping-title">{t('dashboard.shoppingLists')}</h2>
+              <Link to="/shopping" className={styles.viewAllLink} data-testid="manage-shopping-link">
                 {t('dashboard.manage')}
                 <span className="material-symbols-outlined">chevron_right</span>
               </Link>
             </div>
             <div className={styles.shoppingLists}>
               {sortedShoppingLists.map((list, index) => (
-                <Link key={list.id} to="/shopping" className={styles.shoppingCard}>
+                <Link key={list.id} to="/shopping" className={styles.shoppingCard} data-testid={`shopping-card-${list.id}`}>
                   <div className={styles.shoppingIcon}>
                     <span className="material-symbols-outlined">
                       {SHOPPING_ICONS[index % SHOPPING_ICONS.length]}
@@ -196,17 +191,16 @@ export function DashboardPage() {
           </section>
         )}
 
-        {/* Quick Actions */}
-        <section className={styles.quickActions}>
-          <Link to="/tasks" className={styles.quickAction}>
+        <section className={styles.quickActions} data-testid="quick-actions">
+          <Link to="/tasks" className={styles.quickAction} data-testid="quick-action-tasks">
             <span className="material-symbols-outlined">add_task</span>
             <span>{t('tasks.create')}</span>
           </Link>
-          <Link to="/shopping" className={styles.quickAction}>
+          <Link to="/shopping" className={styles.quickAction} data-testid="quick-action-shopping">
             <span className="material-symbols-outlined">shopping_cart</span>
             <span>{t('nav.shopping')}</span>
           </Link>
-          <Link to="/settings" className={styles.quickAction}>
+          <Link to="/settings" className={styles.quickAction} data-testid="quick-action-settings">
             <span className="material-symbols-outlined">settings</span>
             <span>{t('nav.settings')}</span>
           </Link>

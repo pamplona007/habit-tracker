@@ -1,13 +1,13 @@
-import { describe, it, expect, afterEach } from 'bun:test'
+import { describe, it, expect, afterEach } from 'vitest'
+import { cleanupAllTestData, uniqueEmail } from './helpers'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../middleware/auth'
 import app from '../index'
 
-// Helper to create a test user and return user + token
 async function createTestUser(data: { email?: string; name?: string } = {}) {
-  const email = data.email ?? `test-${Date.now()}@example.com`
+  const email = data.email ?? uniqueEmail()
   const name = data.name ?? 'Test User'
   const password = await bcrypt.hash('password123', 10)
 
@@ -29,8 +29,7 @@ async function createTestUser(data: { email?: string; name?: string } = {}) {
 
 describe('PATCH /auth/me', () => {
   afterEach(async () => {
-    await prisma.household.deleteMany({ where: { name: { contains: 'Test' } } });
-    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
+    await cleanupAllTestData()
   })
 
   it('updates name and returns updated user', async () => {
@@ -68,14 +67,11 @@ describe('PATCH /auth/me', () => {
   })
 
   it('rejects email that is already taken', async () => {
-    // Create a user with a specific "taken" email
     const takenEmail = `taken-${Date.now()}@example.com`
     await createTestUser({ email: takenEmail })
 
-    // Create another user and get their token
     const { token } = await createTestUser()
 
-    // Try to update to the taken email
     const res = await app.request('/auth/me', {
       method: 'PATCH',
       headers: {
@@ -120,8 +116,7 @@ describe('PATCH /auth/me', () => {
 
 describe('POST /auth/change-password', () => {
   afterEach(async () => {
-    await prisma.household.deleteMany({ where: { name: { contains: 'Test' } } });
-    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
+    await cleanupAllTestData()
   })
 
   it('changes password successfully', async () => {

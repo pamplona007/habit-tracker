@@ -16,7 +16,7 @@ const taskSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
-// GET /households/:householdId/tasks
+
 tasksRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
   const type = c.req.query('type') as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME' | undefined
@@ -38,7 +38,7 @@ tasksRoutes.get('/', async (c) => {
   return c.json({ tasks })
 })
 
-// POST /households/:householdId/tasks
+
 tasksRoutes.post('/', async (c) => {
   const householdId = c.get('householdId')
   const data = await c.req.json()
@@ -62,7 +62,7 @@ tasksRoutes.post('/', async (c) => {
   return c.json({ task }, 201)
 })
 
-// PATCH /households/:householdId/tasks/:id
+
 tasksRoutes.patch('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')
@@ -87,7 +87,7 @@ tasksRoutes.patch('/:id', async (c) => {
   return c.json({ task: updated })
 })
 
-// POST /households/:householdId/tasks/:id/complete
+
 tasksRoutes.post('/:id/complete', async (c) => {
   const householdId = c.get('householdId')
   const user = c.get('user')
@@ -115,7 +115,7 @@ tasksRoutes.post('/:id/complete', async (c) => {
   return c.json({ completion }, 201)
 })
 
-// DELETE /households/:householdId/tasks/:id
+
 tasksRoutes.delete('/:id', async (c) => {
   const householdId = c.get('householdId')
   const id = c.req.param('id')
@@ -133,7 +133,7 @@ tasksRoutes.delete('/:id', async (c) => {
   return c.json({ success: true })
 })
 
-// DELETE /households/:householdId/tasks/:id/complete — toggle (remove latest completion)
+
 tasksRoutes.delete('/:id/complete', async (c) => {
   const householdId = c.get('householdId')
   const user = c.get('user')
@@ -147,7 +147,7 @@ tasksRoutes.delete('/:id/complete', async (c) => {
     return c.json({ error: 'Task not found' }, 404)
   }
 
-  // Find latest completion by this user
+
   const latestCompletion = await prisma.taskCompletion.findFirst({
     where: { taskId, userId: user.id },
     orderBy: { completedAt: 'desc' },

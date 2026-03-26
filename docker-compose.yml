@@ -34,7 +34,8 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ./apps/api:/app:ro
+      - ./apps/api:/app
+      - /app/node_modules
     command: bun run --watch src/index.ts
 
   web:
@@ -48,9 +49,10 @@ services:
     environment:
       VITE_API_URL: http://localhost:3000
     ports:
-      - '5173:5173'
+      - '9500:5173'
     volumes:
-      - ./apps/web:/app:ro
+      - ./apps/web:/app
+      - /app/node_modules
     command: npm run dev -- --host
 
 volumes:

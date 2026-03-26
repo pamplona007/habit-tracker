@@ -7,7 +7,6 @@ import type { AppBindings } from '../types'
 
 export const authRoutes = new Hono<AppBindings>()
 
-// POST /auth/register
 authRoutes.post('/register', async (c) => {
   const { email, password, name } = await c.req.json()
 
@@ -46,7 +45,6 @@ authRoutes.post('/register', async (c) => {
   return c.json({ user, token })
 })
 
-// POST /auth/login
 authRoutes.post('/login', async (c) => {
   const { email, password } = await c.req.json()
 
@@ -85,7 +83,6 @@ authRoutes.post('/login', async (c) => {
   return c.json({ user: userWithoutPassword, token })
 })
 
-// GET /auth/me — protegida
 authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
   const user = c.get('user')
 
@@ -106,7 +103,6 @@ authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
   return c.json({ user: fullUser })
 })
 
-// PATCH /auth/me — atualizar perfil
 authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
   const user = c.get('user')
   const { name, email } = await c.req.json()
@@ -151,7 +147,6 @@ authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
   return c.json({ user: updated })
 })
 
-// POST /auth/change-password
 authRoutes.post('/change-password', jwtMiddleware, loadUser, async (c) => {
   const user = c.get('user')
   const { currentPassword, newPassword } = await c.req.json()

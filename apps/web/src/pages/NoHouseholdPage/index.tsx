@@ -52,13 +52,13 @@ export function NoHouseholdPage() {
   const hasHouseholds = households && households.length > 0;
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="no-household-page">
       <div className={styles.container}>
         <div className={styles.header}>
-          <div className={styles.avatar}>
+          <div className={styles.avatar} data-testid="user-avatar">
             {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
-          <h1 className={styles.title}>{t('household.noHousehold')}</h1>
+          <h1 className={styles.title} data-testid="no-household-title">{t('household.noHousehold')}</h1>
           <p className={styles.subtitle}>
             {!hasHouseholds
               ? t('household.createFirst')
@@ -79,6 +79,7 @@ export function NoHouseholdPage() {
                     }`}
                     onClick={() => handleSelectHousehold(household.id)}
                     disabled={switchHousehold.isPending}
+                    data-testid={`household-card-${household.id}`}
                   >
                     <div className={styles.householdIcon}>
                       <span className="material-symbols-outlined">home</span>
@@ -101,6 +102,7 @@ export function NoHouseholdPage() {
               <button
                 className={styles.optionCard}
                 onClick={() => setMode('create')}
+                data-testid="create-household-btn"
               >
                 <div className={styles.optionIcon}>
                   <span className="material-symbols-outlined">add_home</span>
@@ -115,6 +117,7 @@ export function NoHouseholdPage() {
               <button
                 className={styles.optionCard}
                 onClick={() => setMode('join')}
+                data-testid="join-household-btn"
               >
                 <div className={styles.optionIcon}>
                   <span className="material-symbols-outlined">group_add</span>
@@ -130,14 +133,14 @@ export function NoHouseholdPage() {
         )}
 
         {mode === 'create' && (
-          <form onSubmit={handleCreate} className={styles.form}>
-            <button type="button" onClick={() => setMode('choose')} className={styles.backBtn}>
+          <form onSubmit={handleCreate} className={styles.form} data-testid="create-household-form">
+            <button type="button" onClick={() => setMode('choose')} className={styles.backBtn} data-testid="back-btn">
               <span className="material-symbols-outlined">arrow_back</span>
               {t('common.back')}
             </button>
 
             <h2>{t('household.createYourHousehold')}</h2>
-            {error && <div className={styles.error}>{error}</div>}
+            {error && <div className={styles.error} data-testid="household-error">{error}</div>}
 
             <div className={styles.field}>
               <label htmlFor="householdName">{t('household.name')}</label>
@@ -148,24 +151,25 @@ export function NoHouseholdPage() {
                 onChange={(e) => setHouseholdName(e.target.value)}
                 placeholder={t('household.householdNamePlaceholder')}
                 required
+                data-testid="household-name-input"
               />
             </div>
 
-            <Button type="submit" fullWidth loading={createHousehold.isPending}>
+            <Button type="submit" fullWidth loading={createHousehold.isPending} data-testid="submit-create-household-btn">
               {t('household.create')}
             </Button>
           </form>
         )}
 
         {mode === 'join' && (
-          <form onSubmit={handleJoin} className={styles.form}>
-            <button type="button" onClick={() => setMode('choose')} className={styles.backBtn}>
+          <form onSubmit={handleJoin} className={styles.form} data-testid="join-household-form">
+            <button type="button" onClick={() => setMode('choose')} className={styles.backBtn} data-testid="back-btn">
               <span className="material-symbols-outlined">arrow_back</span>
               {t('common.back')}
             </button>
 
             <h2>{t('household.join')}</h2>
-            {error && <div className={styles.error}>{error}</div>}
+            {error && <div className={styles.error} data-testid="household-error">{error}</div>}
 
             <div className={styles.field}>
               <label htmlFor="joinCode">{t('household.inviteCode')}</label>
@@ -176,10 +180,11 @@ export function NoHouseholdPage() {
                 onChange={(e) => setJoinCode(e.target.value)}
                 placeholder={t('household.inviteCodePlaceholder')}
                 required
+                data-testid="invite-code-input"
               />
             </div>
 
-            <Button type="submit" fullWidth loading={joinHousehold.isPending}>
+            <Button type="submit" fullWidth loading={joinHousehold.isPending} data-testid="submit-join-household-btn">
               {t('household.join')}
             </Button>
           </form>

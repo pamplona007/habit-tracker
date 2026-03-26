@@ -1,13 +1,13 @@
-import { describe, it, expect, afterEach } from 'bun:test'
+import { describe, it, expect, afterEach } from 'vitest'
+import { cleanupAllTestData, uniqueEmail } from './helpers'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../middleware/auth'
 import app from '../index'
 
-// Helper to create a test user
 async function createTestUser(data: { email?: string; name?: string } = {}) {
-  const email = data.email ?? `test-${Date.now()}@example.com`
+  const email = data.email ?? uniqueEmail()
   const name = data.name ?? 'Test User'
   const password = await bcrypt.hash('password123', 10)
 
@@ -27,7 +27,6 @@ async function createTestUser(data: { email?: string; name?: string } = {}) {
   return { user, token }
 }
 
-// Helper to create a test household with a user as member
 async function createTestHousehold(data: { role?: 'OWNER' | 'ADMIN' | 'MEMBER' } = {}) {
   const role = data.role ?? 'OWNER'
   const { user, token } = await createTestUser()
@@ -44,7 +43,6 @@ async function createTestHousehold(data: { role?: 'OWNER' | 'ADMIN' | 'MEMBER' }
     },
   })
 
-  // Update user's currentHouseholdId
   await prisma.user.update({
     where: { id: user.id },
     data: { currentHouseholdId: household.id },
@@ -53,7 +51,6 @@ async function createTestHousehold(data: { role?: 'OWNER' | 'ADMIN' | 'MEMBER' }
   return { user, token, householdId: household.id }
 }
 
-// Helper to create a user and join a household with a specific role
 async function createTestUserAndJoin(householdId: string, role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER') {
   const { user, token } = await createTestUser()
 
@@ -68,7 +65,6 @@ async function createTestUserAndJoin(householdId: string, role: 'OWNER' | 'ADMIN
   return { userId: user.id, token }
 }
 
-// Helper to get token for an existing user
 async function getTokenForUser(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -80,8 +76,7 @@ async function getTokenForUser(userId: string) {
 
 describe('PATCH /households/:householdId', () => {
   afterEach(async () => {
-    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
-    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
+    await cleanupAllTestData()
   })
 
   it('updates household name as owner', async () => {
@@ -149,8 +144,7 @@ describe('PATCH /households/:householdId', () => {
 
 describe('PATCH /households/:householdId/members/:userId', () => {
   afterEach(async () => {
-    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
-    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
+    await cleanupAllTestData()
   })
 
   it('owner can change member to admin', async () => {
@@ -263,8 +257,7 @@ describe('PATCH /households/:householdId/members/:userId', () => {
 
 describe('DELETE /households/:householdId/members/:userId', () => {
   afterEach(async () => {
-    await prisma.household.deleteMany({ where: { name: { contains: 'Test Household' } } });
-    await prisma.user.deleteMany({ where: { email: { contains: '@example.com' } } });
+    await cleanupAllTestData()
   })
 
   it('owner can remove a member', async () => {
@@ -347,7 +340,6 @@ describe('DELETE /households/:householdId/members/:userId', () => {
   it('cannot remove the last member', async () => {
     const { token, householdId, user } = await createTestHousehold()
 
-    // Try to remove the only member (self) - should fail with different error
     const res = await app.request(`/households/${householdId}/members/${user.id}`, {
       method: 'DELETE',
       headers: {

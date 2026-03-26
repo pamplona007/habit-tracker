@@ -12,7 +12,6 @@ export const jwtMiddleware = jwt({
   alg: 'HS256',
 })
 
-// Carrega user com memberships (N:N)
 export async function loadUser(c: Context<AppBindings>, next: Next) {
   try {
     const payload = c.get('jwtPayload')
@@ -36,8 +35,6 @@ export async function loadUser(c: Context<AppBindings>, next: Next) {
   }
 }
 
-// Verifica se o user é membro da householdId no path
-// Deve ser usado APÓS loadUser
 export async function requireHouseholdMembership(c: Context<AppBindings>, next: Next) {
   const user = c.get('user')
   const householdId = c.req.param('householdId')
@@ -56,7 +53,6 @@ export async function requireHouseholdMembership(c: Context<AppBindings>, next: 
   await next()
 }
 
-// Verifica se o user tem alguma household ativa (currentHouseholdId)
 export async function requireCurrentHousehold(c: Context<AppBindings>, next: Next) {
   const user = c.get('user')
 
@@ -64,7 +60,6 @@ export async function requireCurrentHousehold(c: Context<AppBindings>, next: Nex
     return c.json({ error: 'No active household. Create or join one first.' }, 403)
   }
 
-  // Verifica que ainda é membro da currentHousehold
   const isMember = user.memberships.some(
     (m) => m.householdId === user.currentHouseholdId
   )

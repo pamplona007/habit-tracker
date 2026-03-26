@@ -7,7 +7,7 @@ export interface Streak {
 }
 
 export function calculateStreak(tasks: Task[]): Streak {
-  // Get all completions by the current user, sorted by date descending
+
   const allCompletions = tasks
     .flatMap((task) =>
       task.completions.map((c) => ({
@@ -15,14 +15,14 @@ export function calculateStreak(tasks: Task[]): Streak {
         userId: c.userId,
       }))
     )
-    .filter((c) => c.date) // Filter out invalid dates
+    .filter((c) => c.date)
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 
   if (allCompletions.length === 0) {
     return { current: 0, longest: 0, lastCompletedDate: null };
   }
 
-  // Get unique dates (day only, no time)
+
   const uniqueDates = [...new Set(allCompletions.map((c) => c.date.toISOString().split('T')[0]))].sort(
     (a, b) => new Date(b).getTime() - new Date(a).getTime()
   );
@@ -34,7 +34,7 @@ export function calculateStreak(tasks: Task[]): Streak {
   let longestStreak = 0;
   let tempStreak = 0;
 
-  // Calculate current streak (must include today or yesterday to be "current")
+
   if (uniqueDates[0] === today || uniqueDates[0] === yesterday) {
     for (let i = 0; i < uniqueDates.length; i++) {
       const expectedDate = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
@@ -47,7 +47,7 @@ export function calculateStreak(tasks: Task[]): Streak {
     currentStreak = tempStreak;
   }
 
-  // Calculate longest streak
+
   tempStreak = 1;
   for (let i = 1; i < uniqueDates.length; i++) {
     const prevDate = new Date(uniqueDates[i - 1]);

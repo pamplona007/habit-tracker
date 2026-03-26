@@ -9,6 +9,7 @@ interface PageHeaderProps {
     label: string;
     icon?: ReactNode;
     onClick: () => void;
+    testId?: string;
   };
 }
 
@@ -23,6 +24,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
         <Button
           onClick={action.onClick}
           iconLeft={action.icon}
+          data-testid={action.testId}
         >
           {action.label}
         </Button>

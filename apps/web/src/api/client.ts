@@ -20,7 +20,7 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Don't redirect on 401 during auth endpoints - let the page handle the error
+
     if (error.response?.status === 401) {
       const url = error.config?.url;
       const isAuthEndpoint =

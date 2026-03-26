@@ -66,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   };
 
-  // isAuthenticated is true when:
-  // - We have a valid user OR
-  // - We have a token and we're still loading (to prevent redirect during auth check)
+
+
+
   const isAuthenticated = !!user || (hasToken && isLoading);
 
   return (

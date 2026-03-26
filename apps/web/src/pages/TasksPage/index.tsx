@@ -65,7 +65,7 @@ export function TasksPage() {
   const completedTasks = tasks.filter((t) => t.userCompleted);
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="tasks-page">
       <PageHeader
         title={t('tasks.title')}
         subtitle={`${pendingTasks.length} ${t('tasks.pending')} · ${completedTasks.length} ${t('tasks.completed')}`}
@@ -73,13 +73,14 @@ export function TasksPage() {
           label: t('tasks.create'),
           icon: <span className="material-symbols-outlined">add</span>,
           onClick: () => setShowCreateModal(true),
+          testId: 'create-task-btn',
         }}
       />
 
-      <div className={styles.streakBar}>
-        <div className={styles.streakItem}>
+      <div className={styles.streakBar} data-testid="streak-bar">
+        <div className={styles.streakItem} data-testid="streak-item">
           <span className="material-symbols-outlined">local_fire_department</span>
-          <span>{streak.current} {t('tasks.streak')}</span>
+          <span data-testid="streak-current">{streak.current} {t('tasks.streak')}</span>
         </div>
         <div className={styles.streakItem}>
           <span className="material-symbols-outlined">emoji_events</span>
@@ -87,12 +88,13 @@ export function TasksPage() {
         </div>
       </div>
 
-      <div className={styles.filters}>
+      <div className={styles.filters} data-testid="task-filters">
         {TASK_TYPE_KEYS.map((type) => (
           <button
             key={type.value}
             className={`${styles.filterChip} ${filter === type.value ? styles.active : ''}`}
             onClick={() => setFilter(type.value)}
+            data-testid={`filter-${type.value.toLowerCase()}`}
           >
             {t(type.key)}
           </button>
@@ -112,16 +114,17 @@ export function TasksPage() {
           }}
         />
       ) : (
-        <div className={styles.taskSections}>
+        <div className={styles.taskSections} data-testid="task-sections">
           {pendingTasks.length > 0 && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>{t('tasks.todo')}</h2>
-              <div className={styles.taskList}>
+              <div className={styles.taskList} data-testid="pending-tasks-list">
                 {pendingTasks.map((task) => (
-                  <div key={task.id} className={styles.taskCard}>
+                  <div key={task.id} className={styles.taskCard} data-testid={`task-card-${task.id}`}>
                     <button
                       className={styles.checkBtn}
                       onClick={() => handleToggleComplete(task)}
+                      data-testid={`complete-btn-${task.id}`}
                     >
                       <span className="material-symbols-outlined">radio_button_unchecked</span>
                     </button>
@@ -138,6 +141,7 @@ export function TasksPage() {
                     <button
                       className={styles.deleteBtn}
                       onClick={() => setDeleteTaskId(task.id)}
+                      data-testid={`delete-btn-${task.id}`}
                     >
                       <span className="material-symbols-outlined">delete</span>
                     </button>
@@ -150,12 +154,13 @@ export function TasksPage() {
           {completedTasks.length > 0 && (
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>{t('tasks.completed')}</h2>
-              <div className={styles.taskList}>
+              <div className={styles.taskList} data-testid="completed-tasks-list">
                 {completedTasks.map((task) => (
-                  <div key={task.id} className={`${styles.taskCard} ${styles.completed}`}>
+                  <div key={task.id} className={`${styles.taskCard} ${styles.completed}`} data-testid={`completed-task-card-${task.id}`}>
                     <button
                       className={styles.checkBtn}
                       onClick={() => handleToggleComplete(task)}
+                      data-testid={`uncomplete-btn-${task.id}`}
                     >
                       <span className="material-symbols-outlined">check_circle</span>
                     </button>
@@ -226,14 +231,14 @@ function CreateTaskModal({
       title={t('tasks.create')}
       actions={
         <>
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" form="create-task-form" loading={createTask.isPending}>
+          <Button variant="ghost" onClick={onClose} data-testid="cancel-task-btn">{t('common.cancel')}</Button>
+          <Button type="submit" form="create-task-form" loading={createTask.isPending} data-testid="create-task-submit-btn">
             {t('tasks.create')}
           </Button>
         </>
       }
     >
-      <form id="create-task-form" onSubmit={handleSubmit}>
+      <form id="create-task-form" onSubmit={handleSubmit} data-testid="create-task-form">
         <FormField label={t('tasks.name')}>
           <InputField
             type="text"
@@ -241,6 +246,7 @@ function CreateTaskModal({
             onChange={(e) => setName(e.target.value)}
             placeholder={t('tasks.namePlaceholder')}
             required
+            data-testid="task-name-input"
           />
         </FormField>
 
@@ -250,17 +256,19 @@ function CreateTaskModal({
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t('tasks.descriptionPlaceholder')}
             rows={3}
+            data-testid="task-description-input"
           />
         </FormField>
 
         <FormField label={t('tasks.type')}>
-          <div className={styles.typeOptions}>
+          <div className={styles.typeOptions} data-testid="task-type-options">
             {(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME'] as TaskType[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 className={`${styles.typeOption} ${type === t ? styles.active : ''}`}
                 onClick={() => setType(t)}
+                data-testid={`task-type-${t.toLowerCase()}`}
               >
                 {t === 'ONE_TIME' ? t.replace('_', ' ') : t}
               </button>
@@ -269,13 +277,14 @@ function CreateTaskModal({
         </FormField>
 
         <FormField label={t('tasks.priority')}>
-          <div className={styles.priorityOptions}>
+          <div className={styles.priorityOptions} data-testid="task-priority-options">
             {TASK_PRIORITY_KEYS.map((p) => (
               <button
                 key={p.value}
                 type="button"
                 className={`${styles.priorityOption} ${priority === p.value ? styles.active : ''} ${styles[p.value]}`}
                 onClick={() => setPriority(p.value)}
+                data-testid={`task-priority-${p.value}`}
               >
                 {t(p.key)}
               </button>
