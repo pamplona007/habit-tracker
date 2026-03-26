@@ -908,8 +908,10 @@
   .nav {
     padding: var(--space-3) var(--space-4);
   }
+}
 
-  .navLink {
+@media (max-width: 480px) {
+  .langSwitch {
     display: none;
   }
 }
