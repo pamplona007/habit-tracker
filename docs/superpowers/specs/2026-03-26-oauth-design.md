@@ -22,9 +22,6 @@ model Account {
   userId            String
   provider          String  // "google" | "github"
   providerAccountId String // sub from OAuth provider
-  accessToken       String?
-  refreshToken      String?
-  expiresAt         Int?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -32,6 +29,8 @@ model Account {
   @@unique([provider, userId])
 }
 ```
+
+> Note: `accessToken`, `refreshToken`, `expiresAt` are omitted — not needed for basic OAuth sign-in. Add them only if the app later needs to call the OAuth provider API on the user's behalf.
 
 Update `User` model:
 ```prisma
