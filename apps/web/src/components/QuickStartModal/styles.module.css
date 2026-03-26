@@ -13,8 +13,8 @@
   position: absolute;
   inset: 0;
   background-color: rgba(41, 50, 71, 0.1);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .modal {
