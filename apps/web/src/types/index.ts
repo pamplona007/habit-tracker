@@ -48,9 +48,8 @@ export interface Task {
   isActive: boolean;
   householdId: string;
   createdAt: string;
-  completions: TaskCompletion[];
-  userCompleted?: boolean;
-  userCompletionType?: CompletionType;
+  completed: boolean;
+  completionType: CompletionType | null;
 }
 
 export interface TaskCompletion {

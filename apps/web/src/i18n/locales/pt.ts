@@ -267,6 +267,11 @@ export const pt: TranslationKeys = {
       title: 'Pronto para começar?',
       subtitle: 'Junte-se a milhares de famílias construindo melhores hábitos juntos.',
     },
+    stats: {
+      families: 'Famílias',
+      tasksCompleted: 'Tarefas Concluídas',
+      dayStreakRecord: 'Dias de Sequência',
+    },
     footer: {
       tagline: 'Feito com carinho para famílias em todo lugar',
       copyright: '© 2026 Rastreador de Hábitos. Todos os direitos reservados.',

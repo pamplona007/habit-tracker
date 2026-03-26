@@ -6,7 +6,9 @@ import { authRoutes } from './routes/auth'
 import { householdsRoutes } from './routes/households'
 import { noticesRoutes } from './routes/notices'
 import { tasksRoutes } from './routes/tasks'
+import { streakRoutes } from './routes/streak'
 import { shoppingRoutes } from './routes/shopping'
+import { statsRoutes } from './routes/stats'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -51,6 +53,7 @@ app.get('/', (c) => c.json({
   },
 }))
 
+app.route('/stats', statsRoutes)
 app.route('/auth', authRoutes)
 
 app.use('/households/*', jwtMiddleware, loadUser)
@@ -59,10 +62,12 @@ app.route('/households', householdsRoutes)
 app.use('/households/:householdId/notices/*', requireHouseholdMembership)
 app.use('/households/:householdId/tasks/*', requireHouseholdMembership)
 app.use('/households/:householdId/shopping/*', requireHouseholdMembership)
+app.use('/households/:householdId/streak/*', requireHouseholdMembership)
 
 app.route('/households/:householdId/notices', noticesRoutes)
 app.route('/households/:householdId/tasks', tasksRoutes)
 app.route('/households/:householdId/shopping', shoppingRoutes)
+app.route('/households/:householdId/streak', streakRoutes)
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 

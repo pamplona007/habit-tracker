@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useStats } from '../../hooks';
 import styles from './styles.module.css';
+
+function formatStatValue(value: number): string {
+  if (value >= 1000) return `${Math.floor(value / 1000)}K+`;
+  return String(value);
+}
 
 const FEATURES = [
   {
@@ -36,14 +42,10 @@ const FEATURES = [
   },
 ];
 
-const STATS = [
-  { icon: 'groups', value: '1K+', label: { en: 'Families', pt: 'Famílias' } },
-  { icon: 'task_alt', value: '50K+', label: { en: 'Tasks Completed', pt: 'Tarefas Concluídas' } },
-  { icon: 'local_fire_department', value: '30', label: { en: 'Day Streak Record', pt: 'Dias de Sequência' } },
-];
 
 export function LandingPage() {
   const { t, i18n } = useTranslation();
+  const { data: stats } = useStats();
   const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -168,13 +170,21 @@ export function LandingPage() {
 
       {/* Stats Section */}
       <section className={styles.stats} data-animate>
-        {STATS.map((stat, index) => (
-          <div className={styles.statItem} key={index}>
-            <span className={`material-symbols-outlined ${styles.statIcon}`}>{stat.icon}</span>
-            <span className={styles.statValue}>{stat.value}</span>
-            <span className={styles.statLabel}>{stat.label[i18n.language as 'en' | 'pt']}</span>
-          </div>
-        ))}
+        <div className={styles.statItem}>
+          <span className={`material-symbols-outlined ${styles.statIcon}`}>groups</span>
+          <span className={styles.statValue}>{formatStatValue(stats?.households ?? 0)}</span>
+          <span className={styles.statLabel}>{t('landing.stats.families')}</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={`material-symbols-outlined ${styles.statIcon}`}>task_alt</span>
+          <span className={styles.statValue}>{formatStatValue(stats?.tasksCompleted ?? 0)}</span>
+          <span className={styles.statLabel}>{t('landing.stats.tasksCompleted')}</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={`material-symbols-outlined ${styles.statIcon}`}>local_fire_department</span>
+          <span className={styles.statValue}>{stats?.bestStreak ?? 0}</span>
+          <span className={styles.statLabel}>{t('landing.stats.dayStreakRecord')}</span>
+        </div>
       </section>
 
       {/* Features Section */}

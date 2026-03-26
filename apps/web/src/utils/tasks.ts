@@ -1,18 +1,8 @@
-import type { Task, CompletionType } from '../types';
+import type { Task } from '../types';
 
-export function computeUserTaskFields(tasks: Task[], userId: string): Task[] {
-  return tasks.map((task) => {
-    const userCompletion = task.completions.find((c) => c.userId === userId);
-    return {
-      ...task,
-      userCompleted: !!userCompletion,
-      userCompletionType: userCompletion?.type as CompletionType | undefined,
-    };
-  });
-}
 
 export function getRandomPendingTask(tasks: Task[]): Task | null {
-  const pending = tasks.filter((t) => !t.userCompleted);
+  const pending = tasks.filter((t) => !t.completed);
   if (pending.length === 0) return null;
   const randomIndex = Math.floor(Math.random() * pending.length);
   return pending[randomIndex];

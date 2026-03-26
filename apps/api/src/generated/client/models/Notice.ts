@@ -473,10 +473,6 @@ export type EnumNoticePriorityFieldUpdateOperationsInput = {
   set?: $Enums.NoticePriority
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type NoticeCreateWithoutHouseholdInput = {
   id?: string
   title: string

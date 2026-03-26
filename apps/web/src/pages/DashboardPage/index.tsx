@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks, useStreak, useNotices, useShoppingLists } from '../../hooks';
-import { computeUserTaskFields, getRandomPendingTask } from '../../utils/tasks';
+import { getRandomPendingTask } from '../../utils/tasks';
 import { Link } from 'react-router-dom';
 import { QuickStartModal } from '../../components/QuickStartModal';
 import type { Task } from '../../types';
@@ -14,8 +14,8 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const householdId = user?.currentHouseholdId || '';
-  const { data: rawTasks } = useTasks(householdId);
-  const streak = useStreak(rawTasks);
+  const { data: rawTasks = [] } = useTasks(householdId);
+  const { data: streak = { current: 0, longest: 0, lastCompletedDate: null } } = useStreak(householdId);
   const { data: notices } = useNotices(householdId);
   const { data: shoppingLists } = useShoppingLists(householdId);
 
@@ -29,11 +29,8 @@ export function DashboardPage() {
     .sort((a, b) => b.incompleteCount - a.incompleteCount)
     .slice(0, 4) || [];
 
-  const tasks = useMemo(
-    () => (user?.id ? computeUserTaskFields(rawTasks || [], user.id) : rawTasks || []),
-    [rawTasks, user],
-  );
-  const pendingTasks = useMemo(() => tasks.filter((t) => !t.userCompleted), [tasks]);
+
+  const pendingTasks = useMemo(() => rawTasks.filter((t) => !t.completed), [rawTasks]);
   const todayTasks = pendingTasks.slice(0, 2);
 
   const handleQuickStart = useCallback(() => {

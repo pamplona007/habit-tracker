@@ -1,12 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '../api/tasks';
+import { streakApi } from '../api/streak';
 import type { Task, TaskType, CompletionType, TaskPriority } from '../types';
-import { calculateStreak, type Streak } from '../utils/streak';
 
 export const TASK_KEYS = {
   all: (householdId: string) => ['households', householdId, 'tasks'] as const,
   byType: (householdId: string, type: TaskType) =>
     ['households', householdId, 'tasks', { type }] as const,
+};
+
+export const STREAK_KEYS = {
+  all: (householdId: string) => ['households', householdId, 'streak'] as const,
 };
 
 export function useTasks(householdId: string, type?: TaskType) {
@@ -17,8 +21,12 @@ export function useTasks(householdId: string, type?: TaskType) {
   });
 }
 
-export function useStreak(tasks: Task[] | undefined): Streak {
-  return calculateStreak(tasks || []);
+export function useStreak(householdId: string) {
+  return useQuery({
+    queryKey: STREAK_KEYS.all(householdId),
+    queryFn: () => streakApi.get(householdId),
+    enabled: !!householdId,
+  });
 }
 
 export function useCreateTask() {
@@ -63,6 +71,7 @@ export function useCompleteTask() {
       tasksApi.complete(params.householdId, params.taskId, params.type),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: STREAK_KEYS.all(variables.householdId) });
     },
   });
 }
@@ -74,6 +83,7 @@ export function useUncompleteTask() {
       tasksApi.uncomplete(params.householdId, params.taskId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: STREAK_KEYS.all(variables.householdId) });
     },
   });
 }

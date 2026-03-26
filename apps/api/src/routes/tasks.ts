@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { prisma } from '../db'
 import { z } from 'zod'
-import type { AppBindings } from '../types'
+import type { AppBindings, AuthUser } from '../types'
+import { recalculateStreak } from '../utils/streak'
 
 export const tasksRoutes = new Hono<AppBindings>()
 
@@ -16,9 +17,53 @@ const taskSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
+function startOfToday(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function startOfWeek(): Date {
+  const d = new Date()
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function startOfMonth(): Date {
+  const d = new Date()
+  d.setDate(1)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function isCompletedInPeriod(taskType: string, completedAt: Date): boolean {
+  if (taskType === 'ONE_TIME') return true
+  if (taskType === 'DAILY') {
+    const start = startOfToday()
+    return completedAt >= start
+  }
+  if (taskType === 'WEEKLY') {
+    const start = startOfWeek()
+    return completedAt >= start
+  }
+  if (taskType === 'MONTHLY') {
+    const start = startOfMonth()
+    return completedAt >= start
+  }
+  return false
+}
+
+function buildTaskResponse(task: Record<string, unknown>, completed: boolean, completionType: string | null): Record<string, unknown> {
+  const { completions: _completions, ...rest } = task
+  return { ...rest, completed, completionType }
+}
 
 tasksRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
+  const user = c.get('user') as AuthUser
   const type = c.req.query('type') as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME' | undefined
 
   const where: Record<string, unknown> = { householdId }
@@ -28,14 +73,21 @@ tasksRoutes.get('/', async (c) => {
     where,
     include: {
       completions: {
-        include: { user: { select: { id: true, name: true } } },
+        where: { userId: user.id },
         orderBy: { completedAt: 'desc' },
       },
     },
     orderBy: [{ type: 'asc' }, { createdAt: 'desc' }],
   })
 
-  return c.json({ tasks })
+  const tasksWithCompleted = tasks.map((task) => {
+    const periodCompletion = task.completions.find((c) => isCompletedInPeriod(task.type, c.completedAt))
+    const completed = !!periodCompletion
+    const completionType = completed ? (periodCompletion?.type ?? null) : null
+    return buildTaskResponse(task as unknown as Record<string, unknown>, completed, completionType)
+  })
+
+  return c.json({ tasks: tasksWithCompleted })
 })
 
 
@@ -59,17 +111,19 @@ tasksRoutes.post('/', async (c) => {
     },
   })
 
-  return c.json({ task }, 201)
+  return c.json({ task: buildTaskResponse(task as unknown as Record<string, unknown>, false, null) }, 201)
 })
 
 
 tasksRoutes.patch('/:id', async (c) => {
   const householdId = c.get('householdId')
+  const user = c.get('user') as AuthUser
   const id = c.req.param('id')
   const data = await c.req.json()
 
   const task = await prisma.task.findFirst({
     where: { id, householdId },
+    include: { completions: { where: { userId: user.id }, orderBy: { completedAt: 'desc' } } },
   })
 
   if (!task) {
@@ -84,7 +138,11 @@ tasksRoutes.patch('/:id', async (c) => {
     },
   })
 
-  return c.json({ task: updated })
+  const periodCompletion = task.completions.find((c) => isCompletedInPeriod(updated.type, c.completedAt))
+  const completed = !!periodCompletion
+  const completionType = completed ? (periodCompletion?.type ?? null) : null
+
+  return c.json({ task: buildTaskResponse(updated as unknown as Record<string, unknown>, completed, completionType) })
 })
 
 
@@ -111,6 +169,8 @@ tasksRoutes.post('/:id/complete', async (c) => {
     },
     include: { user: { select: { id: true, name: true } } },
   })
+
+  await recalculateStreak(householdId)
 
   return c.json({ completion }, 201)
 })
@@ -147,7 +207,6 @@ tasksRoutes.delete('/:id/complete', async (c) => {
     return c.json({ error: 'Task not found' }, 404)
   }
 
-
   const latestCompletion = await prisma.taskCompletion.findFirst({
     where: { taskId, userId: user.id },
     orderBy: { completedAt: 'desc' },
@@ -160,6 +219,8 @@ tasksRoutes.delete('/:id/complete', async (c) => {
   await prisma.taskCompletion.delete({
     where: { id: latestCompletion.id },
   })
+
+  await recalculateStreak(householdId)
 
   return c.json({ success: true })
 })

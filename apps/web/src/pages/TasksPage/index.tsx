@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks, useStreak, useCreateTask, useCompleteTask, useUncompleteTask, useDeleteTask } from '../../hooks';
-import { computeUserTaskFields } from '../../utils/tasks';
 import { Modal } from '../../components/Modal';
 import { PageHeader } from '../../components/PageHeader';
 import { LoadingState } from '../../components/LoadingState';
@@ -36,18 +35,17 @@ export function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
 
-  const { data: allTasks, isLoading: isLoadingAll } = useTasks(householdId);
-  const { data: filteredTasks, isLoading: isLoadingFiltered } = useTasks(householdId, filter === 'ALL' ? undefined : filter);
+  const { isLoading: isLoadingAll } = useTasks(householdId);
+  const { data: filteredTasks = [], isLoading: isLoadingFiltered } = useTasks(householdId, filter === 'ALL' ? undefined : filter);
   const isLoading = isLoadingAll || isLoadingFiltered;
-  const streak = useStreak(allTasks);
+  const { data: streak = { current: 0, longest: 0, lastCompletedDate: null } } = useStreak(householdId);
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
   const deleteTask = useDeleteTask();
 
-  const tasks = user?.id ? computeUserTaskFields(filteredTasks || [], user.id) : filteredTasks || [];
 
   const handleToggleComplete = async (task: Task) => {
-    if (task.userCompleted) {
+    if (task.completed) {
       await uncompleteTask.mutateAsync({ householdId, taskId: task.id });
     } else {
       await completeTask.mutateAsync({ householdId, taskId: task.id, type: 'FULL' });
@@ -61,8 +59,8 @@ export function TasksPage() {
     }
   };
 
-  const pendingTasks = tasks.filter((t) => !t.userCompleted);
-  const completedTasks = tasks.filter((t) => t.userCompleted);
+  const pendingTasks = filteredTasks.filter((t) => !t.completed);
+  const completedTasks = filteredTasks.filter((t) => t.completed);
 
   return (
     <div className={styles.page} data-testid="tasks-page">
@@ -103,7 +101,7 @@ export function TasksPage() {
 
       {isLoading ? (
         <LoadingState message={t('common.loading')} />
-      ) : tasks.length === 0 ? (
+      ) : filteredTasks.length === 0 ? (
         <EmptyState
           icon="task_alt"
           title={t('tasks.noTasks')}
@@ -134,17 +132,21 @@ export function TasksPage() {
                         <span className={styles.taskDesc}>{task.description}</span>
                       )}
                     </div>
-                    <span className={`${styles.taskPriority} ${styles[task.priority]}`}>
-                      {t(`tasks.priorities.${task.priority}`)}
-                    </span>
-                    <span className={styles.taskType}>{t(`tasks.types.${task.type}`)}</span>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={() => setDeleteTaskId(task.id)}
-                      data-testid={`delete-btn-${task.id}`}
-                    >
-                      <span className="material-symbols-outlined">delete</span>
-                    </button>
+                    <div className={styles.taskTags}>
+                      <div className={styles.tagsLeft}>
+                        <span className={`${styles.taskPriority} ${styles[task.priority]}`}>
+                          {t(`tasks.priorities.${task.priority}`)}
+                        </span>
+                        <span className={styles.taskType}>{t(`tasks.types.${task.type}`)}</span>
+                      </div>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => setDeleteTaskId(task.id)}
+                        data-testid={`delete-btn-${task.id}`}
+                      >
+                        <span className="material-symbols-outlined">delete</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -265,6 +265,11 @@ export const en = {
       title: 'Ready to get started?',
       subtitle: 'Join thousands of families building better habits together.',
     },
+    stats: {
+      families: 'Families',
+      tasksCompleted: 'Tasks Completed',
+      dayStreakRecord: 'Day Streak Record',
+    },
     footer: {
       tagline: 'Built with care for families everywhere',
       copyright: '© 2026 Habit Tracker. All rights reserved.',

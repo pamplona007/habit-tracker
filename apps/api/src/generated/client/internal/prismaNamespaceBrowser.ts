@@ -82,7 +82,10 @@ export const HouseholdScalarFieldEnum = {
   id: 'id',
   name: 'name',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  streak: 'streak',
+  longestStreak: 'longestStreak',
+  lastCompletedDate: 'lastCompletedDate'
 } as const
 
 export type HouseholdScalarFieldEnum = (typeof HouseholdScalarFieldEnum)[keyof typeof HouseholdScalarFieldEnum]

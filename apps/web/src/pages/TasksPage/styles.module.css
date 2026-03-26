@@ -161,9 +161,6 @@
   gap: var(--space-8);
 }
 
-.section {
-}
-
 .sectionTitle {
   font-size: 0.875rem;
   font-weight: 600;
@@ -181,6 +178,7 @@
 
 .taskCard {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -225,7 +223,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -500,10 +497,21 @@
   cursor: not-allowed;
 }
 
+.taskTags {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tagsLeft {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
 @media (max-width: 768px) {
   .page {
-    padding: var(--space-4);
-    padding-bottom: calc(var(--space-4) + 80px);
+    padding: var(--space-3);
+    padding-bottom: calc(var(--space-3) + 80px);
   }
 
   .filters {
@@ -519,13 +527,31 @@
 
   .taskCard {
     flex-wrap: wrap;
-    row-gap: var(--space-2);
-    padding: var(--space-3);
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .checkBtn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .checkBtn .material-symbols-outlined {
+    font-size: 20px;
   }
 
   .taskContent {
-    flex: 1 1 0;
+    flex: 1;
     min-width: 0;
+  }
+
+  .taskTags {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding-left: calc(32px + var(--space-2));
+    gap: var(--space-1);
+    width: 100%;
   }
 
   .taskPriority,
