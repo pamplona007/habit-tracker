@@ -17,8 +17,23 @@ const API_URL = process.env.API_URL || 'http://localhost:3000'
 const STATE_COOKIE = 'oauth_state'
 const STATE_MAX_AGE = 60 * 5
 
-function generateState(): string {
-  return Buffer.from(crypto.randomUUID() + crypto.randomUUID()).toString('base64url')
+function generateState(userId?: string): string {
+  const uuid = crypto.randomUUID() + crypto.randomUUID()
+  if (userId) {
+    return Buffer.from(`${uuid}:${userId}`).toString('base64url')
+  }
+  return Buffer.from(uuid).toString('base64url')
+}
+
+function parseState(state: string): { userId?: string; uuid: string } {
+  try {
+    const decoded = Buffer.from(state, 'base64url').toString('utf8')
+    const idx = decoded.indexOf(':')
+    if (idx === -1) return { uuid: decoded }
+    return { uuid: decoded.slice(0, idx), userId: decoded.slice(idx + 1) }
+  } catch {
+    return { uuid: state }
+  }
 }
 
 function buildRedirectUrl(token: string, user: unknown): string {
@@ -247,7 +262,7 @@ authRoutes.post('/link-account', jwtMiddleware, loadUser, async (c) => {
     return c.json({ error: 'Account already linked' }, 409)
   }
 
-  const state = generateState()
+  const state = generateState(c.get('user').id)
   c.header('Set-Cookie', `${STATE_COOKIE}=${state}; HttpOnly; SameSite=Lax; Max-Age=${STATE_MAX_AGE}; Path=/`)
 
   const redirectUri = `${API_URL}/auth/oauth/${provider}/link-callback`
@@ -272,7 +287,7 @@ authRoutes.post('/link-account', jwtMiddleware, loadUser, async (c) => {
   return c.json({ redirectUrl: `https://github.com/login/oauth/authorize?${params}` })
 })
 
-authRoutes.get('/oauth/:provider/link-callback', jwtMiddleware, loadUser, async (c) => {
+authRoutes.get('/oauth/:provider/link-callback', async (c) => {
   const provider = c.req.param('provider')
   const { code, state, error } = c.req.query()
 
@@ -286,6 +301,11 @@ authRoutes.get('/oauth/:provider/link-callback', jwtMiddleware, loadUser, async 
 
   const cookieValue = getCookie(c, STATE_COOKIE)
   if (!cookieValue || cookieValue !== state) {
+    return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_state`)
+  }
+
+  const parsed = parseState(state)
+  if (!parsed.userId) {
     return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_state`)
   }
 
@@ -347,7 +367,7 @@ authRoutes.get('/oauth/:provider/link-callback', jwtMiddleware, loadUser, async 
 
   await prisma.account.create({
     data: {
-      userId: c.get('user').id,
+      userId: parsed.userId,
       provider,
       providerAccountId,
     },
