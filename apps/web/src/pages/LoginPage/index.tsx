@@ -40,8 +40,8 @@ export function LoginPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <Link to="/" className={styles.logo}>
-            <span className="material-symbols-outlined">home_tracker</span>
-            <span>Habit</span>
+            <span className="material-symbols-outlined">home</span>
+            <span>{t('common.appName')}</span>
           </Link>
           <button className={styles.langSwitch} onClick={toggleLanguage}>
             <span className="material-symbols-outlined">translate</span>

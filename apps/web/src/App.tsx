@@ -23,7 +23,14 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
@@ -131,6 +138,27 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isLoading, isAuthenticated, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.spinner} />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    if (!user?.currentHouseholdId) {
+      return <Navigate to="/no-household" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

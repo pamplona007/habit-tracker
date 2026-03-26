@@ -1,6 +1,6 @@
 export const en = {
   common: {
-    appName: 'Habit Tracker',
+    appName: 'Casa',
     loading: 'Loading...',
     cancel: 'Cancel',
     delete: 'Delete',
@@ -272,7 +272,7 @@ export const en = {
     },
     footer: {
       tagline: 'Built with care for families everywhere',
-      copyright: '© 2026 Habit Tracker. All rights reserved.',
+      copyright: '© 2026 Casa. All rights reserved.',
     },
   },
 };

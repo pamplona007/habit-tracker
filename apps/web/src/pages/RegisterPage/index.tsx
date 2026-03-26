@@ -43,8 +43,8 @@ export function RegisterPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <Link to="/" className={styles.logo}>
-            <span className="material-symbols-outlined">home_tracker</span>
-            <span>Habit</span>
+            <span className="material-symbols-outlined">home</span>
+            <span>{t('common.appName')}</span>
           </Link>
           <h1 className={styles.title}>{t('auth.register')}</h1>
           <p className={styles.subtitle}>{t('auth.registerSubtitle')}</p>

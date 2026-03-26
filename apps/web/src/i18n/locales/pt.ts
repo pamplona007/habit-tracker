@@ -2,7 +2,7 @@ import type { TranslationKeys } from './en';
 
 export const pt: TranslationKeys = {
   common: {
-    appName: 'Rastreador de Hábitos',
+    appName: 'Casa',
     loading: 'Carregando...',
     cancel: 'Cancelar',
     delete: 'Excluir',
@@ -274,7 +274,7 @@ export const pt: TranslationKeys = {
     },
     footer: {
       tagline: 'Feito com carinho para famílias em todo lugar',
-      copyright: '© 2026 Rastreador de Hábitos. Todos os direitos reservados.',
+      copyright: '© 2026 Casa. Todos os direitos reservados.',
     },
   },
 };

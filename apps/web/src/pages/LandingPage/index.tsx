@@ -77,7 +77,7 @@ export function LandingPage() {
       <nav className={styles.nav}>
         <div className={styles.navContent}>
           <div className={styles.logo}>
-            <span className="material-symbols-outlined">home_app_logo</span>
+            <span className="material-symbols-outlined">home</span>
             <span>{t('common.appName')}</span>
           </div>
           <div className={styles.navActions}>
@@ -269,7 +269,7 @@ export function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <span className="material-symbols-outlined">home_app_logo</span>
+            <span className="material-symbols-outlined">home</span>
             <span>{t('common.appName')}</span>
           </div>
           <p className={styles.footerTagline}>{t('landing.footer.tagline')}</p>
