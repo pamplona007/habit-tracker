@@ -32,7 +32,7 @@ const FEATURES = [
   },
   {
     icon: 'campaign',
-    en: { title: 'Household Announcements', description: 'Post important notices and announcements for your household. Keep everyone informed and aligned.' },
+    en: { title: 'Household Notices', description: 'Post important notices for your household. Keep everyone informed and aligned.' },
     pt: { title: 'Avisos Domésticos', description: 'Publique avisos importantes para sua família. Mantenha todos informados e alinhados.' },
   },
   {

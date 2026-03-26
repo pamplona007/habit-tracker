@@ -4,7 +4,6 @@
   padding-bottom: 100px;
 }
 
-/* Top App Bar */
 .topBar {
   position: sticky;
   top: 0;
@@ -352,7 +351,6 @@
   margin-top: var(--space-1);
 }
 
-/* Announcements Section */
 .announcementsSection {
   display: flex;
   flex-direction: column;
