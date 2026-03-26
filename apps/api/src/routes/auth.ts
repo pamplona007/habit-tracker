@@ -1,11 +1,360 @@
 import { Hono } from 'hono'
+import { getCookie } from 'hono/cookie'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, jwtMiddleware, loadUser } from '../middleware/auth'
 import type { AppBindings } from '../types'
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+const API_URL = process.env.API_URL || 'http://localhost:3000'
+
+const STATE_COOKIE = 'oauth_state'
+const STATE_MAX_AGE = 60 * 5
+
+function generateState(): string {
+  return Buffer.from(crypto.randomUUID() + crypto.randomUUID()).toString('base64url')
+}
+
+function buildRedirectUrl(token: string, user: unknown): string {
+  const params = new URLSearchParams({ token, user: JSON.stringify(user) })
+  return `${FRONTEND_URL}/auth/callback?${params}`
+}
+
+function buildErrorRedirectUrl(error: string): string {
+  const params = new URLSearchParams({ error })
+  return `${FRONTEND_URL}/auth/callback?${params}`
+}
+
 export const authRoutes = new Hono<AppBindings>()
+
+authRoutes.get('/oauth/:provider', async (c) => {
+  const provider = c.req.param('provider')
+
+  if (provider !== 'google' && provider !== 'github') {
+    return c.json({ error: 'Invalid provider' }, 400)
+  }
+
+  const state = generateState()
+
+  c.header('Set-Cookie', `${STATE_COOKIE}=${state}; HttpOnly; SameSite=Lax; Max-Age=${STATE_MAX_AGE}; Path=/`)
+
+  if (provider === 'google') {
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: `${API_URL}/auth/oauth/google/callback`,
+      response_type: 'code',
+      scope: 'openid email profile',
+      state,
+    })
+    return c.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`)
+  }
+
+  const params = new URLSearchParams({
+    client_id: GITHUB_CLIENT_ID,
+    redirect_uri: `${API_URL}/auth/oauth/github/callback`,
+    scope: 'user:email',
+    state,
+  })
+  return c.redirect(`https://github.com/login/oauth/authorize?${params}`)
+})
+
+authRoutes.get('/oauth/:provider/callback', async (c) => {
+  const provider = c.req.param('provider')
+  const { code, state, error } = c.req.query()
+
+  if (provider !== 'google' && provider !== 'github') {
+    return c.redirect(buildErrorRedirectUrl('invalid_provider'))
+  }
+
+  if (error) {
+    return c.redirect(buildErrorRedirectUrl(error))
+  }
+
+  if (!code || !state) {
+    return c.redirect(buildErrorRedirectUrl('missing_params'))
+  }
+
+  const cookieValue = getCookie(c, STATE_COOKIE)
+  if (!cookieValue || cookieValue !== state) {
+    return c.redirect(buildErrorRedirectUrl('invalid_state'))
+  }
+
+  let userInfo: { email: string; name?: string; id: string }
+
+  if (provider === 'google') {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: `${API_URL}/auth/oauth/google/callback`,
+        grant_type: 'authorization_code',
+      }),
+    })
+
+    if (!tokenRes.ok) {
+      return c.redirect(buildErrorRedirectUrl('token_exchange_failed'))
+    }
+
+    const tokenData = await tokenRes.json() as { access_token: string }
+
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    })
+
+    if (!userRes.ok) {
+      return c.redirect(buildErrorRedirectUrl('user_info_failed'))
+    }
+
+    const googleUser = await userRes.json() as { email: string; name?: string; sub: string }
+    userInfo = { email: googleUser.email, name: googleUser.name, id: googleUser.sub }
+
+  } else if (provider === 'github') {
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        code,
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+        redirect_uri: `${API_URL}/auth/oauth/github/callback`,
+      }),
+    })
+
+    if (!tokenRes.ok) {
+      return c.redirect(buildErrorRedirectUrl('token_exchange_failed'))
+    }
+
+    const tokenData = await tokenRes.json() as { access_token: string }
+
+    if (!tokenData.access_token) {
+      return c.redirect(buildErrorRedirectUrl('token_exchange_failed'))
+    }
+
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/vnd.github.v3+json' },
+    })
+
+    if (!userRes.ok) {
+      return c.redirect(buildErrorRedirectUrl('user_info_failed'))
+    }
+
+    const githubUser = await userRes.json() as { email: string | null; name?: string; id: number }
+
+    let email = githubUser.email
+    if (!email) {
+      const emailsRes = await fetch('https://api.github.com/user/emails', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/vnd.github.v3+json' },
+      })
+      if (emailsRes.ok) {
+        const emails = await emailsRes.json() as Array<{ email: string; primary: boolean; verified: boolean }>
+        const primary = emails.find(e => e.primary && e.verified)
+        email = primary?.email ?? emails[0]?.email ?? null
+      }
+    }
+
+    if (!email) {
+      return c.redirect(buildErrorRedirectUrl('github_no_email'))
+    }
+
+    userInfo = { email, name: githubUser.name, id: String(githubUser.id) }
+
+  } else {
+    return c.redirect(buildErrorRedirectUrl('invalid_provider'))
+  }
+
+  const existingAccount = await prisma.account.findUnique({
+    where: { provider_providerAccountId: { provider, providerAccountId: userInfo.id } },
+  })
+
+  if (existingAccount) {
+    const existingUser = await prisma.user.findUnique({
+      where: { id: existingAccount.userId },
+      include: {
+        memberships: { include: { household: { select: { id: true, name: true } } } },
+        accounts: true,
+      },
+    })
+    if (!existingUser) {
+      return c.redirect(buildErrorRedirectUrl('user_not_found'))
+    }
+    const token = jwt.sign({ sub: existingUser.id }, JWT_SECRET, { expiresIn: '7d' })
+    const { password: _, ...userWithoutPassword } = existingUser
+    return c.redirect(buildRedirectUrl(token, userWithoutPassword))
+  }
+
+  const existingUserByEmail = await prisma.user.findUnique({
+    where: { email: userInfo.email },
+    include: {
+      memberships: { include: { household: { select: { id: true, name: true } } } },
+      accounts: true,
+    },
+  })
+
+  let userId: string
+
+  if (existingUserByEmail) {
+    userId = existingUserByEmail.id
+  } else {
+    const newUser = await prisma.user.create({
+      data: {
+        email: userInfo.email,
+        name: userInfo.name || null,
+        password: '',
+      },
+    })
+    userId = newUser.id
+  }
+
+  await prisma.account.create({
+    data: {
+      userId,
+      provider,
+      providerAccountId: userInfo.id,
+    },
+  })
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { memberships: { include: { household: { select: { id: true, name: true } } } }, accounts: true },
+  })
+
+  const token = jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' })
+  const { password: _, ...userWithoutPassword } = user!
+  return c.redirect(buildRedirectUrl(token, userWithoutPassword))
+})
+
+authRoutes.post('/link-account', jwtMiddleware, loadUser, async (c) => {
+  const { provider } = await c.req.json()
+
+  if (provider !== 'google' && provider !== 'github') {
+    return c.json({ error: 'Invalid provider' }, 400)
+  }
+
+  const existing = await prisma.account.findUnique({
+    where: { provider_userId: { provider, userId: c.get('user').id } },
+  })
+
+  if (existing) {
+    return c.json({ error: 'Account already linked' }, 409)
+  }
+
+  const state = generateState()
+  c.header('Set-Cookie', `${STATE_COOKIE}=${state}; HttpOnly; SameSite=Lax; Max-Age=${STATE_MAX_AGE}; Path=/`)
+
+  const redirectUri = `${API_URL}/auth/oauth/${provider}/link-callback`
+
+  if (provider === 'google') {
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      state,
+    })
+    return c.json({ redirectUrl: `https://accounts.google.com/o/oauth2/v2/auth?${params}` })
+  }
+
+  const params = new URLSearchParams({
+    client_id: GITHUB_CLIENT_ID,
+    redirect_uri: redirectUri,
+    scope: 'user:email',
+    state,
+  })
+  return c.json({ redirectUrl: `https://github.com/login/oauth/authorize?${params}` })
+})
+
+authRoutes.get('/oauth/:provider/link-callback', jwtMiddleware, loadUser, async (c) => {
+  const provider = c.req.param('provider')
+  const { code, state, error } = c.req.query()
+
+  if (error) {
+    return c.redirect(`${FRONTEND_URL}/settings?oauth_error=${encodeURIComponent(error)}`)
+  }
+
+  if (!code || !state) {
+    return c.redirect(`${FRONTEND_URL}/settings?oauth_error=missing_params`)
+  }
+
+  const cookieValue = getCookie(c, STATE_COOKIE)
+  if (!cookieValue || cookieValue !== state) {
+    return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_state`)
+  }
+
+  let providerAccountId: string
+
+  if (provider === 'google') {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: `${API_URL}/auth/oauth/google/link-callback`,
+        grant_type: 'authorization_code',
+      }),
+    })
+    if (!tokenRes.ok) {
+      return c.redirect(`${FRONTEND_URL}/settings?oauth_error=token_exchange_failed`)
+    }
+    const tokenData = await tokenRes.json() as { access_token: string }
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    })
+    if (!userRes.ok) {
+      return c.redirect(`${FRONTEND_URL}/settings?oauth_error=user_info_failed`)
+    }
+    const googleUser = await userRes.json() as { sub: string }
+    providerAccountId = googleUser.sub
+  } else if (provider === 'github') {
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        code,
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+        redirect_uri: `${API_URL}/auth/oauth/github/link-callback`,
+      }),
+    })
+    if (!tokenRes.ok) {
+      return c.redirect(`${FRONTEND_URL}/settings?oauth_error=token_exchange_failed`)
+    }
+    const tokenData = await tokenRes.json() as { access_token: string }
+    if (!tokenData.access_token) {
+      return c.redirect(`${FRONTEND_URL}/settings?oauth_error=token_exchange_failed`)
+    }
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/vnd.github.v3+json' },
+    })
+    if (!userRes.ok) {
+      return c.redirect(`${FRONTEND_URL}/settings?oauth_error=user_info_failed`)
+    }
+    const githubUser = await userRes.json() as { id: number }
+    providerAccountId = String(githubUser.id)
+  } else {
+    return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_provider`)
+  }
+
+  await prisma.account.create({
+    data: {
+      userId: c.get('user').id,
+      provider,
+      providerAccountId,
+    },
+  })
+
+  return c.redirect(`${FRONTEND_URL}/settings?oauth_linked=${provider}`)
+})
 
 authRoutes.post('/register', async (c) => {
   const { email, password, name } = await c.req.json()
@@ -96,6 +445,7 @@ authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
       memberships: {
         include: { household: { select: { id: true, name: true } } },
       },
+      accounts: { select: { id: true, provider: true, providerAccountId: true } },
       createdAt: true,
     },
   })

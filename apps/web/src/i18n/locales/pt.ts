@@ -42,6 +42,7 @@ export const pt: TranslationKeys = {
     passwordsDoNotMatch: 'As senhas não coincidem',
     passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
     failedToCreateAccount: 'Erro ao criar conta',
+    oauthError: 'Erro ao vincular conta. Tente novamente.',
   },
   household: {
     create: 'Criar casa',
@@ -175,6 +176,10 @@ export const pt: TranslationKeys = {
     removeMember: 'Remover membro',
     removeMemberMessage: 'Tem certeza que deseja remover {{name}} da casa?',
     remove: 'Remover',
+    linkedAccounts: 'Contas Vinculadas',
+    connect: 'Vincular',
+    connected: 'Vinculada',
+    accountLinked: 'Conta {{provider}} vinculada com sucesso',
   },
   dashboard: {
     greetingMorning: 'Bom dia',

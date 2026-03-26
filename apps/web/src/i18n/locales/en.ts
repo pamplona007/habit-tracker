@@ -40,6 +40,7 @@ export const en = {
     passwordsDoNotMatch: 'Passwords do not match',
     passwordTooShort: 'Password must be at least 6 characters',
     failedToCreateAccount: 'Failed to create account',
+    oauthError: 'Failed to link account. Please try again.',
   },
   household: {
     create: 'Create household',
@@ -173,6 +174,10 @@ export const en = {
     removeMember: 'Remove member',
     removeMemberMessage: 'Are you sure you want to remove {{name}} from the household?',
     remove: 'Remove',
+    linkedAccounts: 'Linked Accounts',
+    connect: 'Connect',
+    connected: 'Connected',
+    accountLinked: '{{provider}} account linked successfully',
   },
   dashboard: {
     greetingMorning: 'Good morning',

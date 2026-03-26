@@ -69,7 +69,7 @@ export function TimerPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+
       <header className={styles.header}>
         <button className={styles.minimizeBtn} onClick={handleMinimize}>
           <span className="material-symbols-outlined">keyboard_arrow_down</span>
@@ -78,9 +78,9 @@ export function TimerPage() {
         <div className={styles.headerSpacer} />
       </header>
 
-      {/* Main Content */}
+
       <main className={styles.main}>
-        {/* Task Identity Card */}
+
         <div className={styles.taskCard}>
           <h1 className={styles.taskName}>{task.name}</h1>
           {task.description && (
@@ -88,7 +88,7 @@ export function TimerPage() {
           )}
         </div>
 
-        {/* Timer Display */}
+
         <div className={styles.timerWrapper}>
           <div className={styles.timerHalo} />
           <svg className={styles.progressRing} viewBox="0 0 200 200">
@@ -120,7 +120,7 @@ export function TimerPage() {
           </div>
         </div>
 
-        {/* Action Controls */}
+
         {!isCompleted && (
           <div className={styles.controls}>
             <button
@@ -151,7 +151,7 @@ export function TimerPage() {
           </div>
         )}
 
-        {/* Completion / Navigation Actions */}
+
         {isCompleted ? (
           <div className={styles.completedState}>
             <div className={styles.completedIcon}>
@@ -172,7 +172,7 @@ export function TimerPage() {
           </button>
         )}
 
-        {/* Distraction Quote */}
+
         {!isCompleted && (
           <div className={styles.quote}>
             <p>"{quote}"</p>

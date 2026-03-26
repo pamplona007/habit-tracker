@@ -264,15 +264,15 @@ function CreateTaskModal({
 
         <FormField label={t('tasks.type')}>
           <div className={styles.typeOptions} data-testid="task-type-options">
-            {(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME'] as TaskType[]).map((t) => (
+            {TASK_TYPE_KEYS.filter((k) => k.value !== 'ALL').map((typeKey) => (
               <button
-                key={t}
+                key={typeKey.value}
                 type="button"
-                className={`${styles.typeOption} ${type === t ? styles.active : ''}`}
-                onClick={() => setType(t)}
-                data-testid={`task-type-${t.toLowerCase()}`}
+                className={`${styles.typeOption} ${type === typeKey.value ? styles.active : ''}`}
+                onClick={() => setType(typeKey.value as TaskType)}
+                data-testid={`task-type-${typeKey.value.toLowerCase()}`}
               >
-                {t === 'ONE_TIME' ? t.replace('_', ' ') : t}
+                {t(typeKey.key)}
               </button>
             ))}
           </div>

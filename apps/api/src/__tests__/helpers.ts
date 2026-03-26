@@ -29,6 +29,15 @@ export async function cleanupTestData() {
       })).map(i => i.code) },
     },
   })
+
+  await prisma.account.deleteMany({
+    where: {
+      userId: { in: (await prisma.user.findMany({
+        where: { email: { contains: '@example.com' } },
+        select: { id: true },
+      })).map(u => u.id) },
+    },
+  })
 }
 
 export async function cleanupAllTestData() {
@@ -40,6 +49,12 @@ export async function cleanupAllTestData() {
   await prisma.householdInvite.deleteMany()
   await prisma.householdMember.deleteMany()
   await prisma.household.deleteMany()
+  await prisma.account.deleteMany({
+    where: { userId: { in: (await prisma.user.findMany({
+      where: { email: { contains: '@example.com' } },
+      select: { id: true },
+    })).map(u => u.id) } },
+  })
   await prisma.user.deleteMany({
     where: { email: { contains: '@example.com' } },
   })

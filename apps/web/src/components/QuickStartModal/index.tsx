@@ -46,16 +46,16 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* Decorative Blurs */}
+
         <div className={styles.blurTopLeft} />
         <div className={styles.blurBottomRight} />
 
-        {/* Close Button */}
+
         <button className={styles.closeBtn} onClick={onClose}>
           <span className="material-symbols-outlined">close</span>
         </button>
 
-        {/* Icon Header */}
+
         <div className={styles.iconWrapper}>
           <div className={styles.iconBg}>
             <span className="material-symbols-outlined">auto_awesome</span>
@@ -63,7 +63,7 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
           <div className={styles.iconGlow} />
         </div>
 
-        {/* Content */}
+
         <div className={styles.content}>
           <p className={styles.label}>{t('quickStart.focusRecommendation')}</p>
           <h2 className={styles.taskName}>{task.name}</h2>
@@ -73,14 +73,14 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
           </div>
         </div>
 
-        {/* Description */}
+
         {task.description && (
           <p className={styles.description}>
             {task.description}
           </p>
         )}
 
-        {/* Duration Selector */}
+
         <div className={styles.durationSection}>
           <span className={styles.sectionLabel}>{t('quickStart.selectDuration')}</span>
           <div className={styles.durationOptions}>
@@ -96,7 +96,7 @@ export function QuickStartModal({ task, onClose, onRollAgain }: QuickStartModalP
           </div>
         </div>
 
-        {/* Actions */}
+
         <div className={styles.actions}>
           <Button variant="primary" size="lg" fullWidth onClick={handleStart}>
             {t('quickStart.startNow')}

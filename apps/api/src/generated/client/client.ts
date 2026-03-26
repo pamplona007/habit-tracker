@@ -86,3 +86,8 @@ export type ShoppingList = Prisma.ShoppingListModel
  * 
  */
 export type ShoppingItem = Prisma.ShoppingItemModel
+/**
+ * Model Account
+ * 
+ */
+export type Account = Prisma.AccountModel

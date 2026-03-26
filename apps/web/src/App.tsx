@@ -12,6 +12,7 @@ import {
   ShoppingPage,
   SettingsPage,
   TimerPage,
+  AuthCallbackPage,
 } from './pages';
 import './i18n';
 import styles from './App.module.css';
@@ -22,7 +23,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
+
         <Route
           path="/"
           element={
@@ -33,8 +34,9 @@ function App() {
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        {/* Protected routes */}
+
         <Route
           path="/dashboard"
           element={
@@ -86,7 +88,7 @@ function App() {
           }
         />
 
-        {/* No Household route */}
+
         <Route
           path="/no-household"
           element={
@@ -96,7 +98,7 @@ function App() {
           }
         />
 
-        {/* Catch all */}
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

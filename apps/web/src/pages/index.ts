@@ -8,3 +8,4 @@ export { NoticesPage } from './NoticesPage';
 export { ShoppingPage } from './ShoppingPage';
 export { SettingsPage } from './SettingsPage';
 export { TimerPage } from './TimerPage';
+export { AuthCallbackPage } from './AuthCallbackPage';

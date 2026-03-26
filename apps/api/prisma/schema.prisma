@@ -61,6 +61,7 @@ model User {
 
   memberships  HouseholdMember[]
   completedTasks TaskCompletion[]
+  accounts Account[]
 }
 
 model HouseholdInvite {
@@ -170,4 +171,16 @@ model ShoppingItem {
 
   listId String
   list   ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  provider          String  // "google" | "github"
+  providerAccountId String  // sub/id from OAuth provider
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@unique([provider, userId])
 }

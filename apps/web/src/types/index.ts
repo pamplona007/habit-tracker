@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name: string;
   currentHouseholdId: string | null;
+  accounts?: Array<{ id: string; provider: string; providerAccountId: string }>;
 }
 
 export interface AuthResponse {

@@ -26,4 +26,13 @@ export const authApi = {
     const { data: response } = await apiClient.post<{ success: boolean }>('/auth/change-password', data);
     return response;
   },
+
+  oauthRedirect: (provider: 'google' | 'github') => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/oauth/${provider}`;
+  },
+
+  linkAccount: async (provider: 'google' | 'github'): Promise<{ redirectUrl: string }> => {
+    const { data } = await apiClient.post<{ redirectUrl: string }>('/auth/link-account', { provider });
+    return data;
+  },
 };

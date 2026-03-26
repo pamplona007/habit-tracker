@@ -140,6 +140,12 @@
   margin: 0;
 }
 
+.success {
+  font-size: 0.75rem;
+  color: var(--primary);
+  margin: 0;
+}
+
 /* Household Section */
 .householdInfo {
   display: flex;
@@ -400,6 +406,72 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
+}
+
+/* Linked Accounts Section */
+.linkedAccountsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.linkedAccountsMessage {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  margin-bottom: var(--space-4);
+}
+
+.linkedAccountsMessage.success {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.linkedAccountsMessage.error {
+  background-color: var(--error-container);
+  color: var(--on-error-container);
+}
+
+.linkedAccount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.linkedAccount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  background-color: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+}
+
+.linkedAccountInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.linkedAccountIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.linkedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.linkedBadge .material-symbols-outlined {
+  font-size: 16px;
 }
 
 /* Password Form */

@@ -73,7 +73,6 @@ export function LandingPage() {
 
   return (
     <div className={styles.page} ref={pageRef}>
-      {/* Navigation */}
       <nav className={styles.nav}>
         <div className={styles.navContent}>
           <div className={styles.logo}>
@@ -95,7 +94,6 @@ export function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroBg}>
           <div className={styles.gradientOrb1} />
@@ -168,7 +166,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className={styles.stats} data-animate>
         <div className={styles.statItem}>
           <span className={`material-symbols-outlined ${styles.statIcon}`}>groups</span>
@@ -187,7 +184,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className={styles.features}>
         <div className={styles.sectionHeader} data-animate>
           <span className={styles.sectionLabel}>{t('landing.features.label')}</span>
@@ -216,7 +212,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className={styles.howItWorks}>
         <div className={styles.sectionHeader} data-animate>
           <span className={styles.sectionLabel}>{t('landing.howItWorks.label')}</span>
@@ -252,7 +247,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className={styles.ctaSection} data-animate>
         <div className={styles.ctaCard}>
           <div className={styles.ctaGlow} />
@@ -265,7 +259,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
