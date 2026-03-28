@@ -63,7 +63,6 @@ function buildTaskResponse(task: Record<string, unknown>, completed: boolean, co
 
 tasksRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
-  const user = c.get('user') as AuthUser
   const type = c.req.query('type') as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME' | undefined
 
   const where: Record<string, unknown> = { householdId }
@@ -73,7 +72,6 @@ tasksRoutes.get('/', async (c) => {
     where,
     include: {
       completions: {
-        where: { userId: user.id },
         orderBy: { completedAt: 'desc' },
       },
     },
@@ -117,13 +115,12 @@ tasksRoutes.post('/', async (c) => {
 
 tasksRoutes.patch('/:id', async (c) => {
   const householdId = c.get('householdId')
-  const user = c.get('user') as AuthUser
   const id = c.req.param('id')
   const data = await c.req.json()
 
   const task = await prisma.task.findFirst({
     where: { id, householdId },
-    include: { completions: { where: { userId: user.id }, orderBy: { completedAt: 'desc' } } },
+    include: { completions: { orderBy: { completedAt: 'desc' } } },
   })
 
   if (!task) {
