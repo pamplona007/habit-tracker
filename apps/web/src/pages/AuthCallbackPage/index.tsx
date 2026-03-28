@@ -12,37 +12,32 @@ export function AuthCallbackPage() {
     if (hasRun.current) return
     hasRun.current = true
 
-    // FIX #1 & #9: Read tokens from URL fragment (#) not query string (?)
-    // Fragments are never sent to servers, don't appear in logs or Referer headers
-    const hash = window.location.hash.substring(1) // Remove leading #
-    const hashParams = new URLSearchParams(hash)
+    const hash = window.location.hash.substring(1)
+    const params = new URLSearchParams(hash)
 
-    const accessToken = hashParams.get('accessToken')
-    const refreshToken = hashParams.get('refreshToken')
-    const userParam = hashParams.get('user')
-
-    // FIX #3: Read error from BOTH fragment (new) and query string (backward compat)
-    const error = hashParams.get('error') || new URLSearchParams(window.location.search).get('error')
-
-    // FIX #9: Clean the URL immediately after reading tokens
-    // This removes tokens from browser history
-    window.history.replaceState(null, '', window.location.pathname)
+    const accessToken = params.get('accessToken')
+    const userParam = params.get('user')
+    const error = params.get('error')
 
     if (error) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate(`/login?oauth_error=${encodeURIComponent(error)}`, { replace: true })
       return
     }
 
-    if (!accessToken || !refreshToken || !userParam) {
+    if (!accessToken || !userParam) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate('/login', { replace: true })
       return
     }
 
     try {
       const user = JSON.parse(decodeURIComponent(userParam))
-      loginWithTokens(accessToken, refreshToken, user)
+      loginWithTokens(accessToken, user)
+      window.history.replaceState(null, '', '/auth/callback')
       navigate('/dashboard', { replace: true })
     } catch {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate('/login', { replace: true })
     }
   }, [loginWithTokens, navigate])

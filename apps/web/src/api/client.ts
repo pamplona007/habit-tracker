@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// In-memory access token (not localStorage)
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null): void {
@@ -12,24 +13,21 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+// Track if we're currently refreshing to prevent concurrent refresh calls
 let isRefreshing = false;
-type RefreshSubscriber = {
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-};
-let refreshSubscribers: RefreshSubscriber[] = [];
+let refreshSubscribers: Array<(token: string) => void> = [];
 
-function subscribeTokenRefresh(subscriber: RefreshSubscriber): void {
-  refreshSubscribers.push(subscriber);
+function subscribeTokenRefresh(callback: (token: string) => void): void {
+  refreshSubscribers.push(callback);
 }
 
 function onRefreshSuccess(newToken: string): void {
-  refreshSubscribers.forEach(sub => sub.resolve(newToken));
+  refreshSubscribers.forEach(callback => callback(newToken));
   refreshSubscribers = [];
 }
 
-function onRefreshFailure(error: unknown): void {
-  refreshSubscribers.forEach(sub => sub.reject(error));
+function onRefreshFailure(): void {
+  refreshSubscribers.forEach(callback => callback('REJECTED'));
   refreshSubscribers = [];
 }
 
@@ -38,6 +36,7 @@ export const unauthenticatedApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 export const apiClient = axios.create({
@@ -45,6 +44,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -66,8 +66,8 @@ apiClient.interceptors.response.use(
         (url.startsWith('/auth/') || url.startsWith(`${API_URL}/auth/`));
 
       if (isAuthEndpoint && !url?.includes('/auth/refresh')) {
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
         setAccessToken(null);
         window.location.href = '/login';
         return Promise.reject(error);
@@ -77,14 +77,13 @@ apiClient.interceptors.response.use(
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          subscribeTokenRefresh({
-            resolve: (token: string) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(apiClient(originalRequest));
-            },
-            reject: (err: unknown) => {
-              reject(err);
-            },
+          subscribeTokenRefresh((token: string) => {
+            if (token === 'REJECTED') {
+              reject(error);
+              return;
+            }
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
           });
         });
       }
@@ -92,26 +91,22 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        // Use unauthenticatedApi to avoid 401 interceptor deadlock
+        // withCredentials: true ensures HttpOnly cookie is sent automatically
+        const response = await unauthenticatedApi.post<{ accessToken: string }>('/auth/refresh');
 
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
+        localStorage.setItem('accessToken', response.data.accessToken);
+        setAccessToken(response.data.accessToken);
 
-        const { data: response } = await unauthenticatedApi.post<{ accessToken: string; refreshToken: string }>('/auth/refresh', { refreshToken });
-        localStorage.setItem('refreshToken', response.refreshToken);
-        setAccessToken(response.accessToken);
+        onRefreshSuccess(response.data.accessToken);
 
-        onRefreshSuccess(response.accessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${response.accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
         return apiClient(originalRequest);
 
       } catch (refreshError) {
-        onRefreshFailure(refreshError);
-
-        localStorage.removeItem('refreshToken');
+        onRefreshFailure();
         localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
         setAccessToken(null);
         window.location.href = '/login';
         return Promise.reject(refreshError);
