@@ -1,16 +1,18 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User } from '../types';
 import { authApi } from '../api/auth';
+import { setAccessToken } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithToken: (token: string, user: User) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string, user: User) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  setAccessToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -18,19 +20,27 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasToken, setHasToken] = useState(false);
+  const [hasRefreshToken, setHasRefreshToken] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        setHasToken(true);
+      const refreshToken = localStorage.getItem('refreshToken');
+      const storedUser = localStorage.getItem('user');
+
+      if (refreshToken && storedUser) {
+        setHasRefreshToken(true);
         try {
-          const userData = await authApi.me();
-          setUser(userData);
+          // Try to refresh the access token
+          const response = await authApi.refresh(refreshToken);
+          setAccessToken(response.accessToken);
+          localStorage.setItem('refreshToken', response.refreshToken);
+          setUser(JSON.parse(storedUser));
         } catch {
-          localStorage.removeItem('token');
-          setHasToken(false);
+          // Refresh failed - clear auth state
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setAccessToken(null);
+          setHasRefreshToken(false);
         }
       }
       setIsLoading(false);
@@ -41,32 +51,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await authApi.login(email, password);
-    localStorage.setItem('token', response.token);
+    localStorage.setItem('refreshToken', response.refreshToken);
     localStorage.setItem('user', JSON.stringify(response.user));
+    setAccessToken(response.accessToken);
     setUser(response.user);
-    setHasToken(true);
+    setHasRefreshToken(true);
   };
 
-  const loginWithToken = async (token: string, user: User) => {
-    localStorage.setItem('token', token);
+  const loginWithTokens = async (accessToken: string, refreshToken: string, user: User) => {
+    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
+    setAccessToken(accessToken);
     setUser(user);
-    setHasToken(true);
+    setHasRefreshToken(true);
   };
 
   const register = async (email: string, password: string, name: string) => {
     const response = await authApi.register(email, password, name);
-    localStorage.setItem('token', response.token);
+    localStorage.setItem('refreshToken', response.refreshToken);
     localStorage.setItem('user', JSON.stringify(response.user));
+    setAccessToken(response.accessToken);
     setUser(response.user);
-    setHasToken(true);
+    setHasRefreshToken(true);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    try {
+      await authApi.logout(refreshToken || undefined);
+    } catch {
+      // Ignore logout errors
+    }
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    setAccessToken(null);
     setUser(null);
-    setHasToken(false);
+    setHasRefreshToken(false);
   };
 
   const refreshUser = async () => {
@@ -74,10 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   };
 
-
-
-
-  const isAuthenticated = !!user || (hasToken && isLoading);
+  const isAuthenticated = !!user || (hasRefreshToken && isLoading);
 
   return (
     <AuthContext.Provider
@@ -86,10 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated,
         login,
-        loginWithToken,
+        loginWithTokens,
         register,
         logout,
         refreshUser,
+        setAccessToken,
       }}
     >
       {children}

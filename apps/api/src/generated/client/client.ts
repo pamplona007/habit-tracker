@@ -91,3 +91,8 @@ export type ShoppingItem = Prisma.ShoppingItemModel
  * 
  */
 export type Account = Prisma.AccountModel
+/**
+ * Model RefreshToken
+ * 
+ */
+export type RefreshToken = Prisma.RefreshTokenModel

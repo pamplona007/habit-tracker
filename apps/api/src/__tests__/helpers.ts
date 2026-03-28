@@ -49,6 +49,12 @@ export async function cleanupAllTestData() {
   await prisma.householdInvite.deleteMany()
   await prisma.householdMember.deleteMany()
   await prisma.household.deleteMany()
+  await prisma.refreshToken.deleteMany({
+    where: { userId: { in: (await prisma.user.findMany({
+      where: { email: { contains: '@example.com' } },
+      select: { id: true },
+    })).map(u => u.id) } },
+  })
   await prisma.account.deleteMany({
     where: { userId: { in: (await prisma.user.findMany({
       where: { email: { contains: '@example.com' } },

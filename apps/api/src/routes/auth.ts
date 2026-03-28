@@ -36,14 +36,76 @@ function parseState(state: string): { userId?: string; uuid: string } {
   }
 }
 
-function buildRedirectUrl(token: string, user: unknown): string {
-  const params = new URLSearchParams({ token, user: JSON.stringify(user) })
+function buildRedirectUrl(accessToken: string, refreshToken: string, user: unknown): string {
+  const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
   return `${FRONTEND_URL}/auth/callback?${params}`
 }
 
 function buildErrorRedirectUrl(error: string): string {
   const params = new URLSearchParams({ error })
   return `${FRONTEND_URL}/auth/callback?${params}`
+}
+
+async function createRefreshToken(userId: string): Promise<string> {
+  const id = crypto.randomUUID()
+  const token = jwt.sign({ sub: userId, type: 'refresh', jti: id }, JWT_SECRET, { expiresIn: '7d' })
+
+  // Decode to get expiration
+  const decoded = jwt.decode(token) as { exp: number }
+  const expiresAt = new Date(decoded.exp * 1000)
+
+  await prisma.refreshToken.create({
+    data: {
+      id,
+      token,
+      userId,
+      expiresAt,
+    },
+  })
+
+  return token
+}
+
+async function validateRefreshToken(token: string): Promise<string | null> {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; type: string; jti: string }
+
+    if (payload.type !== 'refresh') {
+      return null
+    }
+
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token },
+    })
+
+    if (!storedToken) {
+      return null
+    }
+
+    // Check if expired
+    if (storedToken.expiresAt < new Date()) {
+      await prisma.refreshToken.delete({ where: { id: storedToken.id } })
+      return null
+    }
+
+    return payload.sub
+  } catch {
+    return null
+  }
+}
+
+async function deleteRefreshToken(token: string): Promise<void> {
+  try {
+    await prisma.refreshToken.deleteMany({
+      where: { token },
+    })
+  } catch {
+    // Ignore if not found
+  }
+}
+
+function createAccessToken(userId: string): string {
+  return jwt.sign({ sub: userId, type: 'access' }, JWT_SECRET, { expiresIn: '15m' })
 }
 
 export const authRoutes = new Hono<AppBindings>()
@@ -201,9 +263,10 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     if (!existingUser) {
       return c.redirect(buildErrorRedirectUrl('user_not_found'))
     }
-    const token = jwt.sign({ sub: existingUser.id }, JWT_SECRET, { expiresIn: '7d' })
+    const accessToken = createAccessToken(existingUser.id)
+    const refreshToken = await createRefreshToken(existingUser.id)
     const { password: _, ...userWithoutPassword } = existingUser
-    return c.redirect(buildRedirectUrl(token, userWithoutPassword))
+    return c.redirect(buildRedirectUrl(accessToken, refreshToken, userWithoutPassword))
   }
 
   const existingUserByEmail = await prisma.user.findUnique({
@@ -242,9 +305,10 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     include: { memberships: { include: { household: { select: { id: true, name: true } } } }, accounts: true },
   })
 
-  const token = jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: '7d' })
+  const accessToken = createAccessToken(userId)
+  const refreshToken = await createRefreshToken(userId)
   const { password: _, ...userWithoutPassword } = user!
-  return c.redirect(buildRedirectUrl(token, userWithoutPassword))
+  return c.redirect(buildRedirectUrl(accessToken, refreshToken, userWithoutPassword))
 })
 
 authRoutes.post('/link-account', jwtMiddleware, loadUser, async (c) => {
@@ -409,9 +473,10 @@ authRoutes.post('/register', async (c) => {
     },
   })
 
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' })
+  const accessToken = createAccessToken(user.id)
+  const refreshToken = await createRefreshToken(user.id)
 
-  return c.json({ user, token })
+  return c.json({ accessToken, refreshToken, user })
 })
 
 authRoutes.post('/login', async (c) => {
@@ -445,11 +510,45 @@ authRoutes.post('/login', async (c) => {
     return c.json({ error: 'Invalid credentials' }, 401)
   }
 
-  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' })
+  const accessToken = createAccessToken(user.id)
+  const refreshToken = await createRefreshToken(user.id)
 
   const { password: _, ...userWithoutPassword } = user
 
-  return c.json({ user: userWithoutPassword, token })
+  return c.json({ accessToken, refreshToken, user: userWithoutPassword })
+})
+
+authRoutes.post('/refresh', async (c) => {
+  const { refreshToken } = await c.req.json()
+
+  if (!refreshToken) {
+    return c.json({ error: 'Refresh token is required' }, 400)
+  }
+
+  const userId = await validateRefreshToken(refreshToken)
+
+  if (!userId) {
+    return c.json({ error: 'Invalid or expired refresh token' }, 401)
+  }
+
+  // Delete old refresh token
+  await deleteRefreshToken(refreshToken)
+
+  // Issue new tokens
+  const newAccessToken = createAccessToken(userId)
+  const newRefreshToken = await createRefreshToken(userId)
+
+  return c.json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
+})
+
+authRoutes.post('/logout', jwtMiddleware, loadUser, async (c) => {
+  const { refreshToken } = await c.req.json()
+
+  if (refreshToken) {
+    await deleteRefreshToken(refreshToken)
+  }
+
+  return c.json({ success: true })
 })
 
 authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
