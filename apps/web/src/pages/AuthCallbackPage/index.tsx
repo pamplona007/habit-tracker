@@ -16,27 +16,28 @@ export function AuthCallbackPage() {
     const params = new URLSearchParams(hash)
 
     const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
     const userParam = params.get('user')
     const error = params.get('error')
 
-    window.history.replaceState(null, '', window.location.pathname)
-
     if (error) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate(`/login?oauth_error=${encodeURIComponent(error)}`, { replace: true })
       return
     }
 
-    if (!accessToken || !refreshToken || !userParam) {
+    if (!accessToken || !userParam) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate('/login', { replace: true })
       return
     }
 
     try {
       const user = JSON.parse(decodeURIComponent(userParam))
-      loginWithTokens(accessToken, refreshToken, user)
+      loginWithTokens(accessToken, user)
+      window.history.replaceState(null, '', '/auth/callback')
       navigate('/dashboard', { replace: true })
     } catch {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate('/login', { replace: true })
     }
   }, [loginWithTokens, navigate])
