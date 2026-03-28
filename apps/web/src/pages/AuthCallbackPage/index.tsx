@@ -6,14 +6,15 @@ import styles from './styles.module.css'
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { loginWithToken } = useAuth()
+  const { loginWithTokens } = useAuth()
   const hasRun = useRef(false)
 
   useEffect(() => {
     if (hasRun.current) return
     hasRun.current = true
 
-    const token = searchParams.get('token')
+    const accessToken = searchParams.get('accessToken')
+    const refreshToken = searchParams.get('refreshToken')
     const userParam = searchParams.get('user')
     const error = searchParams.get('error')
 
@@ -22,19 +23,19 @@ export function AuthCallbackPage() {
       return
     }
 
-    if (!token || !userParam) {
+    if (!accessToken || !refreshToken || !userParam) {
       navigate('/login', { replace: true })
       return
     }
 
     try {
       const user = JSON.parse(decodeURIComponent(userParam))
-      loginWithToken(token, user)
+      loginWithTokens(accessToken, refreshToken, user)
       navigate('/dashboard', { replace: true })
     } catch {
       navigate('/login', { replace: true })
     }
-  }, [searchParams, loginWithToken, navigate])
+  }, [searchParams, loginWithTokens, navigate])
 
   return (
     <div className={styles.container}>

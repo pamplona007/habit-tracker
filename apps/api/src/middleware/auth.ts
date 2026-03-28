@@ -14,7 +14,13 @@ export const jwtMiddleware = jwt({
 
 export async function loadUser(c: Context<AppBindings>, next: Next) {
   try {
-    const payload = c.get('jwtPayload')
+    const payload = c.get('jwtPayload') as { sub: string; type?: string }
+
+    // Ensure this is an access token
+    if (payload.type && payload.type !== 'access') {
+      return c.json({ error: 'Invalid token type' }, 401)
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
       include: {

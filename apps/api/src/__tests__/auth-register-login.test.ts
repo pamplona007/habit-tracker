@@ -11,7 +11,7 @@ describe('POST /auth/register', () => {
     await cleanupAllTestData()
   })
 
-  it('registers a new user and returns token', async () => {
+  it('registers a new user and returns accessToken and refreshToken', async () => {
     const res = await app.request('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +26,8 @@ describe('POST /auth/register', () => {
     const body = await res.json()
     expect(body.user.email).toBe('newuser@example.com')
     expect(body.user.name).toBe('New User')
-    expect(body.token).toBeDefined()
+    expect(body.accessToken).toBeDefined()
+    expect(body.refreshToken).toBeDefined()
     expect(body.user.password).toBeUndefined()
   })
 
@@ -130,7 +131,8 @@ describe('POST /auth/login', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.user.email).toBe('login@example.com')
-    expect(body.token).toBeDefined()
+    expect(body.accessToken).toBeDefined()
+    expect(body.refreshToken).toBeDefined()
     expect(body.user.password).toBeUndefined()
   })
 
