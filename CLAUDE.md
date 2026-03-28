@@ -12,7 +12,6 @@ Plataforma doméstica colaborativa em React + Bun/Hono.
 - **Axios** — cliente HTTP
 - **@radix-ui/themes** — componentes UI
 - **i18next** — internacionalização (EN/PT)
-- **CSS Modules** — estilos
 
 ### Backend (`apps/api`)
 - **Bun** runtime
@@ -143,9 +142,12 @@ Design system e screens disponíveis em: `projects/1440029435138039410`
 
 ## Regras de Estilo
 
-- **Tailwind CSS v4** — classes utilitárias no JSX
+- **CSS Modules** — estilos em `*.module.css` junto ao componente. Nunca Tailwind inline.
+- **Sem comentários** — código auto-explicativo, sem comments
+- **TDD — Obrigatório** — Zero código sem teste. Ciclo: Red (teste quebrando), Green (mínimo pra passar), Refactor.
+  - Feature, bug fix, refatoração — tudo tem teste, meta 100% de cobertura
+  - Novos testes durante desenvolvimento conforme necessário para garantir cobertura total
 - **Design Tokens** — definidos em `@theme` no `index.css` (ex: `text-primary`, `bg-surface-container-lowest`)
-- **Espaçamento** — classes Tailwind (p-4, m-6, gap-4, etc.)
 - **Border Radius** — `rounded-lg` para containers, `rounded-full` para botões
 - **Material Symbols** — ícone via `<span className="material-symbols-outlined">{icon}</span>`
 ---
