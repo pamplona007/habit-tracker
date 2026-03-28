@@ -30,13 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshToken && storedUser) {
         setHasRefreshToken(true);
         try {
-          // Try to refresh the access token
+
           const response = await authApi.refresh(refreshToken);
           setAccessToken(response.accessToken);
           localStorage.setItem('refreshToken', response.refreshToken);
           setUser(JSON.parse(storedUser));
         } catch {
-          // Refresh failed - clear auth state
+
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
           setAccessToken(null);
@@ -77,11 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    try {
-      await authApi.logout(refreshToken || undefined);
-    } catch {
-      // Ignore logout errors
-    }
+    await authApi.logout(refreshToken || undefined);
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setAccessToken(null);

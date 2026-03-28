@@ -85,7 +85,7 @@ describe('GET /households/:householdId/streak', () => {
     const { token, user, householdId } = await createTestHousehold()
     const task = await createTask(token, householdId, 'Task')
 
-    // Complete via direct DB insert with backdated timestamp (API uses now())
+
     await prisma.taskCompletion.create({
       data: { taskId: task.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 86400000) },
     })
@@ -105,7 +105,7 @@ describe('GET /households/:householdId/streak', () => {
     const { token, user, householdId } = await createTestHousehold()
     const task = await createTask(token, householdId, 'Task')
 
-    // 2 days ago and today (no yesterday)
+
     await prisma.taskCompletion.create({
       data: { taskId: task.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 2 * 86400000) },
     })
@@ -125,12 +125,12 @@ describe('GET /households/:householdId/streak', () => {
     const { token, user, householdId } = await createTestHousehold()
     const task = await createTask(token, householdId, 'Task')
 
-    // Streak of 3 consecutive days (1, 2, 3 days ago)
+
     await prisma.taskCompletion.create({ data: { taskId: task.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 86400000) } })
     await prisma.taskCompletion.create({ data: { taskId: task.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 2 * 86400000) } })
     await prisma.taskCompletion.create({ data: { taskId: task.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 3 * 86400000) } })
 
-    // Complete today (adds to the consecutive streak: today, yesterday, 2_days_ago, 3_days_ago = 4)
+
     await completeTask(token, householdId, task.id)
 
     const res = await app.request(`/households/${householdId}/streak`, {
@@ -139,7 +139,7 @@ describe('GET /households/:householdId/streak', () => {
 
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.streak.current).toBe(4) // all 4 dates consecutive
+    expect(body.streak.current).toBe(4)
     expect(body.streak.longest).toBe(4)
   })
 
@@ -148,7 +148,7 @@ describe('GET /households/:householdId/streak', () => {
     const task1 = await createTask(token, householdId, 'Task 1')
     const task2 = await createTask(token, householdId, 'Task 2')
 
-    // yesterday on task1, today on task2
+
     await prisma.taskCompletion.create({ data: { taskId: task1.id, userId: user.id, type: 'FULL', completedAt: new Date(Date.now() - 86400000) } })
     await completeTask(token, householdId, task2.id)
 
@@ -166,10 +166,10 @@ describe('GET /households/:householdId/streak', () => {
     const { token, user: owner, householdId } = await createTestHousehold()
     const task = await createTask(token, householdId, 'Task')
 
-    // yesterday by owner
+
     await prisma.taskCompletion.create({ data: { taskId: task.id, userId: owner.id, type: 'FULL', completedAt: new Date(Date.now() - 86400000) } })
 
-    // today by another user
+
     const { user: otherUser, token: otherToken } = await createTestUser({ email: 'other@example.com' })
     await prisma.householdMember.create({ data: { householdId, userId: otherUser.id, role: 'MEMBER' } })
     await prisma.user.update({ where: { id: otherUser.id }, data: { currentHouseholdId: householdId } })

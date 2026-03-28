@@ -177,8 +177,8 @@ model ShoppingItem {
 model Account {
   id                String  @id @default(uuid())
   userId            String
-  provider          String  // "google" | "github"
-  providerAccountId String  // sub/id from OAuth provider
+  provider          String
+  providerAccountId String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -222,7 +222,7 @@ describe('GET /households/:householdId/tasks — completed field', () => {
     let body = await res.json()
     expect(body.tasks.find((t: { id: string }) => t.id === task.id).completed).toBe(true)
 
-    // Uncomplete
+
     await app.request(`/households/${householdId}/tasks/${task.id}/complete`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },

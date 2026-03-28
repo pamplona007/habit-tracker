@@ -12,9 +12,7 @@ export function AuthCallbackPage() {
     if (hasRun.current) return
     hasRun.current = true
 
-    // FIX #1 & #9: Read tokens from URL fragment (#) not query string (?)
-    // Fragments are never sent to servers, don't appear in logs or Referer headers
-    const hash = window.location.hash.substring(1) // Remove leading #
+    const hash = window.location.hash.substring(1)
     const params = new URLSearchParams(hash)
 
     const accessToken = params.get('accessToken')
@@ -22,8 +20,6 @@ export function AuthCallbackPage() {
     const userParam = params.get('user')
     const error = params.get('error')
 
-    // FIX #9: Clean the URL immediately after reading tokens
-    // This removes tokens from browser history
     window.history.replaceState(null, '', window.location.pathname)
 
     if (error) {
