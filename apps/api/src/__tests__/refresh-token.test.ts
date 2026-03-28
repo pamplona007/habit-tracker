@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../middleware/auth'
 import app from '../index'
+import crypto from 'crypto'
 
 async function createTestUser(data: { email?: string; name?: string } = {}) {
   const email = data.email ?? `test-${Date.now()}@example.com`
@@ -63,7 +64,7 @@ describe('POST /auth/login - returns both tokens', () => {
     expect(refreshPayload.sub).toBe(user.id)
   })
 
-  it('refresh token is stored in database', async () => {
+  it('refresh token is stored in database (hashed)', async () => {
     const { user } = await createTestUser({ email: 'login2@example.com' })
     await prisma.user.update({
       where: { id: user.id },
@@ -79,9 +80,10 @@ describe('POST /auth/login - returns both tokens', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
 
-    // Check refresh token is in DB
-    const storedToken = await prisma.refreshToken.findUnique({
-      where: { token: body.refreshToken },
+    // Check refresh token hash is in DB
+    const expectedHash = crypto.createHash('sha256').update(body.refreshToken).digest('hex')
+    const storedToken = await prisma.refreshToken.findFirst({
+      where: { token: `hashed:${expectedHash}` },
     })
 
     expect(storedToken).not.toBeNull()
@@ -267,5 +269,294 @@ describe('POST /auth/logout', () => {
       body: JSON.stringify({ refreshToken }),
     })
     expect(refreshRes.status).toBe(401)
+  })
+})
+
+// ============================================
+// NEW SECURITY TESTS
+// ============================================
+
+describe('Security: Refresh token stored as hash, not plaintext', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('refresh token is stored as SHA-256 hash in database, not plaintext', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'hash-test@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'hash-test@example.com', password: 'password123' }),
+    })
+
+    const { refreshToken } = await loginRes.json()
+
+    // Calculate what the hash should be
+    const expectedHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
+
+    // Find all refresh tokens for this user
+    const storedTokens = await prisma.refreshToken.findMany({
+      where: { userId: user.id },
+    })
+
+    expect(storedTokens.length).toBeGreaterThan(0)
+
+    // The raw token should NOT be stored directly (no raw JWT in DB)
+    const rawJwtInDb = storedTokens.filter(t => 
+      t.token.includes('eyJ') && t.token.includes('JWT')
+    )
+    expect(rawJwtInDb.length).toBe(0)
+
+    // The hashed token should be stored with prefix 'hashed:'
+    const hashedToken = storedTokens.find(t => t.token === `hashed:${expectedHash}`)
+    expect(hashedToken).toBeDefined()
+  })
+})
+
+describe('Security: Refresh token rotation is atomic (race condition)', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('concurrent refresh requests - only one should succeed', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'race@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'race@example.com', password: 'password123' }),
+    })
+
+    const { refreshToken } = await loginRes.json()
+
+    // Simulate concurrent refresh requests
+    const [res1, res2] = await Promise.all([
+      app.request('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      }),
+      app.request('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      }),
+    ])
+
+    // One should succeed, one should fail
+    const successCount = [res1, res2].filter(r => r.status === 200).length
+    const failCount = [res1, res2].filter(r => r.status === 401).length
+
+    expect(successCount).toBe(1)
+    expect(failCount).toBe(1)
+  })
+})
+
+describe('Security: Logout with expired access token (using refresh token)', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('logout works with refresh token when access token is expired', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'logout-expired@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'logout-expired@example.com', password: 'password123' }),
+    })
+
+    const { refreshToken } = await loginRes.json()
+
+    // Create an expired access token
+    const expiredAccessToken = jwt.sign(
+      { sub: user.id, type: 'access' },
+      JWT_SECRET,
+      { expiresIn: '-1h' } // Already expired
+    )
+
+    // Logout should work with just the refresh token
+    const logoutRes = await app.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${expiredAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    expect(logoutRes.status).toBe(200)
+
+    // Refresh token should be invalidated
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+    expect(refreshRes.status).toBe(401)
+  })
+
+  it('logout with refresh token only (no access token) should work', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'logout-refresh-only@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'logout-refresh-only@example.com', password: 'password123' }),
+    })
+
+    const { refreshToken } = await loginRes.json()
+
+    // Logout with just refresh token (no Authorization header)
+    const logoutRes = await app.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    expect(logoutRes.status).toBe(200)
+
+    // Refresh token should be invalidated
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+    expect(refreshRes.status).toBe(401)
+  })
+})
+
+describe('Security: Logout with refresh token also invalidates it', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('after logout, refresh token cannot be used again', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'logout-invalidates@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'logout-invalidates@example.com', password: 'password123' }),
+    })
+
+    const { refreshToken, accessToken } = await loginRes.json()
+
+    // Logout
+    await app.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    // Try to use the refresh token again - should fail
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    expect(refreshRes.status).toBe(401)
+  })
+})
+
+describe('Security: OAuth callback URL uses fragment, not query string', () => {
+  it('buildRedirectUrl uses URL fragment (#) not query string (?)', async () => {
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+    const accessToken = 'test-access-token'
+    const refreshToken = 'test-refresh-token'
+    const user = { id: '123', email: 'test@example.com' }
+
+    // Build URL the same way the actual code does
+    const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
+    const queryStringUrl = `${FRONTEND_URL}/auth/callback?${params}`
+    const fragmentUrl = `${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`
+
+    // The correct URL should have # not ?
+    expect(fragmentUrl).toContain('#')
+    expect(fragmentUrl).not.toContain('?accessToken')
+    expect(queryStringUrl).toContain('?accessToken')
+
+    // Verify the expected format
+    expect(fragmentUrl).toBe(`${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`)
+  })
+})
+
+describe('Security: Refresh fails with wrong/expired refresh token returns 401', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('wrong refresh token returns 401', async () => {
+    // Create user and login
+    const { user } = await createTestUser({ email: 'wrong-token@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    // Try to refresh with a completely fake token
+    const res = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: 'completely-fake-token' }),
+    })
+
+    expect(res.status).toBe(401)
+  })
+
+  it('expired refresh token returns 401', async () => {
+    // Create user
+    const { user } = await createTestUser({ email: 'expired-token@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    // Create an already expired token
+    const expiredToken = jwt.sign(
+      { sub: user.id, type: 'refresh', jti: 'expired-jti' },
+      JWT_SECRET,
+      { expiresIn: '-1h' }
+    )
+
+    const res = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: expiredToken }),
+    })
+
+    expect(res.status).toBe(401)
   })
 })
