@@ -16,20 +16,25 @@ export function getAccessToken(): string | null {
 
 // Track if we're currently refreshing to prevent concurrent refresh calls
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+type RefreshSubscriber = {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+};
+let refreshSubscribers: RefreshSubscriber[] = [];
 
-function subscribeTokenRefresh(callback: (token: string) => void): void {
-  refreshSubscribers.push(callback);
+function subscribeTokenRefresh(subscriber: RefreshSubscriber): void {
+  refreshSubscribers.push(subscriber);
 }
 
 function onRefreshSuccess(newToken: string): void {
-  refreshSubscribers.forEach(callback => callback(newToken));
+  refreshSubscribers.forEach(sub => sub.resolve(newToken));
   refreshSubscribers = [];
 }
 
-// FIX #5: Memory leak fix - reject all queued subscribers on refresh failure
-function onRefreshFailure(): void {
-  refreshSubscribers.forEach(callback => callback('REJECTED'));
+// FIX #6: Memory leak fix - reject all queued subscribers on refresh failure
+// Using resolve/reject directly instead of fragile 'REJECTED' sentinel
+function onRefreshFailure(error: unknown): void {
+  refreshSubscribers.forEach(sub => sub.reject(error));
   refreshSubscribers = [];
 }
 
@@ -84,13 +89,14 @@ apiClient.interceptors.response.use(
       // If already refreshing, queue this request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          subscribeTokenRefresh((token: string) => {
-            if (token === 'REJECTED') {
-              reject(error);
-              return;
-            }
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(apiClient(originalRequest));
+          subscribeTokenRefresh({
+            resolve: (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(apiClient(originalRequest));
+            },
+            reject: (err: unknown) => {
+              reject(err);
+            },
           });
         });
       }
@@ -120,8 +126,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
 
       } catch (refreshError) {
-        // FIX #5: Memory leak fix - properly reject queued subscribers
-        onRefreshFailure();
+        // FIX #6: Memory leak fix - properly reject queued subscribers
+        onRefreshFailure(refreshError);
         // Refresh failed - clear auth and redirect to login
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');

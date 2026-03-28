@@ -15,12 +15,14 @@ export function AuthCallbackPage() {
     // FIX #1 & #9: Read tokens from URL fragment (#) not query string (?)
     // Fragments are never sent to servers, don't appear in logs or Referer headers
     const hash = window.location.hash.substring(1) // Remove leading #
-    const params = new URLSearchParams(hash)
+    const hashParams = new URLSearchParams(hash)
 
-    const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
-    const userParam = params.get('user')
-    const error = params.get('error')
+    const accessToken = hashParams.get('accessToken')
+    const refreshToken = hashParams.get('refreshToken')
+    const userParam = hashParams.get('user')
+
+    // FIX #3: Read error from BOTH fragment (new) and query string (backward compat)
+    const error = hashParams.get('error') || new URLSearchParams(window.location.search).get('error')
 
     // FIX #9: Clean the URL immediately after reading tokens
     // This removes tokens from browser history

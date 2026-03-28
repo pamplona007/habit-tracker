@@ -156,9 +156,10 @@ describe('POST /auth/refresh', () => {
     expect(body.refreshToken).toBeDefined()
     expect(body.refreshToken).not.toBe(oldRefreshToken) // Should be a new token
 
-    // Old token should be invalidated
+    // Old token should be invalidated (token is stored as hashed:)
+    const oldHashedToken = `hashed:${crypto.createHash('sha256').update(oldRefreshToken).digest('hex')}`
     const oldTokenInDb = await prisma.refreshToken.findUnique({
-      where: { token: oldRefreshToken },
+      where: { token: oldHashedToken },
     })
     expect(oldTokenInDb).toBeNull()
   })
@@ -256,9 +257,10 @@ describe('POST /auth/logout', () => {
 
     expect(logoutRes.status).toBe(200)
 
-    // Refresh token should be deleted from DB
+    // Refresh token should be deleted from DB (token is stored as hashed:)
+    const hashedToken = `hashed:${crypto.createHash('sha256').update(refreshToken).digest('hex')}`
     const tokenInDb = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
+      where: { token: hashedToken },
     })
     expect(tokenInDb).toBeNull()
 
@@ -307,9 +309,10 @@ describe('Security: Refresh token stored as hash, not plaintext', () => {
 
     expect(storedTokens.length).toBeGreaterThan(0)
 
-    // The raw token should NOT be stored directly (no raw JWT in DB)
-    const rawJwtInDb = storedTokens.filter(t => 
-      t.token.includes('eyJ') && t.token.includes('JWT')
+    // The raw token should NOT be stored directly
+    // Check that no token equals the raw refreshToken and no token starts with 'eyJ' (unhashed JWT prefix)
+    const rawJwtInDb = storedTokens.filter(t =>
+      t.token === refreshToken || t.token.startsWith('eyJ')
     )
     expect(rawJwtInDb.length).toBe(0)
 
@@ -492,24 +495,35 @@ describe('Security: Logout with refresh token also invalidates it', () => {
 })
 
 describe('Security: OAuth callback URL uses fragment, not query string', () => {
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
   it('buildRedirectUrl uses URL fragment (#) not query string (?)', async () => {
-    const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+    // Import the actual function
+    const { buildRedirectUrl } = await import('../routes/auth')
+
     const accessToken = 'test-access-token'
     const refreshToken = 'test-refresh-token'
     const user = { id: '123', email: 'test@example.com' }
 
-    // Build URL the same way the actual code does
-    const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
-    const queryStringUrl = `${FRONTEND_URL}/auth/callback?${params}`
-    const fragmentUrl = `${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`
+    const url = buildRedirectUrl(accessToken, refreshToken, user)
 
-    // The correct URL should have # not ?
-    expect(fragmentUrl).toContain('#')
-    expect(fragmentUrl).not.toContain('?accessToken')
-    expect(queryStringUrl).toContain('?accessToken')
+    // Should use fragment (#), not query string (?)
+    expect(url).toContain('#')
+    expect(url).not.toContain('?')
+    expect(url).toContain(`${FRONTEND_URL}/auth/callback#`)
+  })
 
-    // Verify the expected format
-    expect(fragmentUrl).toBe(`${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`)
+  it('buildErrorRedirectUrl uses URL fragment (#) not query string (?)', async () => {
+    // Import the actual function
+    const { buildErrorRedirectUrl } = await import('../routes/auth')
+
+    const error = 'invalid_state'
+    const url = buildErrorRedirectUrl(error)
+
+    // Should use fragment (#), not query string (?)
+    expect(url).toContain('#error=')
+    expect(url).not.toContain('?error=')
+    expect(url).toContain(`${FRONTEND_URL}/auth/callback#error=`)
   })
 })
 

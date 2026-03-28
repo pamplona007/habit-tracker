@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, unauthenticatedApi } from './client';
 import type { AuthResponse, User } from '../types';
 
 export const authApi = {
@@ -13,7 +13,9 @@ export const authApi = {
   },
 
   refresh: async (refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> => {
-    const { data } = await apiClient.post<{ accessToken: string; refreshToken: string }>('/auth/refresh', { refreshToken });
+    // FIX #1: Use unauthenticatedApi to avoid 401 interceptor deadlock
+    // unauthenticatedApi has no interceptors, so refresh failures won't retry
+    const { data } = await unauthenticatedApi.post<{ accessToken: string; refreshToken: string }>('/auth/refresh', { refreshToken });
     return data;
   },
 
