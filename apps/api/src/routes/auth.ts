@@ -3,6 +3,7 @@ import { getCookie } from 'hono/cookie'
 import { prisma } from '../db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import { JWT_SECRET, jwtMiddleware, loadUser } from '../middleware/auth'
 import type { AppBindings } from '../types'
 
@@ -36,14 +37,21 @@ function parseState(state: string): { userId?: string; uuid: string } {
   }
 }
 
+// FIX #1: Use URL fragment (#) instead of query string (?) to prevent refresh token leakage
+// Fragments are not sent in HTTP requests, browser history, or Referer headers
 function buildRedirectUrl(accessToken: string, refreshToken: string, user: unknown): string {
   const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
-  return `${FRONTEND_URL}/auth/callback?${params}`
+  return `${FRONTEND_URL}/auth/callback#${params}`
 }
 
 function buildErrorRedirectUrl(error: string): string {
   const params = new URLSearchParams({ error })
   return `${FRONTEND_URL}/auth/callback?${params}`
+}
+
+// FIX #2: Hash refresh tokens before storing in DB for security
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex')
 }
 
 async function createRefreshToken(userId: string): Promise<string> {
@@ -54,10 +62,13 @@ async function createRefreshToken(userId: string): Promise<string> {
   const decoded = jwt.decode(token) as { exp: number }
   const expiresAt = new Date(decoded.exp * 1000)
 
+  // Store hash of token in DB, not the raw token
+  const tokenHash = hashToken(token)
+
   await prisma.refreshToken.create({
     data: {
       id,
-      token,
+      token: `hashed:${tokenHash}`, // Prefix to identify hashed tokens
       userId,
       expiresAt,
     },
@@ -74,8 +85,11 @@ async function validateRefreshToken(token: string): Promise<string | null> {
       return null
     }
 
-    const storedToken = await prisma.refreshToken.findUnique({
-      where: { token },
+    const tokenHash = hashToken(token)
+
+    // Find token by hash
+    const storedToken = await prisma.refreshToken.findFirst({
+      where: { token: `hashed:${tokenHash}` },
     })
 
     if (!storedToken) {
@@ -94,13 +108,15 @@ async function validateRefreshToken(token: string): Promise<string | null> {
   }
 }
 
-async function deleteRefreshToken(token: string): Promise<void> {
+async function deleteRefreshToken(token: string): Promise<boolean> {
   try {
-    await prisma.refreshToken.deleteMany({
-      where: { token },
+    const tokenHash = hashToken(token)
+    const result = await prisma.refreshToken.deleteMany({
+      where: { token: `hashed:${tokenHash}` },
     })
+    return result.count > 0
   } catch {
-    // Ignore if not found
+    return false
   }
 }
 
@@ -531,19 +547,26 @@ authRoutes.post('/refresh', async (c) => {
     return c.json({ error: 'Invalid or expired refresh token' }, 401)
   }
 
-  // Delete old refresh token
-  await deleteRefreshToken(refreshToken)
+  // FIX #8: Atomic token rotation - use deleteMany and check affected rows
+  // This prevents race conditions where two concurrent refresh requests both pass validation
+  const deleted = await deleteRefreshToken(refreshToken)
+  if (!deleted) {
+    // Token was already used or invalidated by another request
+    return c.json({ error: 'Invalid or expired refresh token' }, 401)
+  }
 
-  // Issue new tokens
+  // Issue new tokens only if deletion succeeded
   const newAccessToken = createAccessToken(userId)
   const newRefreshToken = await createRefreshToken(userId)
 
   return c.json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
 })
 
-authRoutes.post('/logout', jwtMiddleware, loadUser, async (c) => {
+authRoutes.post('/logout', async (c) => {
   const { refreshToken } = await c.req.json()
 
+  // FIX #3: Allow logout with just refresh token (when access token is expired/invalid)
+  // This prevents users from being stuck unable to logout when their access token expires
   if (refreshToken) {
     await deleteRefreshToken(refreshToken)
   }

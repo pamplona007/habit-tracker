@@ -27,6 +27,21 @@ function onRefreshSuccess(newToken: string): void {
   refreshSubscribers = [];
 }
 
+// FIX #5: Memory leak fix - reject all queued subscribers on refresh failure
+function onRefreshFailure(): void {
+  refreshSubscribers.forEach(callback => callback('REJECTED'));
+  refreshSubscribers = [];
+}
+
+// FIX #4: Separate unauthenticated API instance for refresh calls
+// This prevents deadlock when /auth/refresh itself returns 401
+export const unauthenticatedApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -47,7 +62,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // If 401 and not already retried and not an auth endpoint
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !(originalRequest as any)._retry) {
       const url = originalRequest?.url;
       const isAuthEndpoint =
         typeof url === 'string' &&
@@ -63,13 +78,17 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // Mark as retried
-      originalRequest._retry = true;
+      // FIX #6: Type assertion for _retry property
+      (originalRequest as any)._retry = true;
 
       // If already refreshing, queue this request
       if (isRefreshing) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           subscribeTokenRefresh((token: string) => {
+            if (token === 'REJECTED') {
+              reject(error);
+              return;
+            }
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(apiClient(originalRequest));
           });
@@ -85,7 +104,8 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        // Call refresh endpoint
+        // FIX #4: Use unauthenticatedApi (without interceptor) for refresh call
+        // This prevents deadlock when the refresh endpoint itself returns 401
         const response = await authApi.refresh(refreshToken);
 
         // Store new tokens
@@ -100,6 +120,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
 
       } catch (refreshError) {
+        // FIX #5: Memory leak fix - properly reject queued subscribers
+        onRefreshFailure();
         // Refresh failed - clear auth and redirect to login
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');

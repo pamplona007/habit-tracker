@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import styles from './styles.module.css'
 
 export function AuthCallbackPage() {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { loginWithTokens } = useAuth()
   const hasRun = useRef(false)
@@ -13,10 +12,19 @@ export function AuthCallbackPage() {
     if (hasRun.current) return
     hasRun.current = true
 
-    const accessToken = searchParams.get('accessToken')
-    const refreshToken = searchParams.get('refreshToken')
-    const userParam = searchParams.get('user')
-    const error = searchParams.get('error')
+    // FIX #1 & #9: Read tokens from URL fragment (#) not query string (?)
+    // Fragments are never sent to servers, don't appear in logs or Referer headers
+    const hash = window.location.hash.substring(1) // Remove leading #
+    const params = new URLSearchParams(hash)
+
+    const accessToken = params.get('accessToken')
+    const refreshToken = params.get('refreshToken')
+    const userParam = params.get('user')
+    const error = params.get('error')
+
+    // FIX #9: Clean the URL immediately after reading tokens
+    // This removes tokens from browser history
+    window.history.replaceState(null, '', window.location.pathname)
 
     if (error) {
       navigate(`/login?oauth_error=${encodeURIComponent(error)}`, { replace: true })
@@ -35,7 +43,7 @@ export function AuthCallbackPage() {
     } catch {
       navigate('/login', { replace: true })
     }
-  }, [searchParams, loginWithTokens, navigate])
+  }, [loginWithTokens, navigate])
 
   return (
     <div className={styles.container}>
