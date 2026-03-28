@@ -50,7 +50,7 @@ describe('OAuth callbacks', () => {
     })
 
     it('rejects invalid provider', async () => {
-      // Create and login a user first
+
       const user = await prisma.user.create({
         data: { email: 'user@example.com', password: 'hashed', name: 'Test' },
       })
@@ -74,9 +74,9 @@ describe('OAuth callbacks', () => {
 
   describe('Account auto-linking', () => {
     it('links new OAuth account to existing user with same email', async () => {
-      // This test would require mocking the OAuth provider fetch calls
-      // In a real integration test, you would use a mock OAuth server
-      // For unit tests, we test the account linking logic directly via Prisma
+
+
+
       const email = 'oauthlink@example.com'
 
       const existingUser = await prisma.user.create({
@@ -110,8 +110,8 @@ describe('OAuth callbacks', () => {
         data: { userId: user.id, provider: 'google', providerAccountId: 'google-456' },
       })
 
-      // Try to create another Google account for same user — should fail on @@unique([provider, userId])
-      // In Prisma 7, some errors are returned in the result rather than thrown
+
+
       const result = await prisma.account.create({
         data: { userId: user.id, provider: 'google', providerAccountId: 'google-789' },
       }).catch((err: unknown) => ({ error: err as { code: string } }))

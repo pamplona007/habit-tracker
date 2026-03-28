@@ -35,7 +35,7 @@ export async function recalculateStreak(householdId: string): Promise<void> {
   const today = toDateString(new Date())
   const yesterday = toDateString(new Date(Date.now() - 86400000))
 
-  // Compute longest streak
+
   let longestStreak = 0
   let tempStreak = 1
   for (let i = 0; i < uniqueDates.length - 1; i++) {
@@ -51,7 +51,7 @@ export async function recalculateStreak(householdId: string): Promise<void> {
   }
   longestStreak = Math.max(longestStreak, tempStreak)
 
-  // Compute current streak
+
   let currentStreak = 0
   const mostRecent = uniqueDates[0]
   if (mostRecent === today || mostRecent === yesterday) {
