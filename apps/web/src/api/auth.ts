@@ -13,8 +13,6 @@ export const authApi = {
   },
 
   refresh: async (refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> => {
-    // FIX #1: Use unauthenticatedApi to avoid 401 interceptor deadlock
-    // unauthenticatedApi has no interceptors, so refresh failures won't retry
     const { data } = await unauthenticatedApi.post<{ accessToken: string; refreshToken: string }>('/auth/refresh', { refreshToken });
     return data;
   },

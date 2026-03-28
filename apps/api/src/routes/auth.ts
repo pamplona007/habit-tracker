@@ -36,21 +36,17 @@ function parseState(state: string): { userId?: string; uuid: string } {
     return { uuid: state }
   }
 }
-
-// FIX #1: Use URL fragment (#) instead of query string (?) to prevent refresh token leakage
-// Fragments are not sent in HTTP requests, browser history, or Referer headers
 export function buildRedirectUrl(accessToken: string, refreshToken: string, user: unknown): string {
   const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
   return `${FRONTEND_URL}/auth/callback#${params}`
 }
 
-// FIX #3: Use URL fragment (#) for errors too, not just query string (?)
-// This prevents error messages from being sent to servers in Referer headers
+
 export function buildErrorRedirectUrl(error: string): string {
   return `${FRONTEND_URL}/auth/callback#error=${encodeURIComponent(error)}`
 }
 
-// FIX #2: Hash refresh tokens before storing in DB for security
+
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
@@ -59,17 +55,16 @@ async function createRefreshToken(userId: string): Promise<string> {
   const id = crypto.randomUUID()
   const token = jwt.sign({ sub: userId, type: 'refresh', jti: id }, JWT_SECRET, { expiresIn: '7d' })
 
-  // Decode to get expiration
   const decoded = jwt.decode(token) as { exp: number }
   const expiresAt = new Date(decoded.exp * 1000)
 
-  // Store hash of token in DB, not the raw token
+
   const tokenHash = hashToken(token)
 
   await prisma.refreshToken.create({
     data: {
       id,
-      token: `hashed:${tokenHash}`, // Prefix to identify hashed tokens
+      token: `hashed:${tokenHash}`,
       userId,
       expiresAt,
     },
@@ -88,7 +83,7 @@ async function validateRefreshToken(token: string): Promise<string | null> {
 
     const tokenHash = hashToken(token)
 
-    // Find token by hash
+
     const storedToken = await prisma.refreshToken.findFirst({
       where: { token: `hashed:${tokenHash}` },
     })
@@ -97,7 +92,7 @@ async function validateRefreshToken(token: string): Promise<string | null> {
       return null
     }
 
-    // Check if expired
+
     if (storedToken.expiresAt < new Date()) {
       await prisma.refreshToken.delete({ where: { id: storedToken.id } })
       return null
@@ -109,13 +104,19 @@ async function validateRefreshToken(token: string): Promise<string | null> {
   }
 }
 
-async function deleteRefreshToken(token: string): Promise<boolean> {
-  // FIX #5: Let real DB errors propagate - deleteMany returns { count: 0 } when no match, not an error
+export async function deleteRefreshToken(token: string): Promise<boolean> {
   const tokenHash = hashToken(token)
-  const result = await prisma.refreshToken.deleteMany({
-    where: { token: `hashed:${tokenHash}` },
-  })
-  return result.count > 0
+  try {
+    const result = await prisma.refreshToken.deleteMany({
+      where: { token: `hashed:${tokenHash}` },
+    })
+    return result.count > 0
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2025') {
+      return false
+    }
+    throw error
+  }
 }
 
 function createAccessToken(userId: string): string {
@@ -545,15 +546,15 @@ authRoutes.post('/refresh', async (c) => {
     return c.json({ error: 'Invalid or expired refresh token' }, 401)
   }
 
-  // FIX #8: Atomic token rotation - use deleteMany and check affected rows
-  // This prevents race conditions where two concurrent refresh requests both pass validation
+
+
   const deleted = await deleteRefreshToken(refreshToken)
   if (!deleted) {
-    // Token was already used or invalidated by another request
+
     return c.json({ error: 'Invalid or expired refresh token' }, 401)
   }
 
-  // Issue new tokens only if deletion succeeded
+
   const newAccessToken = createAccessToken(userId)
   const newRefreshToken = await createRefreshToken(userId)
 
@@ -561,17 +562,17 @@ authRoutes.post('/refresh', async (c) => {
 })
 
 authRoutes.post('/logout', async (c) => {
-  // FIX #4: Handle empty or invalid JSON body gracefully
+
   let body: { refreshToken?: string } = {}
   try {
     body = await c.req.json()
   } catch {
-    // Empty or invalid JSON - that's ok, refreshToken is optional
+
   }
   const { refreshToken } = body
 
-  // FIX #3: Allow logout with just refresh token (when access token is expired/invalid)
-  // This prevents users from being stuck unable to logout when their access token expires
+
+
   if (refreshToken) {
     await deleteRefreshToken(refreshToken)
   }
