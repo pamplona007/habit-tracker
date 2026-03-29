@@ -20,7 +20,7 @@ async function setupAuthenticatedUser(page: Page) {
 test.describe('Dashboard Page', () => {
   test('should display dashboard after login with household', async ({ page }) => {
     await setupAuthenticatedUser(page);
-    await expect(page.getByText(/good morning|hello|welcome/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/good (morning|afternoon|evening)|hello|welcome/i)).toBeVisible({ timeout: 5000 });
   });
 
   test('should show streak information', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Dashboard Page', () => {
 
   test('should display notices section', async ({ page }) => {
     await setupAuthenticatedUser(page);
-    await expect(page.getByRole('heading', { name: /announcements/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('a[href="/notices"]').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should display shopping lists section', async ({ page }) => {

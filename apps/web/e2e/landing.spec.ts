@@ -4,7 +4,7 @@ import { ROUTES } from './constants';
 test.describe('Landing Page', () => {
   test('should load landing page with correct title', async ({ page }) => {
     await page.goto(ROUTES.LANDING);
-    await expect(page).toHaveTitle(/Habit/);
+    await expect(page).toHaveTitle(/Casa/);
   });
 
   test('should show navigation with login and signup links', async ({ page }) => {

@@ -26,16 +26,15 @@ async function createTestUser(data: { email?: string; name?: string } = {}) {
   return { user }
 }
 
-describe('POST /auth/login - returns both tokens', () => {
+describe('POST /auth/login - returns access token with refresh token in HttpOnly cookie', () => {
   afterEach(async () => {
     await cleanupAllTestData()
   })
 
-  it('login returns accessToken and refreshToken', async () => {
+  it('login returns accessToken and sets refresh token cookie', async () => {
     const { user } = await createTestUser({ email: 'login@example.com' })
-    await bcrypt.hash('password123', 10) // ensure password is set
+    await bcrypt.hash('password123', 10)
 
-    // Create user with known password
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
@@ -50,18 +49,18 @@ describe('POST /auth/login - returns both tokens', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
+    expect(body.refreshToken).toBeUndefined()
     expect(body.user).toBeDefined()
     expect(body.user.password).toBeUndefined()
 
-    // Verify tokens are different types
-    const accessPayload = jwt.verify(body.accessToken, JWT_SECRET) as { sub: string; type: string }
-    const refreshPayload = jwt.verify(body.refreshToken, JWT_SECRET) as { sub: string; type: string; jti: string }
+    const setCookie = res.headers.get('set-cookie')
+    expect(setCookie).toBeDefined()
+    expect(setCookie).toContain('refresh_token=')
+    expect(setCookie).toContain('HttpOnly')
 
+    const accessPayload = jwt.verify(body.accessToken, JWT_SECRET) as { sub: string; type: string }
     expect(accessPayload.type).toBe('access')
-    expect(refreshPayload.type).toBe('refresh')
     expect(accessPayload.sub).toBe(user.id)
-    expect(refreshPayload.sub).toBe(user.id)
   })
 
   it('refresh token is stored in database (hashed)', async () => {
@@ -78,10 +77,9 @@ describe('POST /auth/login - returns both tokens', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const refreshTokenFromCookie = extractRefreshToken(res.headers.get('set-cookie'))
 
-    // Check refresh token hash is in DB
-    const expectedHash = crypto.createHash('sha256').update(body.refreshToken).digest('hex')
+    const expectedHash = crypto.createHash('sha256').update(refreshTokenFromCookie).digest('hex')
     const storedToken = await prisma.refreshToken.findFirst({
       where: { token: `hashed:${expectedHash}` },
     })
@@ -91,12 +89,12 @@ describe('POST /auth/login - returns both tokens', () => {
   })
 })
 
-describe('POST /auth/register - returns both tokens', () => {
+describe('POST /auth/register - returns access token with refresh token in HttpOnly cookie', () => {
   afterEach(async () => {
     await cleanupAllTestData()
   })
 
-  it('register returns accessToken and refreshToken', async () => {
+  it('register returns accessToken and sets refresh token cookie', async () => {
     const res = await app.request('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,15 +108,16 @@ describe('POST /auth/register - returns both tokens', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
+    expect(body.refreshToken).toBeUndefined()
     expect(body.user.email).toBe('newuser@example.com')
 
-    // Verify token types
-    const accessPayload = jwt.verify(body.accessToken, JWT_SECRET) as { sub: string; type: string }
-    const refreshPayload = jwt.verify(body.refreshToken, JWT_SECRET) as { sub: string; type: string }
+    const setCookie = res.headers.get('set-cookie')
+    expect(setCookie).toBeDefined()
+    expect(setCookie).toContain('refresh_token=')
+    expect(setCookie).toContain('HttpOnly')
 
+    const accessPayload = jwt.verify(body.accessToken, JWT_SECRET) as { sub: string; type: string }
     expect(accessPayload.type).toBe('access')
-    expect(refreshPayload.type).toBe('refresh')
   })
 })
 
@@ -127,97 +126,83 @@ describe('POST /auth/refresh', () => {
     await cleanupAllTestData()
   })
 
+  async function loginAndGetCookie(email: string, password: string): Promise<string> {
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    return extractRefreshToken(loginRes.headers.get('set-cookie'))
+  }
+
   it('refresh with valid token returns new tokens', async () => {
-    // Create user and login to get tokens
     const { user } = await createTestUser({ email: 'refresh@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'refresh@example.com', password: 'password123' }),
-    })
+    const refreshToken = await loginAndGetCookie('refresh@example.com', 'password123')
 
-    const { refreshToken: oldRefreshToken } = await loginRes.json()
-
-    // Refresh
     const res = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: oldRefreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
 
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.accessToken).toBeDefined()
     expect(body.refreshToken).toBeDefined()
-    expect(body.refreshToken).not.toBe(oldRefreshToken) // Should be a new token
+    expect(body.refreshToken).not.toBe(refreshToken)
 
-    // Old token should be invalidated
+    const oldRefreshToken = `hashed:${crypto.createHash('sha256').update(refreshToken).digest('hex')}`
     const oldTokenInDb = await prisma.refreshToken.findUnique({
       where: { token: oldRefreshToken },
     })
     expect(oldTokenInDb).toBeNull()
   })
 
-  it('refresh with expired/invalid token returns 401', async () => {
+  it('refresh with fake token returns 401', async () => {
     const fakeToken = jwt.sign({ sub: 'fake', type: 'refresh' }, JWT_SECRET, { expiresIn: '-1h' })
 
     const res = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: fakeToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${fakeToken}` },
     })
 
     expect(res.status).toBe(401)
   })
 
   it('refresh with token not in database returns 401', async () => {
-    // Create a valid JWT but don't store it in DB
     const { user } = await createTestUser({ email: 'notinDB@example.com' })
     const orphanToken = jwt.sign({ sub: user.id, type: 'refresh', jti: 'orphan' }, JWT_SECRET, { expiresIn: '7d' })
 
     const res = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: orphanToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${orphanToken}` },
     })
 
     expect(res.status).toBe(401)
   })
 
   it("can't use refresh token twice", async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'reuse@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'reuse@example.com', password: 'password123' }),
-    })
+    const refreshToken = await loginAndGetCookie('reuse@example.com', 'password123')
 
-    const { refreshToken } = await loginRes.json()
-
-    // First refresh should work
     const res1 = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
     expect(res1.status).toBe(200)
 
-    // Second refresh with same token should fail (token was deleted)
     const res2 = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
     expect(res2.status).toBe(401)
   })
@@ -228,30 +213,33 @@ describe('POST /auth/logout', () => {
     await cleanupAllTestData()
   })
 
+  async function loginAndGetTokens(email: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const body = await loginRes.json()
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+    return { accessToken: body.accessToken, refreshToken }
+  }
+
   it('logout invalidates refresh token', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'logout@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'logout@example.com', password: 'password123' }),
-    })
+    const { refreshToken, accessToken } = await loginAndGetTokens('logout@example.com', 'password123')
 
-    const { refreshToken, accessToken } = await loginRes.json()
-
-    // Logout
     const logoutRes = await app.request('/auth/logout', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
       },
-      body: JSON.stringify({ refreshToken }),
     })
 
     expect(logoutRes.status).toBe(200)
@@ -262,19 +250,13 @@ describe('POST /auth/logout', () => {
     })
     expect(tokenInDb).toBeNull()
 
-    // Should not be able to refresh with logged out token
     const refreshRes = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
     expect(refreshRes.status).toBe(401)
   })
 })
-
-// ============================================
-// NEW SECURITY TESTS
-// ============================================
 
 describe('Security: Refresh token stored as hash, not plaintext', () => {
   afterEach(async () => {
@@ -282,7 +264,6 @@ describe('Security: Refresh token stored as hash, not plaintext', () => {
   })
 
   it('refresh token is stored as SHA-256 hash in database, not plaintext', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'hash-test@example.com' })
     await prisma.user.update({
       where: { id: user.id },
@@ -295,25 +276,21 @@ describe('Security: Refresh token stored as hash, not plaintext', () => {
       body: JSON.stringify({ email: 'hash-test@example.com', password: 'password123' }),
     })
 
-    const { refreshToken } = await loginRes.json()
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
 
-    // Calculate what the hash should be
     const expectedHash = crypto.createHash('sha256').update(refreshToken).digest('hex')
 
-    // Find all refresh tokens for this user
     const storedTokens = await prisma.refreshToken.findMany({
       where: { userId: user.id },
     })
 
     expect(storedTokens.length).toBeGreaterThan(0)
 
-    // The raw token should NOT be stored directly (no raw JWT in DB)
-    const rawJwtInDb = storedTokens.filter(t => 
-      t.token.includes('eyJ') && t.token.includes('JWT')
+    const rawJwtInDb = storedTokens.filter(t =>
+      t.token === refreshToken || t.token.startsWith('eyJ')
     )
     expect(rawJwtInDb.length).toBe(0)
 
-    // The hashed token should be stored with prefix 'hashed:'
     const hashedToken = storedTokens.find(t => t.token === `hashed:${expectedHash}`)
     expect(hashedToken).toBeDefined()
   })
@@ -324,37 +301,35 @@ describe('Security: Refresh token rotation is atomic (race condition)', () => {
     await cleanupAllTestData()
   })
 
+  async function loginAndGetCookie(email: string, password: string): Promise<string> {
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    return extractRefreshToken(loginRes.headers.get('set-cookie'))
+  }
+
   it('concurrent refresh requests - only one should succeed', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'race@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'race@example.com', password: 'password123' }),
-    })
+    const refreshToken = await loginAndGetCookie('race@example.com', 'password123')
 
-    const { refreshToken } = await loginRes.json()
-
-    // Simulate concurrent refresh requests
     const [res1, res2] = await Promise.all([
       app.request('/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
       }),
       app.request('/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
       }),
     ])
 
-    // One should succeed, one should fail
     const successCount = [res1, res2].filter(r => r.status === 200).length
     const failCount = [res1, res2].filter(r => r.status === 401).length
 
@@ -368,82 +343,72 @@ describe('Security: Logout with expired access token (using refresh token)', () 
     await cleanupAllTestData()
   })
 
+  async function loginAndGetTokens(email: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const body = await loginRes.json()
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+    return { accessToken: body.accessToken, refreshToken }
+  }
+
   it('logout works with refresh token when access token is expired', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'logout-expired@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'logout-expired@example.com', password: 'password123' }),
-    })
+    const { refreshToken } = await loginAndGetTokens('logout-expired@example.com', 'password123')
 
-    const { refreshToken } = await loginRes.json()
-
-    // Create an expired access token
     const expiredAccessToken = jwt.sign(
       { sub: user.id, type: 'access' },
       JWT_SECRET,
-      { expiresIn: '-1h' } // Already expired
+      { expiresIn: '-1h' }
     )
 
-    // Logout should work with just the refresh token
     const logoutRes = await app.request('/auth/logout', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${expiredAccessToken}`,
         'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
       },
-      body: JSON.stringify({ refreshToken }),
     })
 
     expect(logoutRes.status).toBe(200)
 
-    // Refresh token should be invalidated
     const refreshRes = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
     expect(refreshRes.status).toBe(401)
   })
 
   it('logout with refresh token only (no access token) should work', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'logout-refresh-only@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'logout-refresh-only@example.com', password: 'password123' }),
-    })
+    const { refreshToken } = await loginAndGetTokens('logout-refresh-only@example.com', 'password123')
 
-    const { refreshToken } = await loginRes.json()
-
-    // Logout with just refresh token (no Authorization header)
     const logoutRes = await app.request('/auth/logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
       },
-      body: JSON.stringify({ refreshToken }),
     })
 
     expect(logoutRes.status).toBe(200)
 
-    // Refresh token should be invalidated
     const refreshRes = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
     expect(refreshRes.status).toBe(401)
   })
@@ -454,62 +419,117 @@ describe('Security: Logout with refresh token also invalidates it', () => {
     await cleanupAllTestData()
   })
 
+  async function loginAndGetTokens(email: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const body = await loginRes.json()
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+    return { accessToken: body.accessToken, refreshToken }
+  }
+
   it('after logout, refresh token cannot be used again', async () => {
-    // Create user and login
     const { user } = await createTestUser({ email: 'logout-invalidates@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    const loginRes = await app.request('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'logout-invalidates@example.com', password: 'password123' }),
-    })
+    const { refreshToken, accessToken } = await loginAndGetTokens('logout-invalidates@example.com', 'password123')
 
-    const { refreshToken, accessToken } = await loginRes.json()
-
-    // Logout
     await app.request('/auth/logout', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
       },
-      body: JSON.stringify({ refreshToken }),
     })
 
-    // Try to use the refresh token again - should fail
     const refreshRes = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
     })
 
     expect(refreshRes.status).toBe(401)
   })
 })
 
-describe('Security: OAuth callback URL uses fragment, not query string', () => {
-  it('buildRedirectUrl uses URL fragment (#) not query string (?)', async () => {
-    const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+describe('Security: OAuth callback URL uses fragment with access token only', () => {
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+  it('buildRedirectUrl uses URL fragment (#) with access token only', async () => {
+    const { buildRedirectUrl } = await import('../routes/auth')
+
     const accessToken = 'test-access-token'
-    const refreshToken = 'test-refresh-token'
-    const user = { id: '123', email: 'test@example.com' }
 
-    // Build URL the same way the actual code does
-    const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
-    const queryStringUrl = `${FRONTEND_URL}/auth/callback?${params}`
-    const fragmentUrl = `${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`
+    const url = buildRedirectUrl(accessToken)
 
-    // The correct URL should have # not ?
-    expect(fragmentUrl).toContain('#')
-    expect(fragmentUrl).not.toContain('?accessToken')
-    expect(queryStringUrl).toContain('?accessToken')
+    expect(url).toContain('#')
+    expect(url).not.toContain('?')
+    expect(url).toContain(`${FRONTEND_URL}/auth/callback#`)
+    expect(url).toContain('accessToken=')
+    expect(url).not.toContain('refreshToken=')
+    expect(url).not.toContain('user=')
+  })
 
-    // Verify the expected format
-    expect(fragmentUrl).toBe(`${FRONTEND_URL}/auth/callback#accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(user))}`)
+  it('buildErrorRedirectUrl uses URL fragment (#) not query string (?)', async () => {
+    const { buildErrorRedirectUrl } = await import('../routes/auth')
+
+    const error = 'invalid_state'
+    const url = buildErrorRedirectUrl(error)
+
+    expect(url).toContain('#error=')
+    expect(url).not.toContain('?error=')
+    expect(url).toContain(`${FRONTEND_URL}/auth/callback#error=`)
+  })
+})
+
+describe('Security: deleteRefreshToken only returns false for not-found, propagates real errors', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('deleteRefreshToken returns false when token not found', async () => {
+    const { deleteRefreshToken } = await import('../routes/auth')
+
+    const result = await deleteRefreshToken('non-existent-token')
+    expect(result).toBe(false)
+  })
+})
+
+describe('Security: OAuth callback redirects to frontend with fragment error', () => {
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+  it('callback redirects with 302 and Location header containing fragment error', async () => {
+    const res = await app.request('/auth/oauth/google/callback?code=abc&state=tampered', {
+      headers: { Cookie: 'oauth_state=correct-state' },
+    })
+
+    expect(res.status).toBe(302)
+    const location = res.headers.get('location')
+    expect(location).toContain(`${FRONTEND_URL}/auth/callback`)
+    expect(location).toContain('#error=')
+  })
+
+  it('callback redirects with 302 for missing code', async () => {
+    const res = await app.request('/auth/oauth/google/callback?state=abc', {
+      headers: { Cookie: 'oauth_state=abc' },
+    })
+
+    expect(res.status).toBe(302)
+    const location = res.headers.get('location')
+    expect(location).toContain(`${FRONTEND_URL}/auth/callback#error=missing_params`)
+  })
+
+  it('callback redirects with 302 for invalid provider', async () => {
+    const res = await app.request('/auth/oauth/twitter/callback?code=abc&state=def')
+
+    expect(res.status).toBe(302)
+    const location = res.headers.get('location')
+    expect(location).toContain(`${FRONTEND_URL}/auth/callback#error=invalid_provider`)
   })
 })
 
@@ -519,32 +539,24 @@ describe('Security: Refresh fails with wrong/expired refresh token returns 401',
   })
 
   it('wrong refresh token returns 401', async () => {
-    // Create user and login
-    const { user } = await createTestUser({ email: 'wrong-token@example.com' })
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: await bcrypt.hash('password123', 10) },
-    })
-
-    // Try to refresh with a completely fake token
     const res = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: 'completely-fake-token' }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': 'refresh_token=completely-fake-token',
+      },
     })
 
     expect(res.status).toBe(401)
   })
 
   it('expired refresh token returns 401', async () => {
-    // Create user
     const { user } = await createTestUser({ email: 'expired-token@example.com' })
     await prisma.user.update({
       where: { id: user.id },
       data: { password: await bcrypt.hash('password123', 10) },
     })
 
-    // Create an already expired token
     const expiredToken = jwt.sign(
       { sub: user.id, type: 'refresh', jti: 'expired-jti' },
       JWT_SECRET,
@@ -553,10 +565,229 @@ describe('Security: Refresh fails with wrong/expired refresh token returns 401',
 
     const res = await app.request('/auth/refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: expiredToken }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${expiredToken}`,
+      },
     })
 
     expect(res.status).toBe(401)
+  })
+})
+
+function extractRefreshToken(setCookie: string | null): string {
+  if (!setCookie) return ''
+  const match = setCookie.match(/refresh_token=([^;]+)/)
+  return match ? match[1] : ''
+}
+
+describe('Security: Refresh token cookie attributes', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('login sets HttpOnly cookie with correct attributes', async () => {
+    const { user } = await createTestUser({ email: 'cookie-attr@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const res = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'cookie-attr@example.com', password: 'password123' }),
+    })
+
+    expect(res.status).toBe(200)
+    const setCookie = res.headers.get('set-cookie') || ''
+    expect(setCookie).toContain('HttpOnly')
+    expect(setCookie).toContain('SameSite=Strict')
+    expect(setCookie).toContain('Max-Age=604800')
+    expect(setCookie).toContain('refresh_token=')
+  })
+
+  it('register sets HttpOnly cookie with correct attributes', async () => {
+    const res = await app.request('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'register-cookie@example.com',
+        password: 'password123',
+        name: 'Test User',
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    const setCookie = res.headers.get('set-cookie') || ''
+    expect(setCookie).toContain('HttpOnly')
+    expect(setCookie).toContain('SameSite=Strict')
+    expect(setCookie).toContain('Max-Age=604800')
+    expect(setCookie).toContain('refresh_token=')
+  })
+
+  it('refresh endpoint accepts token via cookie (not body)', async () => {
+    const { user } = await createTestUser({ email: 'cookie-refresh@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'cookie-refresh@example.com', password: 'password123' }),
+    })
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
+    })
+
+    expect(refreshRes.status).toBe(200)
+    const body = await refreshRes.json()
+    expect(body.accessToken).toBeDefined()
+    expect(body.refreshToken).toBeDefined()
+  })
+
+  it('refresh with body refreshToken returns 400 (deprecated)', async () => {
+    const { user } = await createTestUser({ email: 'body-refresh@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'body-refresh@example.com', password: 'password123' }),
+    })
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    expect(refreshRes.status).toBe(400)
+  })
+
+  it('new refresh cookie is set after token refresh', async () => {
+    const { user } = await createTestUser({ email: 'new-cookie@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'new-cookie@example.com', password: 'password123' }),
+    })
+    const oldRefreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${oldRefreshToken}` },
+    })
+
+    expect(refreshRes.status).toBe(200)
+    const newSetCookie = refreshRes.headers.get('set-cookie') || ''
+    const newRefreshToken = extractRefreshToken(newSetCookie)
+    expect(newRefreshToken).toBeDefined()
+    expect(newRefreshToken).not.toBe(oldRefreshToken)
+  })
+
+  it('logout clears refresh token cookie', async () => {
+    const { user } = await createTestUser({ email: 'logout-cookie@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'logout-cookie@example.com', password: 'password123' }),
+    })
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+    const accessToken = (await loginRes.json()).accessToken
+
+    const logoutRes = await app.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
+      },
+    })
+
+    expect(logoutRes.status).toBe(200)
+    const setCookie = logoutRes.headers.get('set-cookie') || ''
+    expect(setCookie).toContain('refresh_token=')
+    expect(setCookie).toContain('Max-Age=0')
+  })
+
+  it('cannot reuse refresh token after logout', async () => {
+    const { user } = await createTestUser({ email: 'logout-reuse@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'logout-reuse@example.com', password: 'password123' }),
+    })
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+    const accessToken = (await loginRes.json()).accessToken
+
+    await app.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Cookie': `refresh_token=${refreshToken}`,
+      },
+    })
+
+    const refreshRes = await app.request('/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
+    })
+
+    expect(refreshRes.status).toBe(401)
+  })
+
+  it('concurrent refresh with same cookie - only one succeeds (atomic rotation)', async () => {
+    const { user } = await createTestUser({ email: 'race-cookie@example.com' })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash('password123', 10) },
+    })
+
+    const loginRes = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'race-cookie@example.com', password: 'password123' }),
+    })
+    const refreshToken = extractRefreshToken(loginRes.headers.get('set-cookie'))
+
+    const [res1, res2] = await Promise.all([
+      app.request('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
+      }),
+      app.request('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cookie': `refresh_token=${refreshToken}` },
+      }),
+    ])
+
+    const successCount = [res1, res2].filter(r => r.status === 200).length
+    expect(successCount).toBe(1)
   })
 })

@@ -11,7 +11,7 @@ describe('POST /auth/register', () => {
     await cleanupAllTestData()
   })
 
-  it('registers a new user and returns accessToken and refreshToken', async () => {
+  it('registers a new user and returns accessToken with refresh token in HttpOnly cookie', async () => {
     const res = await app.request('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,8 +27,13 @@ describe('POST /auth/register', () => {
     expect(body.user.email).toBe('newuser@example.com')
     expect(body.user.name).toBe('New User')
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
+    expect(body.refreshToken).toBeUndefined()
     expect(body.user.password).toBeUndefined()
+
+    const setCookie = res.headers.get('set-cookie')
+    expect(setCookie).toBeDefined()
+    expect(setCookie).toContain('refresh_token=')
+    expect(setCookie).toContain('HttpOnly')
   })
 
   it('registers without name', async () => {
@@ -121,7 +126,7 @@ describe('POST /auth/login', () => {
     await cleanupAllTestData()
   })
 
-  it('logs in with correct credentials', async () => {
+  it('logs in with correct credentials and receives refresh token in cookie', async () => {
     const res = await app.request('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -132,8 +137,13 @@ describe('POST /auth/login', () => {
     const body = await res.json()
     expect(body.user.email).toBe('login@example.com')
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
+    expect(body.refreshToken).toBeUndefined()
     expect(body.user.password).toBeUndefined()
+
+    const setCookie = res.headers.get('set-cookie')
+    expect(setCookie).toBeDefined()
+    expect(setCookie).toContain('refresh_token=')
+    expect(setCookie).toContain('HttpOnly')
   })
 
   it('rejects wrong password', async () => {
