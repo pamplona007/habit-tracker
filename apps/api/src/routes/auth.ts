@@ -563,7 +563,9 @@ authRoutes.post('/refresh', async (c) => {
   const newAccessToken = createAccessToken(userId)
   const newRefreshToken = await createRefreshToken(userId)
 
-  return c.json({ accessToken: newAccessToken, refreshToken: newRefreshToken })
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${newRefreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+
+  return c.json({ accessToken: newAccessToken })
 })
 
 authRoutes.post('/logout', async (c) => {
