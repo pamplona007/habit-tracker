@@ -44,6 +44,7 @@ export async function createTestUser(data: Partial<TestUser> = {}): Promise<Test
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, name }),
+    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -59,6 +60,7 @@ export async function loginUser(email: string, password: string): Promise<AuthTo
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -67,7 +69,7 @@ export async function loginUser(email: string, password: string): Promise<AuthTo
 
   const body = await res.json();
   return {
-    token: body.token,
+    token: body.accessToken,
     user: body.user,
   };
 }

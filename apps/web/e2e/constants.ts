@@ -13,4 +13,5 @@ export const ROUTES = {
   SHOPPING: '/shopping',
   SETTINGS: '/settings',
   NO_HOUSEHOLD: '/no-household',
+  CALLBACK: '/auth/callback',
 } as const;

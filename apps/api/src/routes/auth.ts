@@ -36,20 +36,16 @@ function parseState(state: string): { userId?: string; uuid: string } {
     return { uuid: state }
   }
 }
-
-// FIX #1: Use URL fragment (#) instead of query string (?) to prevent refresh token leakage
-// Fragments are not sent in HTTP requests, browser history, or Referer headers
-function buildRedirectUrl(accessToken: string, refreshToken: string, user: unknown): string {
-  const params = new URLSearchParams({ accessToken, refreshToken, user: JSON.stringify(user) })
-  return `${FRONTEND_URL}/auth/callback#${params}`
+export function buildRedirectUrl(accessToken: string): string {
+  return `${FRONTEND_URL}/auth/callback#accessToken=${encodeURIComponent(accessToken)}`
 }
 
-function buildErrorRedirectUrl(error: string): string {
-  const params = new URLSearchParams({ error })
-  return `${FRONTEND_URL}/auth/callback?${params}`
+
+export function buildErrorRedirectUrl(error: string): string {
+  return `${FRONTEND_URL}/auth/callback#error=${encodeURIComponent(error)}`
 }
 
-// FIX #2: Hash refresh tokens before storing in DB for security
+
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
@@ -58,17 +54,16 @@ async function createRefreshToken(userId: string): Promise<string> {
   const id = crypto.randomUUID()
   const token = jwt.sign({ sub: userId, type: 'refresh', jti: id }, JWT_SECRET, { expiresIn: '7d' })
 
-  // Decode to get expiration
   const decoded = jwt.decode(token) as { exp: number }
   const expiresAt = new Date(decoded.exp * 1000)
 
-  // Store hash of token in DB, not the raw token
+
   const tokenHash = hashToken(token)
 
   await prisma.refreshToken.create({
     data: {
       id,
-      token: `hashed:${tokenHash}`, // Prefix to identify hashed tokens
+      token: `hashed:${tokenHash}`,
       userId,
       expiresAt,
     },
@@ -87,7 +82,7 @@ async function validateRefreshToken(token: string): Promise<string | null> {
 
     const tokenHash = hashToken(token)
 
-    // Find token by hash
+
     const storedToken = await prisma.refreshToken.findFirst({
       where: { token: `hashed:${tokenHash}` },
     })
@@ -96,7 +91,7 @@ async function validateRefreshToken(token: string): Promise<string | null> {
       return null
     }
 
-    // Check if expired
+
     if (storedToken.expiresAt < new Date()) {
       await prisma.refreshToken.delete({ where: { id: storedToken.id } })
       return null
@@ -108,15 +103,18 @@ async function validateRefreshToken(token: string): Promise<string | null> {
   }
 }
 
-async function deleteRefreshToken(token: string): Promise<boolean> {
+export async function deleteRefreshToken(token: string): Promise<boolean> {
+  const tokenHash = hashToken(token)
   try {
-    const tokenHash = hashToken(token)
     const result = await prisma.refreshToken.deleteMany({
       where: { token: `hashed:${tokenHash}` },
     })
     return result.count > 0
-  } catch {
-    return false
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2025') {
+      return false
+    }
+    throw error
   }
 }
 
@@ -281,8 +279,10 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     }
     const accessToken = createAccessToken(existingUser.id)
     const refreshToken = await createRefreshToken(existingUser.id)
-    const { password: _, ...userWithoutPassword } = existingUser
-    return c.redirect(buildRedirectUrl(accessToken, refreshToken, userWithoutPassword))
+
+    c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+
+    return c.redirect(buildRedirectUrl(accessToken))
   }
 
   const existingUserByEmail = await prisma.user.findUnique({
@@ -316,15 +316,12 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     },
   })
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { memberships: { include: { household: { select: { id: true, name: true } } } }, accounts: true },
-  })
-
   const accessToken = createAccessToken(userId)
   const refreshToken = await createRefreshToken(userId)
-  const { password: _, ...userWithoutPassword } = user!
-  return c.redirect(buildRedirectUrl(accessToken, refreshToken, userWithoutPassword))
+
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+
+  return c.redirect(buildRedirectUrl(accessToken))
 })
 
 authRoutes.post('/link-account', jwtMiddleware, loadUser, async (c) => {
@@ -492,7 +489,9 @@ authRoutes.post('/register', async (c) => {
   const accessToken = createAccessToken(user.id)
   const refreshToken = await createRefreshToken(user.id)
 
-  return c.json({ accessToken, refreshToken, user })
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+
+  return c.json({ accessToken, user })
 })
 
 authRoutes.post('/login', async (c) => {
@@ -531,11 +530,16 @@ authRoutes.post('/login', async (c) => {
 
   const { password: _, ...userWithoutPassword } = user
 
-  return c.json({ accessToken, refreshToken, user: userWithoutPassword })
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+
+  return c.json({ accessToken, user: userWithoutPassword })
 })
 
+const REFRESH_TOKEN_COOKIE = 'refresh_token'
+const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7
+
 authRoutes.post('/refresh', async (c) => {
-  const { refreshToken } = await c.req.json()
+  const refreshToken = getCookie(c, REFRESH_TOKEN_COOKIE)
 
   if (!refreshToken) {
     return c.json({ error: 'Refresh token is required' }, 400)
@@ -547,15 +551,15 @@ authRoutes.post('/refresh', async (c) => {
     return c.json({ error: 'Invalid or expired refresh token' }, 401)
   }
 
-  // FIX #8: Atomic token rotation - use deleteMany and check affected rows
-  // This prevents race conditions where two concurrent refresh requests both pass validation
+
+
   const deleted = await deleteRefreshToken(refreshToken)
   if (!deleted) {
-    // Token was already used or invalidated by another request
+
     return c.json({ error: 'Invalid or expired refresh token' }, 401)
   }
 
-  // Issue new tokens only if deletion succeeded
+
   const newAccessToken = createAccessToken(userId)
   const newRefreshToken = await createRefreshToken(userId)
 
@@ -563,13 +567,13 @@ authRoutes.post('/refresh', async (c) => {
 })
 
 authRoutes.post('/logout', async (c) => {
-  const { refreshToken } = await c.req.json()
+  const refreshToken = getCookie(c, REFRESH_TOKEN_COOKIE)
 
-  // FIX #3: Allow logout with just refresh token (when access token is expired/invalid)
-  // This prevents users from being stuck unable to logout when their access token expires
   if (refreshToken) {
     await deleteRefreshToken(refreshToken)
   }
+
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/`)
 
   return c.json({ success: true })
 })

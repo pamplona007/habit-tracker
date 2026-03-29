@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { apiClient } from '../../api/client'
 import styles from './styles.module.css'
 
 export function AuthCallbackPage() {
@@ -16,29 +17,37 @@ export function AuthCallbackPage() {
     const params = new URLSearchParams(hash)
 
     const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
-    const userParam = params.get('user')
     const error = params.get('error')
 
-    window.history.replaceState(null, '', window.location.pathname)
-
     if (error) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate(`/login?oauth_error=${encodeURIComponent(error)}`, { replace: true })
       return
     }
 
-    if (!accessToken || !refreshToken || !userParam) {
+    if (!accessToken) {
+      window.history.replaceState(null, '', window.location.pathname)
       navigate('/login', { replace: true })
       return
     }
 
-    try {
-      const user = JSON.parse(decodeURIComponent(userParam))
-      loginWithTokens(accessToken, refreshToken, user)
-      navigate('/dashboard', { replace: true })
-    } catch {
-      navigate('/login', { replace: true })
+    const authenticate = async () => {
+      try {
+        loginWithTokens(accessToken, { id: '', email: '', name: '' } as any)
+
+        const response = await apiClient.get<{ user: any }>('/auth/me')
+        const user = response.data.user
+
+        loginWithTokens(accessToken, user)
+        window.history.replaceState(null, '', '/auth/callback')
+        navigate('/dashboard', { replace: true })
+      } catch {
+        window.history.replaceState(null, '', window.location.pathname)
+        navigate('/login', { replace: true })
+      }
     }
+
+    authenticate()
   }, [loginWithTokens, navigate])
 
   return (
