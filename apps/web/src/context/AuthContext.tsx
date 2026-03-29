@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import type { User } from '../types';
 import { authApi } from '../api/auth';
 import { setAccessToken } from '../api/client';
@@ -20,8 +20,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initRef = useRef(false);
 
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
     const initAuth = async () => {
       const storedUser = localStorage.getItem('user');
       const storedAccessToken = localStorage.getItem('accessToken');
@@ -31,10 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (storedAccessToken) {
+        setAccessToken(storedAccessToken);
+      }
+
       try {
-        if (storedAccessToken) {
-          setAccessToken(storedAccessToken);
-        }
         const userData = await authApi.me();
         setUser(userData);
       } catch {

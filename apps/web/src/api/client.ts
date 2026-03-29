@@ -65,7 +65,12 @@ apiClient.interceptors.response.use(
         typeof url === 'string' &&
         (url.startsWith('/auth/') || url.startsWith(`${API_URL}/auth/`));
 
-      if (isAuthEndpoint && !url?.includes('/auth/refresh')) {
+      const isAuthWithoutRefresh =
+        isAuthEndpoint &&
+        !url?.includes('/auth/refresh') &&
+        !url?.includes('/auth/me');
+
+      if (isAuthWithoutRefresh) {
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         setAccessToken(null);
