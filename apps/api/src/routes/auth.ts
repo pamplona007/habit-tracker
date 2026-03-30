@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import { JWT_SECRET, jwtMiddleware, loadUser } from '../middleware/auth'
+import { authRateLimiter } from '../middleware/rateLimit'
 import type { AppBindings } from '../types'
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
@@ -176,6 +177,8 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     return c.redirect(buildErrorRedirectUrl('invalid_state'))
   }
 
+  c.header('Set-Cookie', `${STATE_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`)
+
   let userInfo: { email: string; name?: string; id: string }
 
   if (provider === 'google') {
@@ -280,7 +283,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     const accessToken = createAccessToken(existingUser.id)
     const refreshToken = await createRefreshToken(existingUser.id)
 
-    c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+    c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/; Secure`)
 
     return c.redirect(buildRedirectUrl(accessToken))
   }
@@ -296,7 +299,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
   let userId: string
 
   if (existingUserByEmail) {
-    userId = existingUserByEmail.id
+    return c.redirect(buildErrorRedirectUrl('email_already_exists'))
   } else {
     const newUser = await prisma.user.create({
       data: {
@@ -319,7 +322,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
   const accessToken = createAccessToken(userId)
   const refreshToken = await createRefreshToken(userId)
 
-  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/; Secure`)
 
   return c.redirect(buildRedirectUrl(accessToken))
 })
@@ -380,6 +383,8 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
   if (!cookieValue || cookieValue !== state) {
     return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_state`)
   }
+
+  c.header('Set-Cookie', `${STATE_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`)
 
   const parsed = parseState(state)
   if (!parsed.userId) {
@@ -453,11 +458,16 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
   return c.redirect(`${FRONTEND_URL}/settings?oauth_linked=${provider}`)
 })
 
-authRoutes.post('/register', async (c) => {
+authRoutes.post('/register', authRateLimiter, async (c) => {
   const { email, password, name } = await c.req.json()
 
   if (!email || !password) {
     return c.json({ error: 'Email and password are required' }, 400)
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return c.json({ error: 'Invalid email format' }, 400)
   }
 
   if (password.length < 6) {
@@ -489,12 +499,12 @@ authRoutes.post('/register', async (c) => {
   const accessToken = createAccessToken(user.id)
   const refreshToken = await createRefreshToken(user.id)
 
-  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/; Secure`)
 
   return c.json({ accessToken, user })
 })
 
-authRoutes.post('/login', async (c) => {
+authRoutes.post('/login', authRateLimiter, async (c) => {
   const { email, password } = await c.req.json()
 
   if (!email || !password) {
@@ -530,7 +540,7 @@ authRoutes.post('/login', async (c) => {
 
   const { password: _, ...userWithoutPassword } = user
 
-  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/; Secure`)
 
   return c.json({ accessToken, user: userWithoutPassword })
 })
@@ -563,7 +573,7 @@ authRoutes.post('/refresh', async (c) => {
   const newAccessToken = createAccessToken(userId)
   const newRefreshToken = await createRefreshToken(userId)
 
-  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${newRefreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/`)
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=${newRefreshToken}; HttpOnly; SameSite=Strict; Max-Age=${REFRESH_TOKEN_MAX_AGE}; Path=/; Secure`)
 
   return c.json({ accessToken: newAccessToken })
 })
@@ -575,7 +585,7 @@ authRoutes.post('/logout', async (c) => {
     await deleteRefreshToken(refreshToken)
   }
 
-  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/`)
+  c.header('Set-Cookie', `${REFRESH_TOKEN_COOKIE}=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/; Secure`)
 
   return c.json({ success: true })
 })
@@ -670,10 +680,15 @@ authRoutes.post('/change-password', jwtMiddleware, loadUser, async (c) => {
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10)
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { password: hashedPassword },
-  })
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    }),
+    prisma.refreshToken.deleteMany({
+      where: { userId: user.id },
+    }),
+  ])
 
   return c.json({ success: true })
 })

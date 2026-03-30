@@ -20,8 +20,9 @@ app.use('*', async (c, next) => {
   const method = c.req.method
   const path = c.req.path
   const headers = c.req.header()
+  const { authorization: _, cookie: __, ...safeHeaders } = headers as Record<string, string>
   console.log(`[${new Date().toISOString()}] --> ${method} ${path}`)
-  console.log('  Headers:', JSON.stringify(headers, null, 2))
+  console.log('  Headers:', JSON.stringify(safeHeaders, null, 2))
   await next()
   const duration = Date.now() - start
   console.log(`[${new Date().toISOString()}] <-- ${method} ${path} [${c.res.status}] ${duration}ms`)
@@ -39,7 +40,7 @@ app.onError((err, c) => {
 })
 
 app.use('*', cors({
-  origin: '*',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }))
 

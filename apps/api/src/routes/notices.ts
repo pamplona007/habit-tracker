@@ -14,6 +14,15 @@ const noticeSchema = z.object({
   endDate: z.string().datetime().optional(),
 })
 
+const noticeUpdateSchema = z.object({
+  title: z.string().min(1).optional(),
+  content: z.string().optional(),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+  isActive: z.boolean().optional(),
+  startDate: z.string().datetime().optional().nullable(),
+  endDate: z.string().datetime().optional().nullable(),
+})
+
 
 noticesRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
@@ -54,6 +63,8 @@ noticesRoutes.patch('/:id', async (c) => {
   const id = c.req.param('id')
   const data = await c.req.json()
 
+  const parsed = noticeUpdateSchema.parse(data)
+
   const notice = await prisma.notice.findFirst({
     where: { id, householdId },
   })
@@ -62,13 +73,17 @@ noticesRoutes.patch('/:id', async (c) => {
     return c.json({ error: 'Notice not found' }, 404)
   }
 
+  const updateData: Record<string, unknown> = {}
+  if (parsed.title !== undefined) updateData.title = parsed.title
+  if (parsed.content !== undefined) updateData.content = parsed.content
+  if (parsed.priority !== undefined) updateData.priority = parsed.priority
+  if (parsed.isActive !== undefined) updateData.isActive = parsed.isActive
+  if (parsed.startDate !== undefined) updateData.startDate = parsed.startDate ? new Date(parsed.startDate) : null
+  if (parsed.endDate !== undefined) updateData.endDate = parsed.endDate ? new Date(parsed.endDate) : null
+
   const updated = await prisma.notice.update({
     where: { id },
-    data: {
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate) : notice.startDate,
-      endDate: data.endDate ? new Date(data.endDate) : notice.endDate,
-    },
+    data: updateData,
   })
 
   return c.json({ notice: updated })

@@ -3,7 +3,11 @@ import { jwt } from 'hono/jwt'
 import { prisma } from '../db'
 import type { AppBindings, AuthUser } from '../types'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET && process.env.NODE_ENV !== 'test') {
+  throw new Error('JWT_SECRET environment variable is required')
+}
 
 export { JWT_SECRET }
 
@@ -75,5 +79,18 @@ export async function requireCurrentHousehold(c: Context<AppBindings>, next: Nex
   }
 
   c.set('householdId', user.currentHouseholdId)
+  await next()
+}
+
+export async function requireHouseholdAdmin(c: Context<AppBindings>, next: Next) {
+  const user = c.get('user')
+  const householdId = c.get('householdId')
+
+  const membership = user.memberships.find((m) => m.householdId === householdId)
+
+  if (!membership || membership.role === 'MEMBER') {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
   await next()
 }

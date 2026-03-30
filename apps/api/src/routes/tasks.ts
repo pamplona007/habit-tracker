@@ -18,6 +18,17 @@ const taskSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
+const taskUpdateSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'ONE_TIME']).optional(),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+  dayOfWeek: z.number().min(0).max(6).optional(),
+  dayOfMonth: z.number().min(1).max(31).optional(),
+  deadline: z.string().datetime().optional().nullable(),
+  isActive: z.boolean().optional(),
+})
+
 function startOfToday(): Date {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
@@ -127,6 +138,8 @@ tasksRoutes.patch('/:id', async (c) => {
   const id = c.req.param('id')
   const data = await c.req.json()
 
+  const parsed = taskUpdateSchema.parse(data)
+
   const task = await prisma.task.findFirst({
     where: { id, householdId },
     include: { completions: { orderBy: { completedAt: 'desc' } } },
@@ -136,12 +149,19 @@ tasksRoutes.patch('/:id', async (c) => {
     return c.json({ error: 'Task not found' }, 404)
   }
 
+  const updateData: Record<string, unknown> = {}
+  if (parsed.name !== undefined) updateData.name = parsed.name
+  if (parsed.description !== undefined) updateData.description = parsed.description
+  if (parsed.type !== undefined) updateData.type = parsed.type
+  if (parsed.priority !== undefined) updateData.priority = parsed.priority
+  if (parsed.dayOfWeek !== undefined) updateData.dayOfWeek = parsed.dayOfWeek
+  if (parsed.dayOfMonth !== undefined) updateData.dayOfMonth = parsed.dayOfMonth
+  if (parsed.deadline !== undefined) updateData.deadline = parsed.deadline ? new Date(parsed.deadline) : null
+  if (parsed.isActive !== undefined) updateData.isActive = parsed.isActive
+
   const updated = await prisma.task.update({
     where: { id },
-    data: {
-      ...data,
-      deadline: data.deadline ? new Date(data.deadline) : task.deadline,
-    },
+    data: updateData,
   })
 
   const periodCompletion = task.completions.find((c) => isCompletedInPeriod(updated.type, c.completedAt))

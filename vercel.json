@@ -3,5 +3,11 @@
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/cron/morning-reminders",
+      "schedule": "0 9 * * *"
+    }
   ]
 }
