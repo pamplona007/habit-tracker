@@ -42,10 +42,10 @@ export function ConfirmDialog({
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.message}>{message}</p>
         <div className={styles.actions}>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} data-testid="confirm-dialog-cancel">
             {cancelLabel || t('common.cancel')}
           </Button>
-          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={handleConfirm}>
+          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={handleConfirm} data-testid="confirm-dialog-confirm">
             {confirmLabel || t('common.confirm')}
           </Button>
         </div>

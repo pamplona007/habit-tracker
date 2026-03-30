@@ -27,7 +27,31 @@ export function useCreateNotice() {
         endDate?: string;
       };
     }) => noticesApi.create(params.householdId, params.notice),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, notice }) => {
+      const queryKey = NOTICE_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Notice[]>(queryKey);
+      const optimisticNotice: Notice = {
+        id: `optimistic-${Date.now()}`,
+        title: notice.title,
+        content: notice.content,
+        priority: notice.priority ?? 'normal',
+        isActive: true,
+        startDate: notice.startDate ?? null,
+        endDate: notice.endDate ?? null,
+        householdId,
+        createdAt: new Date().toISOString(),
+        createdBy: '',
+      };
+      queryClient.setQueryData<Notice[]>(queryKey, (old) => [...(old ?? []), optimisticNotice]);
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Notice[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: NOTICE_KEYS.all(variables.householdId) });
     },
   });
@@ -41,7 +65,21 @@ export function useUpdateNotice() {
       noticeId: string;
       updates: Partial<Notice>;
     }) => noticesApi.update(params.householdId, params.noticeId, params.updates),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, noticeId, updates }) => {
+      const queryKey = NOTICE_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Notice[]>(queryKey);
+      queryClient.setQueryData<Notice[]>(queryKey, (old) =>
+        (old ?? []).map((n) => (n.id === noticeId ? { ...n, ...updates } : n))
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Notice[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: NOTICE_KEYS.all(variables.householdId) });
     },
   });
@@ -52,7 +90,21 @@ export function useDeleteNotice() {
   return useMutation({
     mutationFn: (params: { householdId: string; noticeId: string }) =>
       noticesApi.delete(params.householdId, params.noticeId),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, noticeId }) => {
+      const queryKey = NOTICE_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Notice[]>(queryKey);
+      queryClient.setQueryData<Notice[]>(queryKey, (old) =>
+        (old ?? []).filter((n) => n.id !== noticeId)
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Notice[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: NOTICE_KEYS.all(variables.householdId) });
     },
   });

@@ -30,7 +30,7 @@ services:
       DATABASE_URL: postgresql://habit_tracker:habit_tracker_dev@postgres:5432/habit_tracker
       JWT_SECRET: local-dev-secret-change-in-production
       PORT: 3000
-      NODE_ENV: development
+      NODE_ENV: test
     ports:
       - '3000:3000'
     volumes:

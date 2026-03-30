@@ -63,3 +63,4 @@ export function createRateLimiter(windowMs: number, maxRequests: number): Middle
 }
 
 export const authRateLimiter = createRateLimiter(15 * 60 * 1000, 20)
+export const globalRateLimiter = createRateLimiter(60 * 1000, 100)

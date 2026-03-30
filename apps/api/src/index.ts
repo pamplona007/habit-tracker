@@ -11,6 +11,7 @@ import { shoppingRoutes } from './routes/shopping'
 import { statsRoutes } from './routes/stats'
 import { pushRoutes } from './routes/push'
 import { cronRoutes } from './routes/cron'
+import { globalRateLimiter } from './middleware/rateLimit'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -43,6 +44,8 @@ app.use('*', cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }))
+
+app.use('*', globalRateLimiter)
 
 app.get('/', (c) => c.json({
   message: 'Habit Tracker API',

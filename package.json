@@ -16,6 +16,7 @@
     "turbo": "^2.0.0"
   },
   "dependencies": {
+    "@types/node": "^25.5.0",
     "react-router-dom": "^7.13.2"
   }
 }

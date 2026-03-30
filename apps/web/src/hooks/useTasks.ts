@@ -44,7 +44,34 @@ export function useCreateTask() {
         priority?: TaskPriority;
       };
     }) => tasksApi.create(params.householdId, params.task),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, task }) => {
+      const queryKey = TASK_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      const optimisticTask: Task = {
+        id: `optimistic-${Date.now()}`,
+        name: task.name,
+        description: task.description ?? null,
+        type: task.type,
+        priority: task.priority ?? 'normal',
+        dayOfWeek: task.dayOfWeek ?? null,
+        dayOfMonth: task.dayOfMonth ?? null,
+        deadline: task.deadline ?? null,
+        isActive: true,
+        householdId,
+        createdAt: new Date().toISOString(),
+        completed: false,
+        completionType: null,
+      };
+      queryClient.setQueryData<Task[]>(queryKey, (old) => [...(old ?? []), optimisticTask]);
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Task[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
     },
   });
@@ -58,7 +85,21 @@ export function useUpdateTask() {
       taskId: string;
       updates: Partial<Task>;
     }) => tasksApi.update(params.householdId, params.taskId, params.updates),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, taskId, updates }) => {
+      const queryKey = TASK_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      queryClient.setQueryData<Task[]>(queryKey, (old) =>
+        (old ?? []).map((t) => (t.id === taskId ? { ...t, ...updates } : t))
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Task[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
     },
   });
@@ -69,7 +110,23 @@ export function useCompleteTask() {
   return useMutation({
     mutationFn: (params: { householdId: string; taskId: string; type: CompletionType }) =>
       tasksApi.complete(params.householdId, params.taskId, params.type),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, taskId, type }) => {
+      const queryKey = TASK_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      queryClient.setQueryData<Task[]>(queryKey, (old) =>
+        (old ?? []).map((t) =>
+          t.id === taskId ? { ...t, completed: true, completionType: type } : t
+        )
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Task[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
       queryClient.invalidateQueries({ queryKey: STREAK_KEYS.all(variables.householdId) });
     },
@@ -81,7 +138,23 @@ export function useUncompleteTask() {
   return useMutation({
     mutationFn: (params: { householdId: string; taskId: string }) =>
       tasksApi.uncomplete(params.householdId, params.taskId),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, taskId }) => {
+      const queryKey = TASK_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      queryClient.setQueryData<Task[]>(queryKey, (old) =>
+        (old ?? []).map((t) =>
+          t.id === taskId ? { ...t, completed: false, completionType: null } : t
+        )
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Task[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
       queryClient.invalidateQueries({ queryKey: STREAK_KEYS.all(variables.householdId) });
     },
@@ -93,7 +166,21 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: (params: { householdId: string; taskId: string }) =>
       tasksApi.delete(params.householdId, params.taskId),
-    onSuccess: (_, variables) => {
+    onMutate: async ({ householdId, taskId }) => {
+      const queryKey = TASK_KEYS.all(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      queryClient.setQueryData<Task[]>(queryKey, (old) =>
+        (old ?? []).filter((t) => t.id !== taskId)
+      );
+      return { queryKey, previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queryKey) {
+        queryClient.setQueryData<Task[]>(context.queryKey, context.previous);
+      }
+    },
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.all(variables.householdId) });
     },
   });
