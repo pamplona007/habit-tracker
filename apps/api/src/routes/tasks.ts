@@ -65,7 +65,7 @@ tasksRoutes.get('/', async (c) => {
   const householdId = c.get('householdId')
   const type = c.req.query('type') as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ONE_TIME' | undefined
 
-  const where: Record<string, unknown> = { householdId }
+  const where: Record<string, unknown> = { householdId, deletedAt: null }
   if (type) where.type = type
 
   const tasks = await prisma.task.findMany({
@@ -178,16 +178,69 @@ tasksRoutes.delete('/:id', async (c) => {
   const id = c.req.param('id')
 
   const task = await prisma.task.findFirst({
-    where: { id, householdId },
+    where: { id, householdId, deletedAt: null },
   })
 
   if (!task) {
     return c.json({ error: 'Task not found' }, 404)
   }
 
-  await prisma.task.delete({ where: { id } })
+  await prisma.task.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  })
 
   return c.json({ success: true })
+})
+
+
+tasksRoutes.get('/archived', async (c) => {
+  const householdId = c.get('householdId')
+
+  const tasks = await prisma.task.findMany({
+    where: { householdId, deletedAt: { not: null } },
+    include: {
+      completions: {
+        orderBy: { completedAt: 'desc' },
+      },
+    },
+    orderBy: [{ type: 'asc' }, { createdAt: 'desc' }],
+  })
+
+  const tasksWithCompleted = tasks.map((task) => {
+    const periodCompletion = task.completions.find((c) => isCompletedInPeriod(task.type, c.completedAt))
+    const completed = !!periodCompletion
+    const completionType = completed ? (periodCompletion?.type ?? null) : null
+    return buildTaskResponse(task as unknown as Record<string, unknown>, completed, completionType)
+  })
+
+  return c.json({ tasks: tasksWithCompleted })
+})
+
+
+tasksRoutes.post('/:id/restore', async (c) => {
+  const householdId = c.get('householdId')
+  const id = c.req.param('id')
+
+  const task = await prisma.task.findFirst({
+    where: { id, householdId, deletedAt: { not: null } },
+    include: { completions: { orderBy: { completedAt: 'desc' } } },
+  })
+
+  if (!task) {
+    return c.json({ error: 'Task not found' }, 404)
+  }
+
+  const restored = await prisma.task.update({
+    where: { id },
+    data: { deletedAt: null },
+  })
+
+  const periodCompletion = task.completions.find((c) => isCompletedInPeriod(restored.type, c.completedAt))
+  const completed = !!periodCompletion
+  const completionType = completed ? (periodCompletion?.type ?? null) : null
+
+  return c.json({ task: buildTaskResponse(restored as unknown as Record<string, unknown>, completed, completionType) })
 })
 
 

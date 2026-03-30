@@ -69,10 +69,8 @@ export function DashboardPage() {
           </div>
           <div className={styles.streakBadge} data-testid="streak-badge">
             <span className="material-symbols-outlined">local_fire_department</span>
-            <div className={styles.streakInfo}>
-              <span className={styles.streakValue} data-testid="streak-current">{streak.current}</span>
-              <span className={styles.streakLabel}>{t('dashboard.dayStreak')}</span>
-            </div>
+            <span className={styles.streakValue} data-testid="streak-current">{streak.current}</span>
+            <span className={styles.streakLabel}>{t('dashboard.dayStreak')}</span>
           </div>
         </section>
 

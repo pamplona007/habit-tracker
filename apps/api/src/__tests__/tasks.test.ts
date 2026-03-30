@@ -324,7 +324,7 @@ describe('DELETE /households/:householdId/tasks/:id', () => {
     await cleanupAllTestData()
   })
 
-  it('deletes a task', async () => {
+  it('soft deletes a task', async () => {
     const { token, householdId } = await createTestHousehold()
     const task = await prisma.task.create({ data: { name: 'Task', householdId } })
 
@@ -338,7 +338,25 @@ describe('DELETE /households/:householdId/tasks/:id', () => {
     expect(body.success).toBe(true)
 
     const deleted = await prisma.task.findUnique({ where: { id: task.id } })
-    expect(deleted).toBeNull()
+    expect(deleted).not.toBeNull()
+    expect(deleted!.deletedAt).not.toBeNull()
+  })
+
+  it('does not return soft-deleted task in active list', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const task = await prisma.task.create({ data: { name: 'Task', householdId } })
+
+    await app.request(`/households/${householdId}/tasks/${task.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const res = await app.request(`/households/${householdId}/tasks`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const body = await res.json()
+    expect(body.tasks.find((t: { id: string }) => t.id === task.id)).toBeUndefined()
   })
 
   it('returns 404 for non-existent task', async () => {
@@ -409,5 +427,115 @@ describe('DELETE /households/:householdId/tasks/:id/complete', () => {
     const completions = await prisma.taskCompletion.findMany({ where: { taskId: task.id } })
     expect(completions.length).toBe(1)
     expect(completions[0].userId).toBe(otherUser.id)
+  })
+})
+
+describe('GET /households/:householdId/tasks/archived', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('returns soft-deleted tasks', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const task = await prisma.task.create({ data: { name: 'Task', householdId, deletedAt: new Date() } })
+
+    const res = await app.request(`/households/${householdId}/tasks/archived`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.tasks.length).toBe(1)
+    expect(body.tasks[0].id).toBe(task.id)
+    expect(body.tasks[0].deletedAt).not.toBeNull()
+  })
+
+  it('does not return active tasks', async () => {
+    const { token, householdId } = await createTestHousehold()
+    await prisma.task.create({ data: { name: 'Active Task', householdId } })
+    await prisma.task.create({ data: { name: 'Deleted Task', householdId, deletedAt: new Date() } })
+
+    const res = await app.request(`/households/${householdId}/tasks/archived`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.tasks.length).toBe(1)
+    expect(body.tasks[0].name).toBe('Deleted Task')
+  })
+
+  it('returns 403 for non-member', async () => {
+    const { householdId } = await createTestHousehold()
+    const { token } = await createTestUser({ email: 'outsider@example.com' })
+
+    const res = await app.request(`/households/${householdId}/tasks/archived`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('POST /households/:householdId/tasks/:id/restore', () => {
+  afterEach(async () => {
+    await cleanupAllTestData()
+  })
+
+  it('restores a soft-deleted task', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const task = await prisma.task.create({ data: { name: 'Task', householdId, deletedAt: new Date() } })
+
+    const res = await app.request(`/households/${householdId}/tasks/${task.id}/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.task.deletedAt).toBeNull()
+
+    const restored = await prisma.task.findUnique({ where: { id: task.id } })
+    expect(restored!.deletedAt).toBeNull()
+  })
+
+  it('returns restored task in active list', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const task = await prisma.task.create({ data: { name: 'Task', householdId, deletedAt: new Date() } })
+
+    await app.request(`/households/${householdId}/tasks/${task.id}/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const res = await app.request(`/households/${householdId}/tasks`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    const body = await res.json()
+    expect(body.tasks.find((t: { id: string }) => t.id === task.id)).toBeDefined()
+  })
+
+  it('returns 404 for non-existent task', async () => {
+    const { token, householdId } = await createTestHousehold()
+
+    const res = await app.request(`/households/${householdId}/tasks/nonexistent-id/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 404 for already active task', async () => {
+    const { token, householdId } = await createTestHousehold()
+    const task = await prisma.task.create({ data: { name: 'Task', householdId } })
+
+    const res = await app.request(`/households/${householdId}/tasks/${task.id}/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    expect(res.status).toBe(404)
   })
 })

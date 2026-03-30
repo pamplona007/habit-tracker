@@ -117,6 +117,8 @@ model Task {
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   completions TaskCompletion[]
+
+  deletedAt DateTime?
 }
 
 enum TaskPriority {
@@ -188,7 +190,7 @@ model Account {
 
 model RefreshToken {
   id        String   @id @default(uuid())
-  token     String   @unique
+  token     String   @unique @db.Text
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
