@@ -1,5 +1,5 @@
 import { useTimer } from '../../context/TimerContext';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function TimerWidget() {
   const {

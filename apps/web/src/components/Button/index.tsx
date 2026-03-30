@@ -1,5 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';

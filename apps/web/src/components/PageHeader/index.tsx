@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Button } from '../Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 interface PageHeaderProps {
   title: string;

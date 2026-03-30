@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholds } from '../../hooks';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const navItems = [
   { path: '/dashboard', icon: 'dashboard', labelKey: 'nav.dashboard' as const },

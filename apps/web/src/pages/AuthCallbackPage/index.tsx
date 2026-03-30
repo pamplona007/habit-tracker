@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { apiClient } from '../../api/client'
-import styles from './styles.module.css'
+import styles from './styles.module.scss'
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()

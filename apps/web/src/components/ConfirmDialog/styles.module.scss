@@ -1,7 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(41, 50, 71, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,26 +31,26 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-}
 
-.icon.danger {
-  background-color: var(--error-container);
-}
+  &.danger {
+    background-color: var(--error-container);
 
-.icon.danger .material-symbols-outlined {
-  color: var(--on-error-container);
-}
+    .material-symbols-outlined {
+      color: var(--on-error-container);
+    }
+  }
 
-.icon.default {
-  background-color: var(--primary-container);
-}
+  &.default {
+    background-color: var(--primary-container);
 
-.icon.default .material-symbols-outlined {
-  color: var(--on-primary-container);
-}
+    .material-symbols-outlined {
+      color: var(--on-primary-container);
+    }
+  }
 
-.icon .material-symbols-outlined {
-  font-size: 24px;
+  .material-symbols-outlined {
+    font-size: 24px;
+  }
 }
 
 .title {
@@ -72,8 +73,8 @@
   gap: var(--space-2);
   margin-top: var(--space-2);
   width: 100%;
-}
 
-.actions > * {
-  flex: 1;
+  > * {
+    flex: 1;
+  }
 }

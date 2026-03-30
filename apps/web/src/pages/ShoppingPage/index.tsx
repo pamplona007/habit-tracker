@@ -16,7 +16,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { FormField, InputField } from '../../components/FormField';
 import { Button } from '../../components/Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function ShoppingPage() {
   const { t } = useTranslation();
@@ -59,7 +59,7 @@ export function ShoppingPage() {
   };
 
   return (
-    <div className={styles.page} data-testid="shopping-page">
+    <div data-testid="shopping-page">
       <PageHeader
         title={t('shopping.title')}
         subtitle={`${lists?.length || 0} ${t('shopping.title')}`}

@@ -5,8 +5,9 @@ import { useTasks, useStreak, useNotices, useShoppingLists } from '../../hooks';
 import { getRandomPendingTask } from '../../utils/tasks';
 import { Link } from 'react-router-dom';
 import { QuickStartModal } from '../../components/QuickStartModal';
+import { Card } from '../../components/Card';
 import type { Task } from '../../types';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const SHOPPING_ICONS = ['local_grocery_store', 'home_repair_service', 'medical_services', 'inventory_2'];
 
@@ -59,9 +60,8 @@ export function DashboardPage() {
   };
 
   return (
-    <div className={styles.page} data-testid="dashboard-page">
+    <div className={styles.main} data-testid="dashboard-page">
 
-      <main className={styles.main}>
         <section className={styles.heroSection} data-testid="hero-section">
           <div className={styles.heroContent}>
             <p className={styles.greetingLabel} data-testid="greeting-label">{getGreeting()}</p>
@@ -96,7 +96,7 @@ export function DashboardPage() {
               </div>
             ) : (
               todayTasks.map((task) => (
-                <div key={task.id} className={styles.taskCard} data-testid={`task-card-${task.id}`}>
+                <Card key={task.id} variant="elevated" className={styles.taskCard} data-testid={`task-card-${task.id}`}>
                   <div className={styles.taskCardContent}>
                     <div className={styles.taskInfo}>
                       <h3 className={styles.taskName}>{task.name}</h3>
@@ -111,48 +111,48 @@ export function DashboardPage() {
                   <div className={styles.taskMeta}>
                     <span className={styles.priorityBadge}>{t(`tasks.types.${task.type}`)}</span>
                   </div>
-                </div>
+                </Card>
               ))
             )}
           </div>
         </section>
 
         <section className={styles.statsSection} data-testid="stats-section">
-          <div className={styles.statCard} data-testid="streak-stat-card">
+          <Card variant="flat" className={styles.statCard} data-testid="streak-stat-card">
             <span className="material-symbols-outlined">local_fire_department</span>
             <div className={styles.statContent}>
               <span className={styles.statValue} data-testid="streak-value">{streak.current}</span>
               <span className={styles.statLabel}>{t('tasks.streak')}</span>
             </div>
-          </div>
-          <div className={styles.statCard} data-testid="best-streak-stat-card">
+          </Card>
+          <Card variant="flat" className={styles.statCard} data-testid="best-streak-stat-card">
             <span className="material-symbols-outlined">emoji_events</span>
             <div className={styles.statContent}>
               <span className={styles.statValue}>{streak.longest}</span>
               <span className={styles.statLabel}>{t('dashboard.bestStreak')}</span>
             </div>
-          </div>
+          </Card>
         </section>
 
         <section className={styles.announcementsSection} data-testid="announcements-section">
           <h2 className={styles.sectionTitle} data-testid="announcements-title">{t('dashboard.announcements')}</h2>
           {activeNotices.length === 0 ? (
-            <div className={styles.noticeCard} data-testid="no-notices-card">
+            <Card className={styles.noticeCard} data-testid="no-notices-card">
               <div className={styles.noticeIcon}>
                 <span className="material-symbols-outlined">campaign</span>
               </div>
               <div className={styles.noticeContent}>
                 <p className={styles.noticeEmpty} data-testid="no-notices-text">{t('dashboard.noAnnouncements')}</p>
               </div>
-            </div>
+            </Card>
           ) : (
             activeNotices.map((notice) => (
-              <div key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`} data-testid={`notice-card-${notice.id}`}>
+              <Card key={notice.id} className={`${styles.noticeCard} ${styles[notice.priority]}`} data-testid={`notice-card-${notice.id}`}>
                 <div className={styles.noticeContent}>
                   <span className={styles.noticeTitle}>{notice.title}</span>
                   <span className={styles.noticeText}>{notice.content}</span>
                 </div>
-              </div>
+              </Card>
             ))
           )}
         </section>
@@ -200,7 +200,6 @@ export function DashboardPage() {
             <span>{t('nav.settings')}</span>
           </Link>
         </section>
-      </main>
 
       {quickStartTask && (
         <QuickStartModal

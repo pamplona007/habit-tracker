@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useTimer } from '../../context/TimerContext';
 import { useCompleteTask } from '../../hooks';
 import { useAuth } from '../../context/AuthContext';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const FOCUS_QUOTES = [
   "Focus is a matter of deciding what things you're not going to do.",

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 interface LoadingStateProps {
   message?: string;

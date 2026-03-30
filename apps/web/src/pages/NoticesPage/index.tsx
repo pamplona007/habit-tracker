@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { FormField, InputField, TextareaField } from '../../components/FormField';
 import { Button } from '../../components/Button';
 import type { NoticePriority } from '../../types';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const PRIORITIES: NoticePriority[] = ['low', 'normal', 'high', 'urgent'];
 
@@ -35,7 +35,7 @@ export function NoticesPage() {
   const activeNotices = notices?.filter((n) => n.isActive) || [];
 
   return (
-    <div className={styles.page} data-testid="notices-page">
+    <div data-testid="notices-page">
       <PageHeader
         title={t('notices.title')}
         subtitle={`${activeNotices.length} ${t('notices.activeNotices')}`}

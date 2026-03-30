@@ -1,7 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(41, 50, 71, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,15 +46,15 @@
   background-color: var(--surface-container-high);
   color: var(--on-surface-variant);
   transition: all var(--transition-fast);
-}
 
-.closeBtn:hover {
-  background-color: var(--surface-container-highest);
-  color: var(--on-surface);
-}
+  &:hover {
+    background-color: var(--surface-container-highest);
+    color: var(--on-surface);
+  }
 
-.closeBtn .material-symbols-outlined {
-  font-size: 18px;
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
 
 .content {
@@ -66,8 +67,8 @@
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-4);
-}
 
-.actions > * {
-  flex: 1;
+  > * {
+    flex: 1;
+  }
 }

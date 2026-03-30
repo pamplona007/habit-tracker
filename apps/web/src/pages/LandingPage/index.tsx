@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStats } from '../../hooks';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 function formatStatValue(value: number): string {
   if (value >= 1000) return `${Math.floor(value / 1000)}K+`;

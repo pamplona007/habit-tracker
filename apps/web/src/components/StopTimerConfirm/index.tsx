@@ -1,6 +1,6 @@
 import { useTimer } from '../../context/TimerContext';
 import { Button } from '../Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function StopTimerConfirm() {
   const { showStopConfirm, task, cancelReset, confirmReset } = useTimer();

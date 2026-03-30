@@ -4,7 +4,7 @@ import type { Task } from '../../types';
 import { TIMER_OPTIONS, type TimerDuration } from '../../utils/tasks';
 import { Button } from '../Button';
 import { useTimer } from '../../context/TimerContext';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 interface QuickStartModalProps {
   task: Task;

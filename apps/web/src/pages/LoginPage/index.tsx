@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/auth';
 import { FormField, InputField } from '../../components/FormField';
 import { Button } from '../../components/Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function LoginPage() {
   const { t, i18n } = useTranslation();

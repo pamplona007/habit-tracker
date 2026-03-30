@@ -1,0 +1,22 @@
+.card {
+  background-color: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast);
+}
+
+.interactive:hover {
+  background-color: var(--surface-container-low);
+}
+
+.elevated:hover {
+  background-color: var(--primary-container);
+  border-color: var(--primary);
+}
+
+.flat {
+  background-color: var(--surface-container-low);
+}
+
+.bordered {
+  border: 1px solid var(--outline);
+}

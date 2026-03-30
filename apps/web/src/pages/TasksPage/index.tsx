@@ -9,8 +9,9 @@ import { EmptyState } from '../../components/EmptyState';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { FormField, InputField, TextareaField } from '../../components/FormField';
 import { Button } from '../../components/Button';
+import { Badge } from '../../components/Badge';
 import type { Task, TaskType, TaskPriority } from '../../types';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const TASK_TYPE_KEYS: { value: TaskType | 'ALL'; key: string }[] = [
   { value: 'ALL', key: 'tasks.filters.all' },
@@ -63,7 +64,7 @@ export function TasksPage() {
   const completedTasks = filteredTasks.filter((t) => t.completed);
 
   return (
-    <div className={styles.page} data-testid="tasks-page">
+    <div data-testid="tasks-page">
       <PageHeader
         title={t('tasks.title')}
         subtitle={`${pendingTasks.length} ${t('tasks.pending')} · ${completedTasks.length} ${t('tasks.completed')}`}
@@ -134,10 +135,12 @@ export function TasksPage() {
                     </div>
                     <div className={styles.taskTags}>
                       <div className={styles.tagsLeft}>
-                        <span className={`${styles.taskPriority} ${styles[task.priority]}`}>
+                        <Badge variant={task.priority}>
                           {t(`tasks.priorities.${task.priority}`)}
-                        </span>
-                        <span className={styles.taskType}>{t(`tasks.types.${task.type}`)}</span>
+                        </Badge>
+                        <Badge variant="outline">
+                          {t(`tasks.types.${task.type}`)}
+                        </Badge>
                       </div>
                       <button
                         className={styles.deleteBtn}

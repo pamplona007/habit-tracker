@@ -16,7 +16,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
 import { Button } from '../../components/Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 const AUTH_KEYS = {
   me: ['auth', 'me'] as const,
@@ -224,7 +224,7 @@ export function SettingsPage() {
   };
 
   return (
-    <div className={styles.page} data-testid="settings-page">
+    <div data-testid="settings-page">
       <PageHeader title={t('settings.title')} />
 
       <div className={styles.sections}>

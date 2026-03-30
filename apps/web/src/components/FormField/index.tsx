@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import React from 'react';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 interface FormFieldProps {
   label: string;

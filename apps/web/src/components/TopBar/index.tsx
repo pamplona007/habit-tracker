@@ -1,5 +1,5 @@
 import { TimerWidget } from '../TimerWidget';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function TopBar() {
   return (

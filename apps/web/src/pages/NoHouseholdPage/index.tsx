@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholds, useCreateHousehold, useJoinHousehold, useSwitchHousehold } from '../../hooks';
 import { Button } from '../../components/Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 export function NoHouseholdPage() {
   const { t } = useTranslation();

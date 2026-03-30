@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '../Button';
-import styles from './styles.module.css';
+import styles from './styles.module.scss';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
