@@ -6,7 +6,5 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/__tests__/**/*.test.ts'],
-    pool: 'forks',
-    maxWorkers: 1,
   },
 })

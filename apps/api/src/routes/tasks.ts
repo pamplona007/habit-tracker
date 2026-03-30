@@ -3,6 +3,7 @@ import { prisma } from '../db'
 import { z } from 'zod'
 import type { AppBindings, AuthUser } from '../types'
 import { recalculateStreak } from '../utils/streak'
+import { broadcastToHousehold } from '../services/notification'
 
 export const tasksRoutes = new Hono<AppBindings>()
 
@@ -91,6 +92,7 @@ tasksRoutes.get('/', async (c) => {
 
 tasksRoutes.post('/', async (c) => {
   const householdId = c.get('householdId')
+  const creator = c.get('user')
   const data = await c.req.json()
 
   const parsed = taskSchema.parse(data)
@@ -108,6 +110,13 @@ tasksRoutes.post('/', async (c) => {
       householdId,
     },
   })
+
+  broadcastToHousehold(
+    householdId,
+    creator.id,
+    { title: 'Nova tarefa', body: `Tarefa criada: ${task.name}` },
+    prisma
+  ).catch(console.error)
 
   return c.json({ task: buildTaskResponse(task as unknown as Record<string, unknown>, false, null) }, 201)
 })
@@ -168,6 +177,13 @@ tasksRoutes.post('/:id/complete', async (c) => {
   })
 
   await recalculateStreak(householdId)
+
+  broadcastToHousehold(
+    householdId,
+    user.id,
+    { title: 'Tarefa concluída', body: `${user.name} completou: ${task.name}` },
+    prisma
+  ).catch(console.error)
 
   return c.json({ completion }, 201)
 })

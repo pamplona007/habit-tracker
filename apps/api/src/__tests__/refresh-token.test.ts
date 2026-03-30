@@ -152,8 +152,7 @@ describe('POST /auth/refresh', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
-    expect(body.refreshToken).not.toBe(refreshToken)
+    expect(body.refreshToken).toBeUndefined()
 
     const oldRefreshToken = `hashed:${crypto.createHash('sha256').update(refreshToken).digest('hex')}`
     const oldTokenInDb = await prisma.refreshToken.findUnique({
@@ -648,7 +647,7 @@ describe('Security: Refresh token cookie attributes', () => {
     expect(refreshRes.status).toBe(200)
     const body = await refreshRes.json()
     expect(body.accessToken).toBeDefined()
-    expect(body.refreshToken).toBeDefined()
+    expect(body.refreshToken).toBeUndefined()
   })
 
   it('refresh with body refreshToken returns 400 (deprecated)', async () => {

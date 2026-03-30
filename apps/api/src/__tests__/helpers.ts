@@ -61,6 +61,18 @@ export async function cleanupAllTestData() {
       select: { id: true },
     })).map(u => u.id) } },
   })
+  await prisma.pushSubscription.deleteMany({
+    where: { userId: { in: (await prisma.user.findMany({
+      where: { email: { contains: '@example.com' } },
+      select: { id: true },
+    })).map(u => u.id) } },
+  })
+  await prisma.notificationSettings.deleteMany({
+    where: { userId: { in: (await prisma.user.findMany({
+      where: { email: { contains: '@example.com' } },
+      select: { id: true },
+    })).map(u => u.id) } },
+  })
   await prisma.user.deleteMany({
     where: { email: { contains: '@example.com' } },
   })

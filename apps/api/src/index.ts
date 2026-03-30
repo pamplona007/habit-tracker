@@ -9,6 +9,8 @@ import { tasksRoutes } from './routes/tasks'
 import { streakRoutes } from './routes/streak'
 import { shoppingRoutes } from './routes/shopping'
 import { statsRoutes } from './routes/stats'
+import { pushRoutes } from './routes/push'
+import { cronRoutes } from './routes/cron'
 import { z } from 'zod'
 
 const app = new Hono()
@@ -68,6 +70,10 @@ app.route('/households/:householdId/notices', noticesRoutes)
 app.route('/households/:householdId/tasks', tasksRoutes)
 app.route('/households/:householdId/shopping', shoppingRoutes)
 app.route('/households/:householdId/streak', streakRoutes)
+
+app.route('/push', pushRoutes)
+
+app.route('/cron', cronRoutes)
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 

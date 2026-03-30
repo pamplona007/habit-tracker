@@ -10,6 +10,8 @@ import {
   useUpdateHousehold,
   useUpdateMemberRole,
   useRemoveMember,
+  usePushSubscription,
+  useNotificationSettings,
 } from '../../hooks';
 import { authApi } from '../../api/auth';
 import { PageHeader } from '../../components/PageHeader';
@@ -34,6 +36,9 @@ export function SettingsPage() {
   const updateHousehold = useUpdateHousehold(householdId);
   const updateMemberRole = useUpdateMemberRole(householdId);
   const removeMember = useRemoveMember(householdId);
+
+  const { subscription, isSupported, permissionState, subscribe } = usePushSubscription();
+  const { settings, updateSettings, isUpdating } = useNotificationSettings();
 
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
   const [isLinkingGithub, setIsLinkingGithub] = useState(false);
@@ -542,6 +547,92 @@ export function SettingsPage() {
                 <option value="en">{t('settings.languageEn')}</option>
                 <option value="pt">{t('settings.languagePt')}</option>
               </select>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section} data-testid="notifications-section">
+          <h2 className={styles.sectionTitle}>{t('settings.notifications')}</h2>
+          <div className={styles.card}>
+            <div className={styles.notificationSection}>
+              <div className={styles.notificationHeader}>
+                <div className={styles.notificationIcon}>
+                  <span className="material-symbols-outlined">notifications</span>
+                </div>
+                <div>
+                  <p className={styles.notificationTitle}>{t('settings.pushNotifications')}</p>
+                  <p className={styles.notificationSubtitle}>{t('settings.enableNotificationsDesc')}</p>
+                </div>
+              </div>
+
+              {!isSupported && (
+                <div className={styles.notificationStatus + ' ' + styles.error}>
+                  <span className="material-symbols-outlined">error</span>
+                  <span>{t('settings.notificationsDisabled')}</span>
+                </div>
+              )}
+
+              {isSupported && permissionState !== 'granted' && (
+                <div className={styles.enableButton}>
+                  <Button
+                    variant="primary"
+                    onClick={() => subscribe()}
+                    iconLeft={<span className="material-symbols-outlined">notifications_active</span>}
+                  >
+                    {t('settings.enableNotifications')}
+                  </Button>
+                </div>
+              )}
+
+              {isSupported && permissionState === 'granted' && subscription && (
+                <>
+                  <div className={styles.toggleRow}>
+                    <div className={styles.toggleInfo}>
+                      <p className={styles.toggleLabel}>{t('settings.morningReminder')}</p>
+                      <p className={styles.toggleDesc}>{t('settings.morningReminderDesc')}</p>
+                    </div>
+                    <input
+                      type="time"
+                      className={styles.timeInput}
+                      value={settings?.morningReminderTime || '09:00'}
+                      onChange={(e) => updateSettings({ morningReminderTime: e.target.value, morningReminderEnabled: true })}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <div className={styles.toggleRow}>
+                    <div className={styles.toggleInfo}>
+                      <p className={styles.toggleLabel}>{t('settings.taskCreatedNotifications')}</p>
+                      <p className={styles.toggleDesc}>{t('settings.taskCreatedNotificationsDesc')}</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input
+                        type="checkbox"
+                        checked={settings?.taskCreatedEnabled ?? true}
+                        onChange={(e) => updateSettings({ taskCreatedEnabled: e.target.checked })}
+                        disabled={isUpdating}
+                      />
+                      <span className={styles.toggleSlider} />
+                    </label>
+                  </div>
+
+                  <div className={styles.toggleRow}>
+                    <div className={styles.toggleInfo}>
+                      <p className={styles.toggleLabel}>{t('settings.taskCompletedNotifications')}</p>
+                      <p className={styles.toggleDesc}>{t('settings.taskCompletedNotificationsDesc')}</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input
+                        type="checkbox"
+                        checked={settings?.taskCompletedEnabled ?? true}
+                        onChange={(e) => updateSettings({ taskCompletedEnabled: e.target.checked })}
+                        disabled={isUpdating}
+                      />
+                      <span className={styles.toggleSlider} />
+                    </label>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>

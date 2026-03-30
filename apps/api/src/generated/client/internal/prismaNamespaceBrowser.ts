@@ -61,7 +61,9 @@ export const ModelName = {
   ShoppingList: 'ShoppingList',
   ShoppingItem: 'ShoppingItem',
   Account: 'Account',
-  RefreshToken: 'RefreshToken'
+  RefreshToken: 'RefreshToken',
+  PushSubscription: 'PushSubscription',
+  NotificationSettings: 'NotificationSettings'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -219,6 +221,31 @@ export const RefreshTokenScalarFieldEnum = {
 } as const
 
 export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
+
+
+export const PushSubscriptionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  endpoint: 'endpoint',
+  keys: 'keys',
+  isActive: 'isActive',
+  deviceName: 'deviceName',
+  createdAt: 'createdAt'
+} as const
+
+export type PushSubscriptionScalarFieldEnum = (typeof PushSubscriptionScalarFieldEnum)[keyof typeof PushSubscriptionScalarFieldEnum]
+
+
+export const NotificationSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  morningReminderEnabled: 'morningReminderEnabled',
+  morningReminderTime: 'morningReminderTime',
+  taskCreatedEnabled: 'taskCreatedEnabled',
+  taskCompletedEnabled: 'taskCompletedEnabled'
+} as const
+
+export type NotificationSettingsScalarFieldEnum = (typeof NotificationSettingsScalarFieldEnum)[keyof typeof NotificationSettingsScalarFieldEnum]
 
 
 export const SortOrder = {

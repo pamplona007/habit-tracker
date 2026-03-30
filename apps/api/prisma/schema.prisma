@@ -63,6 +63,8 @@ model User {
   completedTasks TaskCompletion[]
   accounts Account[]
   refreshTokens RefreshToken[]
+  pushSubscriptions PushSubscription[]
+  notificationSettings NotificationSettings?
 }
 
 model HouseholdInvite {
@@ -195,4 +197,27 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model PushSubscription {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique
+  keys       String   @db.Text
+  isActive   Boolean  @default(true)
+  deviceName String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model NotificationSettings {
+  id                    String  @id @default(uuid())
+  userId                String  @unique
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  morningReminderEnabled Boolean @default(true)
+  morningReminderTime   String  @default("09:00")
+  taskCreatedEnabled    Boolean @default(true)
+  taskCompletedEnabled  Boolean @default(true)
 }
