@@ -8,6 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
+      injectRegister: 'inline',
       srcDir: 'src',
       filename: 'sw.ts',
       injectManifest: {

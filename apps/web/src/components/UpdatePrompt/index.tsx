@@ -2,7 +2,9 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 import styles from './styles.module.scss'
 
 export function UpdatePrompt() {
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW()
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+    immediate: true,
+  })
 
   if (needRefresh) {
     return (
