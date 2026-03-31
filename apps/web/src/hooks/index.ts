@@ -4,3 +4,4 @@ export { useNotices, useCreateNotice, useUpdateNotice, useDeleteNotice, NOTICE_K
 export { useShoppingLists, useCreateShoppingList, useDeleteShoppingList, useAddShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem, useToggleShoppingItem, SHOPPING_KEYS } from './useShopping';
 export { useStats, STATS_KEYS } from './useStats';
 export { usePushSubscription, useNotificationSettings, PUSH_KEYS } from './usePush';
+export { useFirstVisitNotification } from './useFirstVisitNotification';

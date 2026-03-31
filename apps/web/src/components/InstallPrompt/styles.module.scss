@@ -1,0 +1,74 @@
+.banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--gray-12);
+  color: var(--gray-1);
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  max-width: calc(100vw - 48px);
+}
+
+.icon {
+  color: var(--accent-9);
+  flex-shrink: 0;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.installBtn {
+  padding: 6px 14px;
+  background: var(--accent-9);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.installBtn:hover {
+  background: var(--accent-10);
+}
+
+.dismissBtn {
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--gray-8);
+  border: 1px solid var(--gray-7);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.dismissBtn:hover {
+  background: var(--gray-4);
+}

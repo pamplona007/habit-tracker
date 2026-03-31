@@ -238,6 +238,16 @@ export const en = {
     startNow: 'Start Now',
     rollAgain: 'Roll Again',
   },
+  install: {
+    title: 'Install Casa',
+    subtitle: 'Add to your home screen',
+    notNow: 'Not now',
+    install: 'Install',
+  },
+  notifications: {
+    enabled: 'Notifications enabled!',
+    enabledDesc: 'You will receive reminders for your habits.',
+  },
   landing: {
     badge: 'Collaborative habit tracking',
     title: {

@@ -2,14 +2,79 @@
   "name": "Casa - Build better habits together",
   "short_name": "Casa",
   "description": "Casa - Build better habits together",
+  "id": "casa-habit-tracker",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone"],
   "background_color": "#ffffff",
   "theme_color": "#016a6b",
   "orientation": "portrait",
   "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "lifestyle"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "",
   "icons": [
-    { "src": "/icons-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tasks",
+      "short_name": "Tasks",
+      "description": "View and complete tasks",
+      "url": "/?tab=tasks",
+      "icons": [{ "src": "/icons-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Notices",
+      "short_name": "Notices",
+      "description": "View household notices",
+      "url": "/?tab=notices",
+      "icons": [{ "src": "/icons-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Shopping",
+      "short_name": "Shopping",
+      "description": "View shopping lists",
+      "url": "/?tab=shopping",
+      "icons": [{ "src": "/icons-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "file_handlers": [],
+  "protocol_handlers": [],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "widgets": [],
+  "edge_side_panel": {},
+  "note_taking": {},
+  "scope_extensions": [],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard view showing tasks and streaks"
+    },
+    {
+      "src": "/screenshots/tasks.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Task management with daily habits"
+    }
   ]
 }

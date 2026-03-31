@@ -240,6 +240,16 @@ export const pt: TranslationKeys = {
     startNow: 'Começar Agora',
     rollAgain: 'Sortear Novamente',
   },
+  install: {
+    title: 'Instalar Casa',
+    subtitle: 'Adicione à tela inicial',
+    notNow: 'Agora não',
+    install: 'Instalar',
+  },
+  notifications: {
+    enabled: 'Notificações ativadas!',
+    enabledDesc: 'Você receberá lembretes dos seus hábitos.',
+  },
   landing: {
     badge: 'Rastreamento colaborativo de hábitos',
     title: {
