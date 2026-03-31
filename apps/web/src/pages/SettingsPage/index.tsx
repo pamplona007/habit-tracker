@@ -18,6 +18,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
 import { Button } from '../../components/Button';
+import { Avatar, getAvatarUrl } from '../../components/Avatar';
 import styles from './styles.module.scss';
 
 const AUTH_KEYS = {
@@ -97,6 +98,7 @@ export function SettingsPage() {
 
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberRole, setEditingMemberRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
+  const [showAvatarOptions, setShowAvatarOptions] = useState(false);
 
   const userMembership = household?.members?.find((m) => m.userId === user?.id);
   const userRole = userMembership?.role;
@@ -113,6 +115,14 @@ export function SettingsPage() {
   const changePasswordMutation = useMutation({
     mutationFn: (data: { currentPassword: string; newPassword: string }) =>
       authApi.changePassword(data),
+  });
+
+  const updateImageMutation = useMutation({
+    mutationFn: ({ image, provider }: { image: string | null; provider?: string }) =>
+      authApi.updateImage(image, provider),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.me });
+    },
   });
 
   const handleCreateInvite = async () => {
@@ -215,6 +225,15 @@ export function SettingsPage() {
     setEditingMemberId(null);
   };
 
+  const handleSelectAvatar = async (image: string | null, provider?: string) => {
+    await updateImageMutation.mutateAsync({ image, provider });
+    await refreshUser();
+    setShowAvatarOptions(false);
+  };
+
+  const linkedAccounts = user?.accounts?.filter((a) => a.image) || [];
+  const currentAvatarUrl = user ? getAvatarUrl(user) : null;
+
   const handleRemoveMember = (memberId: string, memberName: string) => {
     setMemberToRemove(memberId);
     setMemberToRemoveName(memberName);
@@ -237,8 +256,50 @@ export function SettingsPage() {
           <h2 className={styles.sectionTitle}>{t('settings.profile')}</h2>
           <div className={styles.card}>
             <div className={styles.profileInfo}>
-              <div className={styles.avatar} data-testid="user-avatar">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              <div className={styles.avatarWrapper}>
+                {user && <Avatar user={user} size={80} />}
+                <button
+                  className={styles.avatarEditBtn}
+                  onClick={() => setShowAvatarOptions(!showAvatarOptions)}
+                  aria-label="Change avatar"
+                >
+                  <span className="material-symbols-outlined">edit</span>
+                </button>
+                {showAvatarOptions && (
+                  <div className={styles.avatarDropdown}>
+                    {linkedAccounts.length > 0 && (
+                      <div className={styles.avatarOptionGroup}>
+                        <span className={styles.avatarOptionLabel}>Connected accounts</span>
+                        {linkedAccounts.map((account) => (
+                          <button
+                            key={account.id}
+                            className={`${styles.avatarOption} ${currentAvatarUrl === account.image ? styles.active : ''}`}
+                            onClick={() => handleSelectAvatar(account.image, account.provider)}
+                          >
+                            <img src={account.image!} alt={account.provider} className={styles.avatarOptionImg} />
+                            <span>{account.provider === 'google' ? 'Google' : 'GitHub'}</span>
+                            {currentAvatarUrl === account.image && (
+                              <span className="material-symbols-outlined">check</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className={styles.avatarOptionGroup}>
+                      <span className={styles.avatarOptionLabel}>Default</span>
+                      <button
+                        className={`${styles.avatarOption} ${!user?.image ? styles.active : ''}`}
+                        onClick={() => handleSelectAvatar(null)}
+                      >
+                        <div className={styles.avatarOptionInitial}>
+                          {user?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <span>Initial</span>
+                        {!user?.image && <span className="material-symbols-outlined">check</span>}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               {isEditingProfile ? (
                 <div className={styles.profileEditForm}>

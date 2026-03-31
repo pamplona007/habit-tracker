@@ -179,7 +179,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
 
   c.header('Set-Cookie', `${STATE_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`)
 
-  let userInfo: { email: string; name?: string; id: string }
+  let userInfo: { email: string; name?: string; id: string; image?: string | null }
 
   if (provider === 'google') {
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -208,8 +208,8 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
       return c.redirect(buildErrorRedirectUrl('user_info_failed'))
     }
 
-    const googleUser = await userRes.json() as { email: string; name?: string; sub: string }
-    userInfo = { email: googleUser.email, name: googleUser.name, id: googleUser.sub }
+    const googleUser = await userRes.json() as { email: string; name?: string; sub: string; picture?: string }
+    userInfo = { email: googleUser.email, name: googleUser.name, id: googleUser.sub, image: googleUser.picture }
 
   } else if (provider === 'github') {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
@@ -241,7 +241,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
       return c.redirect(buildErrorRedirectUrl('user_info_failed'))
     }
 
-    const githubUser = await userRes.json() as { email: string | null; name?: string; id: number }
+    const githubUser = await userRes.json() as { email: string | null; name?: string; id: number; avatar_url?: string }
 
     let email = githubUser.email
     if (!email) {
@@ -259,7 +259,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
       return c.redirect(buildErrorRedirectUrl('github_no_email'))
     }
 
-    userInfo = { email, name: githubUser.name, id: String(githubUser.id) }
+    userInfo = { email, name: githubUser.name, id: String(githubUser.id), image: githubUser.avatar_url }
 
   } else {
     return c.redirect(buildErrorRedirectUrl('invalid_provider'))
@@ -280,6 +280,19 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
     if (!existingUser) {
       return c.redirect(buildErrorRedirectUrl('user_not_found'))
     }
+
+    if (!existingUser.image && userInfo.image) {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { image: userInfo.image },
+      })
+    }
+
+    await prisma.account.update({
+      where: { provider_providerAccountId: { provider, providerAccountId: userInfo.id } },
+      data: { image: userInfo.image },
+    }).catch(() => {})
+
     const accessToken = createAccessToken(existingUser.id)
     const refreshToken = await createRefreshToken(existingUser.id)
 
@@ -306,6 +319,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
         email: userInfo.email,
         name: userInfo.name || null,
         password: '',
+        image: userInfo.image || null,
       },
     })
     userId = newUser.id
@@ -316,6 +330,7 @@ authRoutes.get('/oauth/:provider/callback', async (c) => {
       userId,
       provider,
       providerAccountId: userInfo.id,
+      image: userInfo.image || null,
     },
   })
 
@@ -392,6 +407,7 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
   }
 
   let providerAccountId: string
+  let providerImage: string | null = null
 
   if (provider === 'google') {
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -415,8 +431,9 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
     if (!userRes.ok) {
       return c.redirect(`${FRONTEND_URL}/settings?oauth_error=user_info_failed`)
     }
-    const googleUser = await userRes.json() as { sub: string }
+    const googleUser = await userRes.json() as { sub: string; picture?: string }
     providerAccountId = googleUser.sub
+    providerImage = googleUser.picture || null
   } else if (provider === 'github') {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -441,8 +458,9 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
     if (!userRes.ok) {
       return c.redirect(`${FRONTEND_URL}/settings?oauth_error=user_info_failed`)
     }
-    const githubUser = await userRes.json() as { id: number }
+    const githubUser = await userRes.json() as { id: number; avatar_url?: string }
     providerAccountId = String(githubUser.id)
+    providerImage = githubUser.avatar_url || null
   } else {
     return c.redirect(`${FRONTEND_URL}/settings?oauth_error=invalid_provider`)
   }
@@ -452,6 +470,7 @@ authRoutes.get('/oauth/:provider/link-callback', async (c) => {
       userId: parsed.userId,
       provider,
       providerAccountId,
+      image: providerImage,
     },
   })
 
@@ -599,11 +618,12 @@ authRoutes.get('/me', jwtMiddleware, loadUser, async (c) => {
       id: true,
       email: true,
       name: true,
+      image: true,
       currentHouseholdId: true,
       memberships: {
         include: { household: { select: { id: true, name: true } } },
       },
-      accounts: { select: { id: true, provider: true, providerAccountId: true } },
+      accounts: { select: { id: true, provider: true, providerAccountId: true, image: true } },
       createdAt: true,
     },
   })
@@ -647,12 +667,46 @@ authRoutes.patch('/me', jwtMiddleware, loadUser, async (c) => {
       id: true,
       email: true,
       name: true,
+      image: true,
       currentHouseholdId: true,
       createdAt: true,
     },
   })
 
   return c.json({ user: updated })
+})
+
+authRoutes.patch('/me/image', jwtMiddleware, loadUser, async (c) => {
+  const user = c.get('user')
+  const { image, provider } = await c.req.json()
+
+  if (image !== null && typeof image !== 'string') {
+    return c.json({ error: 'Invalid image' }, 400)
+  }
+
+  if (image && !image.startsWith('http')) {
+    return c.json({ error: 'Invalid image URL' }, 400)
+  }
+
+  if (provider) {
+    const account = await prisma.account.findUnique({
+      where: { provider_userId: { provider, userId: user.id } },
+    })
+    if (!account) {
+      return c.json({ error: 'Account not found' }, 404)
+    }
+    await prisma.account.update({
+      where: { id: account.id },
+      data: { image },
+    })
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { image },
+  })
+
+  return c.json({ success: true })
 })
 
 authRoutes.post('/change-password', jwtMiddleware, loadUser, async (c) => {

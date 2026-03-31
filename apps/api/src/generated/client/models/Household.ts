@@ -210,7 +210,7 @@ export type HouseholdGroupByOutputType = {
   _max: HouseholdMaxAggregateOutputType | null
 }
 
-type GetHouseholdGroupByPayload<T extends HouseholdGroupByArgs> = Prisma.PrismaPromise<
+export type GetHouseholdGroupByPayload<T extends HouseholdGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<HouseholdGroupByOutputType, T['by']> &
       {

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   width: 280px;
-  height: 100vh;
+  height: 100dvh;
   background-color: var(--surface-container-lowest);
   border-right: 1px solid var(--surface-container-high);
   position: fixed;
@@ -28,11 +28,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.logo .material-symbols-outlined {
-  font-size: 32px;
-  color: var(--primary);
 }
 
 .logoText {
@@ -99,66 +94,6 @@
   font-size: 24px;
 }
 
-.footer {
-  padding: var(--space-4);
-  border-top: 1px solid var(--surface-container-high);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.user {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background-color: var(--primary);
-  color: var(--on-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.userInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.userName {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--on-surface);
-}
-
-.userEmail {
-  font-size: 0.75rem;
-  color: var(--on-surface-variant);
-}
-
-.logoutBtn {
-  padding: var(--space-2);
-  border-radius: var(--radius-lg);
-  color: var(--on-surface-variant);
-  transition: all var(--transition-fast);
-}
-
-.logoutBtn:hover {
-  background-color: var(--error-container);
-  color: var(--error);
-}
-
-.logoutBtn .material-symbols-outlined {
-  font-size: 24px;
-}
-
 @media (max-width: 768px) {
   .sidebar {
     width: 100%;
@@ -173,8 +108,7 @@
     border-top: 1px solid var(--surface-container-high);
   }
 
-  .header,
-  .footer {
+  .header {
     display: none;
   }
 

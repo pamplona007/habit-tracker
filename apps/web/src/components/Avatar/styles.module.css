@@ -1,0 +1,15 @@
+.image {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.initial {
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}

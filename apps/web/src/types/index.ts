@@ -2,8 +2,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  image: string | null;
   currentHouseholdId: string | null;
-  accounts?: Array<{ id: string; provider: string; providerAccountId: string }>;
+  accounts?: Array<{ id: string; provider: string; providerAccountId: string; image: string | null }>;
 }
 
 export interface AuthResponse {

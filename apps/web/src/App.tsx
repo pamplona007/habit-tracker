@@ -17,7 +17,7 @@ import {
 import './i18n';
 import styles from './App.module.css';
 import { Sidebar } from './components/Sidebar';
-import { TimerWidget } from './components/TimerWidget';
+import { TopBar } from './components/TopBar';
 
 function App() {
   return (
@@ -172,8 +172,8 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.layout}>
       <Sidebar />
+      <TopBar />
       <main className={styles.main}>
-        <TimerWidget />
         <div className={styles.content}>
           {children}
         </div>

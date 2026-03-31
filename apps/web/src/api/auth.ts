@@ -44,4 +44,9 @@ export const authApi = {
     const { data } = await apiClient.post<{ redirectUrl: string }>('/auth/link-account', { provider });
     return data;
   },
+
+  updateImage: async (image: string | null, provider?: string): Promise<{ success: boolean }> => {
+    const { data } = await apiClient.patch<{ success: boolean }>('/auth/me/image', { image, provider });
+    return data;
+  },
 };

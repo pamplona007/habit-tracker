@@ -50,6 +50,122 @@
   flex-shrink: 0;
 }
 
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatarEditBtn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-container-high);
+  border: 2px solid var(--surface-container-lowest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.avatarEditBtn:hover {
+  background-color: var(--surface-container);
+}
+
+.avatarEditBtn .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--on-surface);
+}
+
+.avatarDropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  min-width: 200px;
+  background-color: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  z-index: 100;
+}
+
+.avatarOptionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.avatarOptionGroup + .avatarOptionGroup {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.avatarOptionLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant);
+  padding: var(--space-1) var(--space-2);
+}
+
+.avatarOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.avatarOption:hover {
+  background-color: var(--surface-container-low);
+}
+
+.avatarOption.active {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.avatarOptionImg {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.avatarOptionInitial {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.avatarOption .material-symbols-outlined {
+  font-size: 18px;
+  margin-left: auto;
+}
+
 .profileDisplay {
   display: flex;
   flex: 1;
